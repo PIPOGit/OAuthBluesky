@@ -24,6 +24,9 @@
 			"code_challenge": "pkce_code_challenge"
 		}
 	},
+	"github": {
+		"repo": "https://github.com/PIPOGit/OAuthBluesky"
+	},
 	"neocities": {
 		"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
 		"redirect_delay": 2000,
