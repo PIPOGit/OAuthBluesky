@@ -33,6 +33,11 @@ const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
 const API							= CONFIGURATION.api;
 const LSKEYS						= CONFIGURATION.localStorageKeys;
 
+// Crypto constants
+const SIGNING_ALGORITM				= "ECDSA";
+const CURVE_ALGORITM				= "P-256";
+const HASHING_ALGORITM				= "SHA-256";
+
 // Bluesky constants
 const APP_CLIENT_ID					= "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json";
 const APP_CALLBACK_URL				= "https://madrilenyer.neocities.org/bsky/oauth/callback/";
@@ -70,8 +75,10 @@ let codeChallenge					= null;
 
 // Response from the access token request
 let cryptoKey						= null;
+let jwk								= null;
 let userAuthentication				= null;
 let userAccessToken					= null;
+let accessTokenHash					= null;
 
 
 /**********************************************************
@@ -183,10 +190,29 @@ function generateRandomUUID() {
 async function generateCodeVerifierChallengeFromVerifier( codeVerifier ) {
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
-    let hashedCodeVerifier = await window.crypto.subtle.digest('SHA-256', data);
+    let hashedCodeVerifier = await window.crypto.subtle.digest(HASHING_ALGORITM, data);
 	return base64urlencode(hashedCodeVerifier);
 }
 
+async function createHash(accessToken, noPadding = false){
+    var encodedAT = new TextEncoder().encode(accessToken);
+    var atHash = await crypto.subtle.digest(HASHING_ALGORITM, encodedAT)
+    .then(function(hash) {        
+        var base = toBase64Url(new Uint8Array(hash));
+        if (noPadding){
+            base = base.replace(/\=+$/, '');
+        }    
+        return base;
+    })
+    .catch(function(err){
+        console.log(err);
+        throw err;
+    });
+    return atHash;
+}
+
+
+// Fancy CSS style for the DevTools console.
 const CONSOLE_STYLE					= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
 function analizeParsedResponse( parsedResponse ) {
 	const PREFIX = `[${MODULE_NAME}:analizeParsedResponse] `;
@@ -240,6 +266,7 @@ function prettyString(section){
 }
 
 
+// HTML Helper functions
 function printOutFetchResponse(prefix, data) {
 	let PREFIX = prefix + "[RESPONSE=="+(data.ok?"OK":"ERROR")+" ("+data.status+")]";
 	if (DEBUG) console.groupCollapsed(PREFIX);
@@ -268,6 +295,38 @@ function printOutFetchResponse(prefix, data) {
 	}
 	if (DEBUG) console.groupEnd(PREFIX);
 	return response;
+}
+
+
+function updateHTMLFields(parsedSearch){
+	const PREFIX = `[${MODULE_NAME}:updateHTMLFields] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	let iss = parsedSearch.get("iss");
+	let state = parsedSearch.get("state");
+	let code = parsedSearch.get("code");
+	let error = parsedSearch.get("error");
+	let errorDescription = parsedSearch.get("error_description");
+
+	if (DEBUG) console.debug(PREFIX, "Updating HTML Elements:");
+	if (DEBUG) console.debug(PREFIX, "+ iss:", iss);
+	if (DEBUG) console.debug(PREFIX, "+ state:", state);
+	if (DEBUG) console.debug(PREFIX, "+ code:", code);
+	if (DEBUG) console.debug(PREFIX, "+ error:", error);
+	if (DEBUG) console.debug(PREFIX, "+ errorDescription:", errorDescription);
+
+	// Update HTML page element values.
+	// CSS Classes.
+	$("#rootPanel").removeClass("hidden");
+	$("#rootPanel").addClass("visible");
+
+	$("#iss").val(iss);
+	$("#state").val(state);
+	$("#code").val(code);
+	$("#error").val(error);
+	$("#errorDescription").val(errorDescription);
+
+	if (DEBUG) console.groupEnd(PREFIX);
 }
 
 
@@ -498,6 +557,7 @@ async function test05PARRequest() {
     // Just, to make it simple! I know there are better ways to do this, BUT...
     // ------------------------------------------
     let body = "response_type=code";
+    body += "&prompt=login";
     body += "&code_challenge_method=S256";
     body += "&scope=atproto+transition:generic"; // MUST match the scopes in the client-metadata.json
     body += "&client_id=" + encodeURIComponent( APP_CLIENT_ID );
@@ -663,10 +723,7 @@ async function test11RetrieveTheUserAccessToken(code) {
     // Create the crypto key.
     // Must save it, 'cause we'll reuse it later.
     // ------------------------------------------
-    let cryptoKeyOptions = {
-        name: "ECDSA",
-        namedCurve: "P-256"
-    };
+    let cryptoKeyOptions = { name: SIGNING_ALGORITM, namedCurve: CURVE_ALGORITM };
     let cryptoKeyPurposes = ["sign", "verify"];
     let cryptoKey = await crypto.subtle.generateKey(cryptoKeyOptions, false, cryptoKeyPurposes).then(function(eckey) {
         return eckey;
@@ -711,8 +768,8 @@ async function test11RetrieveTheUserAccessToken(code) {
 
     // + Sign
     let signOptions = {
-        name: "ECDSA",
-        hash: { name: "SHA-256" },
+        name: SIGNING_ALGORITM,
+        hash: { name: HASHING_ALGORITM },
     };
     let signatureAsBase64 = await crypto.subtle.sign(signOptions, cryptoKey.privateKey, messageAsUint8Array)
     .then(function(signature) {
@@ -770,11 +827,6 @@ async function test11RetrieveTheUserAccessToken(code) {
 				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
-		if ( !response.ok ) {
-			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
-			});
-		}
         return response.json();
     }).then( data => {
         // Process the HTTP Response Body
@@ -795,7 +847,128 @@ async function test11RetrieveTheUserAccessToken(code) {
 
 	if (DEBUG) console.debug( PREFIX_FETCH, "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
-	return { cryptoKey: cryptoKey, userAuthentication: responseFromServer, userAccessToken: userAccessToken };
+	return { cryptoKey: cryptoKey, jwk: jwk, userAuthentication: responseFromServer, userAccessToken: userAccessToken };
+}
+
+async function test12RetrieveUserNotifications(code) {
+	const PREFIX = `[${MODULE_NAME}:test12] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_BODY = `${PREFIX_FETCH}[Body] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [test12RetrieveUserNotifications]" );
+
+	let endpoint = API.bluesky.XRPC.api.listNotifications;
+	// let root = userPDSURL + "/xrpc";
+	let root = API.bluesky.XRPC.public;
+	let url = root + endpoint;
+	if (DEBUG) console.debug(PREFIX, "Fetching data from the (Authenticated) URL:", url);
+
+	// We already have the cryptoKey somewhere, from previous calls...
+	// + cryptoKey
+	// + userAuthentication
+	// + userAccessToken
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+    let uuid = self.crypto.randomUUID();
+    let dpop_proof_header = {
+        typ: "dpop+jwt",
+        alg: "ES256",
+        jwk: jwk
+    };
+    let dpop_proof_payload = {
+        iss: APP_CLIENT_ID, // Added
+        ath: accessTokenHash,
+        jti: uuid,
+        htm: "GET",
+        htu: url,
+        iat: Math.floor(Date.now() / 1000),
+        nonce: dpopNonce
+    };
+	if (DEBUG) console.debug( PREFIX, "dpop_proof_header:", prettyJson( dpop_proof_header ) );
+	if (DEBUG) console.debug( PREFIX, "dpop_proof_payload:", prettyJson( dpop_proof_payload ) );
+
+
+    // Crypt and sign the DPoP-Proof header+body
+    // ------------------------------------------
+    // + Prepare
+    const h = JSON.stringify(dpop_proof_header);
+    const p = JSON.stringify(dpop_proof_payload);
+    const partialToken = [
+        toBase64Url(utf8ToUint8Array(h)),
+        toBase64Url(utf8ToUint8Array(p)),
+    ].join(".");
+    const messageAsUint8Array = utf8ToUint8Array(partialToken);
+
+    // + Sign
+    let signOptions = {
+        name: SIGNING_ALGORITM,
+        hash: { name: HASHING_ALGORITM },
+    };
+    let signatureAsBase64 = await crypto.subtle.sign(signOptions, cryptoKey.privateKey, messageAsUint8Array)
+    .then(function(signature) {
+		const signatureAsBase64 = toBase64Url(new Uint8Array(signature));
+		return signatureAsBase64;
+    });
+
+
+    // The DPoP-Proof
+    // ------------------------------------------
+    let dpopProof = `${partialToken}.${signatureAsBase64}`;
+	if (DEBUG) console.debug( PREFIX, "dpopProof:", dpopProof );
+	if (DEBUG) console.debug( PREFIX, "dpopProof:", jwtToPrettyJSON( dpopProof ) );
+
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers = {
+		'Authorization': `DPoP ${userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': 'application/json',
+        'DPoP-Nonce': dpopNonce
+    }
+    let fetchOptions = {
+        method: 'GET',
+        headers: headers
+    }
+	if (DEBUG) console.debug( PREFIX, "headers:", prettyJson( headers ) );
+	if (DEBUG) console.debug( PREFIX, "fetchOptions:", prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (DEBUG) console.debug( PREFIX, "Invoking URL:", url );
+ 	let responseFromServer = await fetch( url, fetchOptions ).then( response => {
+        // Process the HTTP Response
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
+		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
+		analizeParsedResponse( parsedResponse );
+		if ( !response.ok ) {
+			return response.json().then( data => {
+				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+			});
+		}
+        return response.json();
+    }).then( data => {
+        // Process the HTTP Response Body
+		if (DEBUG) console.debug( PREFIX_FETCH_BODY, "Data:", prettyJson( data ) );
+        // Here, we gather the "access_token" item in the received json.
+        let notifications = data.notifications;
+        // Return something
+		return notifications;
+    }).catch( error => {
+		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
+		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		throw( error );
+    }).finally( () => {
+		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
+		if (GROUP_DEBUG) console.groupEnd();
+    });
+	if (DEBUG) console.debug( PREFIX, "Received responseFromServer:", prettyJson( responseFromServer ) );
+
+	if (DEBUG) console.debug( PREFIX_FETCH, "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return responseFromServer;
 }
 
 
@@ -847,47 +1020,42 @@ async function testProcessCallback(parsedSearch) {
 	const PREFIX = `[${MODULE_NAME}:testProcessCallback] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	// Retrieve the "code"...
-	let iss = parsedSearch.get("iss");
-	let state = parsedSearch.get("state");
-	let code = parsedSearch.get("code");
-	let error = parsedSearch.get("error");
-	let errorDescription = parsedSearch.get("error_description");
-
-	if (DEBUG) console.debug(PREFIX, "Updating HTML Elements:");
-	if (DEBUG) console.debug(PREFIX, "+ iss:", iss);
-	if (DEBUG) console.debug(PREFIX, "+ state:", state);
-	if (DEBUG) console.debug(PREFIX, "+ code:", code);
-	if (DEBUG) console.debug(PREFIX, "+ error:", error);
-	if (DEBUG) console.debug(PREFIX, "+ errorDescription:", errorDescription);
-
-	// Update HTML page element values.
-	// CSS Classes.
-	$("#rootPanel").removeClass("hidden");
-	$("#rootPanel").addClass("visible");
-
-	$("#iss").val(iss);
-	$("#state").val(state);
-	$("#code").val(code);
-	$("#error").val(error);
-	$("#errorDescription").val(errorDescription);
+	// Update some HTML fields
+	updateHTMLFields(parsedSearch);
 
 	// Restore data from localStorage.
 	test10RestoreDataFromLocalStorage();
 
 	// Retrieve the "code"...
+	let code = parsedSearch.get("code");
 	if (DEBUG) console.debug( PREFIX, "Current code:", code );
 
 	// Retrieve the access_token
 	let authServerResponse = null;
 	try {
+		// With the "code", let's retrieve the user access_token from the server.
 		authServerResponse					= await test11RetrieveTheUserAccessToken(code);
+		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", authServerResponse );
+
+		// Let's group the following messages
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[DETAIL]" );
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", prettyJson( authServerResponse ) );
-		let cryptoKey						= authServerResponse.cryptoKey;
-		let userAuthentication				= authServerResponse.userAuthentication;
-		let userAccessToken					= authServerResponse.userAccessToken;
+
+		// Parse the response
+		cryptoKey							= authServerResponse.cryptoKey;
+		jwk									= authServerResponse.jwk;
+		userAuthentication					= authServerResponse.userAuthentication;
+		userAccessToken						= authServerResponse.userAccessToken;
+
+		// Let's create also the access token HASH...
+		accessTokenHash = await createHash(userAccessToken, true);
+		if (DEBUG) console.debug(PREFIX, "accessTokenHash:", accessTokenHash);
+
+		// Some information
 		if (DEBUG) console.debug( PREFIX, "Current cryptoKey:", cryptoKey );
 		if (DEBUG) console.debug( PREFIX, "Current cryptoKey:", prettyJson( cryptoKey ) );
+		if (DEBUG) console.debug( PREFIX, "Current jwk:", jwk );
+		if (DEBUG) console.debug( PREFIX, "Current jwk:", prettyJson( jwk ) );
 		if (DEBUG) console.debug( PREFIX, "Current userAuthentication:", userAuthentication );
 		if (DEBUG) console.debug( PREFIX, "Current userAuthentication:", prettyJson( userAuthentication ) );
 		if (DEBUG) console.debug( PREFIX, "Current userAccessToken:", userAccessToken );
@@ -897,9 +1065,22 @@ async function testProcessCallback(parsedSearch) {
 		$("#access_token_jwt").text( userAccessToken );
 		$("#access_token_json").text( jwtToPrettyJSON( userAccessToken ) );
 		hljs.highlightAll();
+		if (GROUP_DEBUG) console.groupEnd();
+
+		// Now, let's try to call a "protected" EndPoint.
+		authServerResponse					= await test12RetrieveUserNotifications();
+		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", authServerResponse );
+		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", prettyJson( authServerResponse ) );
+
+		// Parse the response
+		let notifications					= authServerResponse;
+
 	} catch (error) {
 		if (DEBUG) console.warn( PREFIX, "ERROR:", error.message );
 		if (DEBUG) console.warn( PREFIX, "ERROR Cause:", prettyJson( error.cause ) );
+		// Update the HTML fields
+		$("#error").val(error.cause.payload.error);
+		$("#errorDescription").val(error.cause.payload.message);
 	}
 
 	if (GROUP_DEBUG) console.groupEnd();

@@ -42,7 +42,8 @@
 					"getAccountInfo": "/com.atproto.admin.getAccountInfo",
 					"getFollowers": "/app.bsky.graph.getFollowers",
 					"getProfile": "/app.bsky.actor.getProfile",
-					"resolveHandle": "/com.atproto.identity.resolveHandle"
+					"resolveHandle": "/com.atproto.identity.resolveHandle",
+					"listNotifications": "/app.bsky.notification.listNotifications"
 				}
 			}
 		},

@@ -80,16 +80,16 @@ export async function createDPoPProof(atHash, jwk, key, resourceUrl, clientId, n
 
     if (!key){
         key = await CryptoModule.generateKey();
+		if (DEBUG) console.debug(PREFIX, "key:", COMMON.prettyJson(key));
     }
-	if (DEBUG) console.debug(PREFIX, "key:", COMMON.prettyJson(key));
 
     if (!jwk){
         jwk = await CryptoModule.exportJwk(key.publicKey);
 		if (DEBUG) console.debug(PREFIX, "jwk (original):", COMMON.prettyJson(jwk));
         delete jwk.ext;
         delete jwk.key_ops;
+		if (DEBUG) console.debug(PREFIX, "jwk:", COMMON.prettyJson(jwk));
     }        
-	if (DEBUG) console.debug(PREFIX, "jwk:", COMMON.prettyJson(jwk));
 
     header.jwk = jwk;
 	if (DEBUG) console.debug(PREFIX, "header:", COMMON.prettyJson(header));
