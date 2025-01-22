@@ -1,0 +1,20 @@
+{
+	"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
+	"application_type": "web",
+	"grant_types": [
+		"authorization_code",
+		"refresh_token"
+	],
+	"scope": "atproto transition:generic transition:chat.bsky",
+	"response_types": [
+		"code id_token",
+		"code"
+	],
+	"redirect_uris": [
+		"https://madrilenyer.neocities.org/bsky/oauth/callback/"
+	],
+	"dpop_bound_access_tokens": true,
+	"token_endpoint_auth_method": "none",
+	"client_name": "Madrilenyer Example Browser App",
+	"client_uri": "https://madrilenyer.neocities.org/bsky/"
+}

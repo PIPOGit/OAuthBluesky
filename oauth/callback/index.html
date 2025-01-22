@@ -1,0 +1,180 @@
+<!--
+	URL Localhost: http://localhost/neocities/bsky/oauth/callback/index.html
+	URL Neocities: http://madrilenyer.neocities.org/bsky/oauth/callback/index.html
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>The OAuth2 callback page of madrilenyer</title>
+		<link rel="icon"       type="image/x-icon" href="../../images/madrilenyer.png">
+		<link rel="stylesheet" type="text/css"     href="../../style/bsky.css"         media="all">
+		<!-- jQuery -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<!-- highlight.js -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/macintosh.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/xt256.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/3024.css">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<!-- Internal -->
+		<script type="module"     src="../../js/login.js"></script>
+		<script type="module"     src="../../js/test.js"></script>
+	</head>
+	<body class="container" onLoad="BSKY.analizeCallbackURL();">
+		<div id="rootPanel" class="center hidden">
+
+			<!-- The upper form. -->
+			<div class="center theme-green">
+				<h1>Bluesky OAuth2 callback:</h1>
+				<fieldset>
+					<legend>Identificación:</legend>
+					<p>Información recibida:</p>
+					<label for="iss">ISS:</label>
+					<input type="text" id="iss" name="iss" size="80"><br><br>
+					<label for="state">State:</label>
+					<input type="text" id="state" name="state" size="80"><br><br>
+					<label for="code">Code:</label>
+					<input type="text" id="code" name="code" size="80"><br><br>
+					<div style="width: 20%">
+						<pre><code id="access_token_jwt"  name="access_token_jwt"  class="language-json"></code></pre>
+						<pre><code id="access_token_json" name="access_token_json" class="language-json"></code></pre><hr/>
+					</div>
+					<label for="error">Error:</label>
+					<input type="text" id="error" name="error" class="error" size="20"><input type="text" id="errorDescription" name="errorDescription" class="errorDescription" size="80"><br><br>
+				</fieldset>
+			</div>
+
+			<!-- The "Starting pages" banner. -->
+			<div class="center theme-yellow">
+				<span onClick="BSKY.showHide('theme-docs');"><strong>DOCS</strong></span> |
+				Starting pages:
+				<a href="http://localhost/neocities/bsky/index.html">Localhost</a> |
+				<a href="http://madrilenyer.neocities.org/bsky/index.html">Neocities</a>
+			</div>
+
+			<!-- The links. -->
+			<div class="center theme-docs hidden">
+				<div class="theme-docs-title">Useful Links:</div>
+				<div class="theme-docs-content">
+					Neocities:
+					<ul>
+						<li>Public of "Madrilenyer" @ Neocities:
+							<ul>
+								<li><a href="https://madrilenyer.neocities.org/">Home Page</a></li>
+								<li><a href="https://madrilenyer.neocities.org/bsky/">Bluesky Page</a></li>
+								<li><a href="https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json">client-metadata.json</a></li>
+								<li><a href="https://madrilenyer.neocities.org/bsky/index.html">Index Page</a></li>
+								<li><a href="https://madrilenyer.neocities.org/bsky/oauth/callback//index.html">Callback Page</a></li>
+							</ul>
+						</li>
+						<li>Management of "Madrilenyer" @ Neocities:
+							<ul>
+								<li><a href="https://neocities.org/dashboard">Neocities: ROOT Dashboard</a></li>
+								<li><a href="https://neocities.org/dashboard?dir=bsky">Neocities: BSKY Dashboard</a></li>
+								<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Findex.html">Neocities|TextEdit: /index.html</a></li>
+								<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Fjs%2Fmodules%2Fbluesky.js">Neocities|TextEdit: /bsky/js/modules/bluesky.js</a></li>
+								<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Foauth%2Fclient-metadata.json">Neocities|TextEdit: /bsky/oauth/client-metadata.json</a></li>
+								<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Foauth%2Fcallback%2Findex.html">Neocities|TextEdit: /bsky/oauth/callback/index.html</a></li>
+							</ul>
+						</li>
+					</ul>
+					Bluesky Related:
+					<ul>
+						<li>Bluesky General:
+							<ul>
+								<li><a href="https://bsky.app/">Bluesky Official Web Client</a></li>
+								<li><a href="https://aaronparecki.com/2023/03/07/3/bluesky-custom-domain">How to use your own domain as your BlueSky handle</a></li>
+								<li><a href="https://docs.bsky.app/blog/create-post">Posting via the Bluesky API</a></li>
+							</ul>
+						</li>
+						<li>Bluesky AT Proto Documentation:
+							<ul>
+								<li><a href="https://atproto.com/">The AT Protocol</a></li>
+								<li><a href="https://github.com/bluesky-social/atproto">The AT Protocol @ GitHub</a></li>
+								<li><a href="https://github.com/bluesky-social/atproto/issues/3410">OAuth2 Authentication not working @ GitHub <span class="badge">ISSUE</span></a></li>
+								<li><a href="https://docs.bsky.app/docs/category/http-reference">HTTP Reference</a></li>
+								<li><a href="https://docs.bsky.app/docs/category/advanced-guides">Advanced Guides</a></li>
+								<li><a href="https://github.com/trozzelle/Bluesky-OpenAPI?tab=readme-ov-file#readme">WIP OpenAPI Spec for Bluesky/AT Protocol</a></li>
+								<li><a href="https://chrismcleod.dev/blog/a-hello-world-for-bluesky/the-at-protocol/">A "Hello World" for bluesky/the AT protocol</a></li>
+								<li><a href="https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?actor=madrilenyer.bsky.social">Bluesky API | Sample Usage</a></li>
+							</ul>
+						</li>
+						<li>Bluesky OAuth Documentation:
+							<ul>
+								<li><a href="https://github.com/bluesky-social/proposals/blob/main/0004-oauth/README.md#authorization-flow-from-a-serverless-browser-app">Proposal 0004: OAuth 2.0 for the AT Protocol</a></li>
+								<li><a href="https://atproto.com/specs/oauth">OAuth - AT Protocol</a></li>
+								<li><a href="https://docs.bsky.app/blog/oauth-atproto">Blog: OAuth for AT Protocol</a></li>
+								<li><a href="https://web.plc.directory/api/redoc">did:plc Directory Server API (0.1)</a></li>
+								<li><a href="https://docs.bsky.app/docs/advanced-guides/oauth-client">OAuth Client Implementation</a></li>
+							</ul>
+						</li>
+						<li>ATProto Client Configuration Examples:
+							<ul>
+								<li><a href="https://atproto-oauth-example.vercel.app/oauth/client-metadata.json">https://atproto-oauth-example.vercel.app/oauth/client-metadata.json</a></li>
+							</ul>
+						</li>
+						<li>Bluesky AT Protocol OAuth examples:
+							<ul>
+								<li><a href="https://github.com/pilcrowonpaper/atproto-oauth-example/tree/main">AT Protocol OAuth example</a></li>
+								<li><a href="https://bsky.app/profile/b0rk.jvns.ca/post/3lb6kbbcoik2d">Post de Julia Evans</a></li>
+								<li><a href="https://github.com/mary-ext/atcute/tree/trunk/packages/oauth/browser-client">@atcute/oauth-browser-client</a></li>
+								<li><a href="https://github.com/jvns/bsky-oauth-example">bsky oauth example</a></li>
+								<li><a href="https://www.npmjs.com/package/@atproto/oauth-client-browser">atproto OAuth Client for the Browser</a></li>
+								<li><a href="https://atproto.com/guides/applications">Quick start guide to building applications on AT Protocol</a></li>
+							</ul>
+						</li>
+					</ul>
+					JavaScript Related:
+					<ul>
+						<li><a href="https://kogui.app/c/codigo.help/javascript/como-encriptar-texto-con-sha256-usando-javascript-en-navegadores-antiguos-y-modernos">Encriptar Texto con SHA256</a></li>
+						<li>DPoP: Demonstration of proof-of-possession:
+							<ul>
+								<li><a href="https://noem.blog/3-implementing-dpop-client-side-with-javascript">DPoP #3: Implementing DPoP client side with javascript</a></li>
+								<li><a href="https://docs.verify.ibm.com/verify/docs/oauth-20-dpop">IBM: Demonstration of proof-of-possession</a></li>
+								<li><a href="https://dpoptest.z1.web.core.windows.net/index.htm">DPoP Test</a></li>
+								<li><a href="https://github.com/udelt/dpop_js_test/tree/main">DPoP JS Test</a></li>
+								<li><a href="https://tech.aufomm.com/how-to-use-demonstrating-proof-of-possession-dpop-token-with-kong-and-keycloak/">How to Use Demonstrating Proof-of-Possession (DPoP) Token With Kong and Keycloak</a></li>
+								<li><a href="https://www.0xkishan.com/blogs/how-dpop-works-a-guide-to-proof-of-possession-for-web-tokens">How DPoP Works: A Guide to Proof of Possession for Web Tokens</a></li>
+								<li><a href="https://developer.okta.com/docs/guides/dpop/nonoktaresourceserver/main/">OKTA: Configure OAuth 2.0 Demonstrating Proof-of-Possession</a></li>
+							</ul>
+						</li>
+						<li>PKCE:
+							<ul>
+								<li><a href="https://github.com/darrenjrobinson/PKCE">PKCE Code Verifier and Challenge Generator PowerShell Module</a></li>
+								<li><a href="https://stackoverflow.com/questions/70278741/how-to-create-pkce-code-and-verifier-for-auth-code-flow">How to create PKCE code and verifier for OAuth code flow</a></li>
+							</ul>
+						</li>
+					</ul>
+					Bootstrap Related:
+					<ul>
+						<li><a href="https://www.getbootstrap.com/">https://www.getbootstrap.com/</a></li>
+						<li><a href="https://getbootstrap.com/docs/5.3/getting-started/introduction/">Get started with Bootstrap</a></li>
+						<li><a href="https://icons.getbootstrap.com/">Bootstrap Icons</a></li>
+						<li>Bootstrap Examples:
+							<ul>
+								<li><a href="https://bootsnipp.com/snippets/4DbR">Bootstrap Snippet Accordion List Group Menu using HTML CSS  Bootstrap</a></li>
+								<li><a href="https://bootstraptemple.com/p/bootstrap-sidebar">Bootstrap Sidebar</a></li>
+								<li><a href="https://www.codeply.com/go/WhjhP0G1ZD/bootstrap-list-group-accordion-toggle">Bootstrap list group accordion toggle on Codeply</a></li>
+							</ul>
+						</li>
+					</ul>
+					NodeJS Related:
+					<ul>
+						<li><a href="https://code.visualstudio.com/docs/nodejs/nodejs-tutorial">Node.js tutorial in Visual Studio Code</a></li>
+						<li><a href="https://nodejs.org/api/documentation.html">Node.js v23.6.0 documentation</a></li>
+						<li><a href="https://www.docker.com/blog/how-to-use-the-node-docker-official-image/">How to Use the Node Docker Official Image</a></li>
+					</ul>
+					Useful Docs & Tools:
+					<ul>
+						<li><a href="https://jwt.io/#debugger-io">JWT.IO: JSON Web Tokens</a></li>
+						<li><a href="https://lenguajejs.com/javascript/peticiones-http/url/">URL en Javascript</a></li>
+						<li><a href="https://www.w3schools.com/typescript/typescript_getstarted.php">W3Schools | TypeScript Getting Started</a></li>
+						<li><a href="https://www.freeformatter.com/">Free Online Tools For Developers</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

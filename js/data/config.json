@@ -1,0 +1,70 @@
+{
+	"global": {
+		"debug": true,
+		"debug_folded": true,
+		"appName": "BlueSkyAPP",
+		"appVersion": "1.0.0"
+	},
+	"localStorageKeys": {
+		"user": {
+			"handle": "user_handle",
+			"did": "user_did",
+			"didDoc": "user_did_document",
+			"pdsUrl": "user_pds_url",
+			"authServerUrl": "user_auth_server_url",
+			"authServerDiscovery": "user_auth_server_discovery",
+			"authServerRequestURI": "user_auth_server_request_uri"
+		},
+		"request": {
+			"dpop_nonce": "dpop_nonce"
+		},
+		"pkce": {
+			"state": "pkce_state",
+			"code_verifier": "pkce_code_verifier",
+			"code_challenge": "pkce_code_challenge"
+		}
+	},
+	"neocities": {
+		"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
+		"redirect_delay": 2000,
+		"redirect_uri": "https://madrilenyer.neocities.org/bsky/oauth/callback/"
+	},
+	"api": {
+		"bluesky": {
+			"XRPC": {
+				"public": "https://public.api.bsky.app/xrpc",
+				"url": "https://bsky.social/xrpc",
+				"api": {
+					"describeRepo": "/com.atproto.repo.describeRepo",
+					"getAccountInfo": "/com.atproto.admin.getAccountInfo",
+					"getFollowers": "/app.bsky.graph.getFollowers",
+					"getProfile": "/app.bsky.actor.getProfile",
+					"resolveHandle": "/com.atproto.identity.resolveHandle"
+				}
+			}
+		},
+		"plc": {
+			"docs": "https://web.plc.directory/api/redoc",
+			"url": "https://plc.directory",
+			"api": {
+				"resolveDID": "/"
+			}
+		},
+		"pds": {
+			"api": {
+				"metadata": "/.well-known/oauth-protected-resource"
+			}
+		},
+		"authServer": {
+			"api": {
+				"discovery": "/.well-known/oauth-authorization-server"
+			},
+			"key": {
+				"auth": "authorization_endpoint",
+				"token": "token_endpoint",
+				"par": "pushed_authorization_request_endpoint",
+				"introspection": "introspection_endpoint"
+			}
+		}
+	}
+}
