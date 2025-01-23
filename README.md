@@ -15,6 +15,8 @@ This post is merely to illustrate "*how-to*". It's not a "*working example*"; ma
 
 If you see any error, please don't doubt on contacting me.
 
+The article has been posted in [**dev.to**](https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h)
+
 
 ## Our application
 
