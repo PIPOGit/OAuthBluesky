@@ -128,6 +128,7 @@ function bootstrap() {
 	// Actualizamos el objeto raiz.
 	window.BSKY.testAuthenticateWithBluesky = testAuthenticateWithBluesky;
 	window.BSKY.testProcessCallback = testProcessCallback;
+	window.BSKY.testRetrieveNotifications = testRetrieveNotifications;
 	if (DEBUG) console.debug( PREFIX, `Updated object: [window.BSKY].` );
 	if (DEBUG) console.debug( PREFIX, "window.BSKY object:", window.BSKY );
 
@@ -1212,9 +1213,38 @@ async function testProcessCallback(parsedSearch) {
 		$("#access_token_json").text( jwtToPrettyJSON( userAccessToken ) );
 		hljs.highlightAll();
 		if (GROUP_DEBUG) console.groupEnd();
+	} catch (error) {
+		if (GROUP_DEBUG) console.groupEnd();
 
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ERROR );
+		if (DEBUG) console.warn( PREFIX, "ERROR:", error.message );
+		if (DEBUG) console.warn( PREFIX, "ERROR Step:", prettyJson( error.cause.step ) );
+		if (DEBUG) console.warn( PREFIX, "ERROR Cause:", prettyJson( error.cause ) );
+		if (DEBUG) console.warn( PREFIX, "ERROR dpopNonceUsed:", dpopNonceUsed );
+		if (DEBUG) console.warn( PREFIX, "ERROR dpopNonceReceived:", dpopNonceReceived );
+		if (GROUP_DEBUG) console.groupEnd();
+
+		// Update the HTML fields
+		$("#error").val(error.cause.payload.error);
+		$("#errorDescription").val(error.cause.payload.message);
+	}
+
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+async function testRetrieveNotifications() {
+	const PREFIX = `[${MODULE_NAME}:testRetrieveNotifications] `;
+	const PREFIX_PREFETCH = `${PREFIX}[PREFETCH] `;
+	const PREFIX_ERROR = `${PREFIX}[ERROR] `;
+	const PREFIX_RETRY = `${PREFIX}[RETRY] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Retrieve the access_token
+	let authServerResponse = null;
+	try {
 		// Now, let's try to call a "protected" EndPoint.
-		authServerResponse					= await test12RetrieveUserNotifications();
+		authServerResponse				= await test12RetrieveUserNotifications();
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", authServerResponse );
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", prettyJson( authServerResponse ) );
 

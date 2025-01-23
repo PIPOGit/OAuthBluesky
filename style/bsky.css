@@ -120,6 +120,10 @@ fieldset > legend {
   margin: 0px;
 }
 
+.buttons {
+  margin-bottom: 8px
+}
+
 .notifications {
 }
 

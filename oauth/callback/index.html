@@ -36,8 +36,11 @@
 					<input type="text" id="code" name="code" size="80"><br>
 					<div style="width: 800px;">
 						<pre><code id="access_token_jwt"  name="access_token_jwt"  class="language-json"></code></pre>
+						<div id="buttons" name="buttons" class="buttons">
+							<input type="button" value="Back to Home" onClick="window.location = 'http://localhost/neocities/bsky/index.html';">
+							<input type="button" value="Get Notifications" onClick="BSKY.testRetrieveNotifications()">
+						</div>
 						<div id="notifications" name="notifications" class="notifications">
-							<a href="http://localhost/neocities/bsky/index.html">Back to home</a><br/><br/>
 						</div>
 						<pre><code id="access_token_json" name="access_token_json" class="language-json"></code></pre><hr/>
 						<label for="error">Error:</label>
