@@ -120,8 +120,6 @@ function bootstrap() {
 	};
 	*/
 
-	if (DEBUG) console.groupEnd();
-
 	let userHandle = localStorage.getItem(LSKEYS.user.handle);
 	if ( userHandle ) {
 		let $input = $( "#handle" );
@@ -133,6 +131,7 @@ function bootstrap() {
 	}
 
 	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
+	if (DEBUG) console.groupEnd();
 }
 
 

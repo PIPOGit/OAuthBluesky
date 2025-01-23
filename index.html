@@ -13,10 +13,7 @@
 		<!-- jQuery -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 		<!-- highlight.js -->
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/macintosh.css">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/xt256.css">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/3024.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/pop.css">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 		<!-- Internal -->
 		<script type="module"     src="./js/login.js"></script>
@@ -33,11 +30,14 @@
 						<legend>Identificación:</legend>
 						<p>Introduce tu handle Bluesky (<em>tu usuario <strong>completo</strong></em>):</p>
 						<label for="handle">Handle:</label>
-						@<input type="text" id="handle" name="handle" placeholder="bsky.app"><br><br>
-						<input type="button" value="Test" onClick="BSKY.testAuthenticateWithBluesky( this.form.handle.value )">
-						<input type="button" value="Acceder" onClick="BSKY.authenticateWithBluesky( this.form.handle.value )"><br><br><hr/>
-						<label for="error">Error:</label>
-						<input type="text" id="error" name="error" class="error" size="20"><input type="text" id="errorDescription" name="errorDescription" class="errorDescription" size="80"><br><br>
+						@<input type="text" id="handle" name="handle" placeholder="bsky.app">
+						<input type="button" value="Consultar" onClick="BSKY.testAuthenticateWithBluesky( this.form.handle.value )">
+						<!-- <input type="button" value="Acceder" onClick="BSKY.authenticateWithBluesky( this.form.handle.value )"><br><br> -->
+						<hr/><div style="width: 100%">
+							<label for="error">Error:</label>
+							<input type="text" id="error" name="error" class="error" size="20">
+							<input type="text" id="errorDescription" name="errorDescription" class="errorDescription" size="60"><br><br>
+						</div>
 					</fieldset>
 				</form>
 			</div>
@@ -127,6 +127,7 @@
 						<li><a href="https://kogui.app/c/codigo.help/javascript/como-encriptar-texto-con-sha256-usando-javascript-en-navegadores-antiguos-y-modernos">Encriptar Texto con SHA256</a></li>
 						<li>DPoP: Demonstration of proof-of-possession:
 							<ul>
+								<li><a href="https://darutk.medium.com/illustrated-dpop-oauth-access-token-security-enhancement-801680d761ff">About DPoP</a></li>
 								<li><a href="https://noem.blog/3-implementing-dpop-client-side-with-javascript">DPoP #3: Implementing DPoP client side with javascript</a></li>
 								<li><a href="https://docs.verify.ibm.com/verify/docs/oauth-20-dpop">IBM: Demonstration of proof-of-possession</a></li>
 								<li><a href="https://dpoptest.z1.web.core.windows.net/index.htm">DPoP Test</a></li>

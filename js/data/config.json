@@ -16,7 +16,8 @@
 			"authServerRequestURI": "user_auth_server_request_uri"
 		},
 		"request": {
-			"dpop_nonce": "dpop_nonce"
+			"dpop_nonce": "dpop_nonce",
+			"www_authenticate": "www_authenticate"
 		},
 		"pkce": {
 			"state": "pkce_state",
@@ -26,6 +27,9 @@
 	},
 	"github": {
 		"repo": "https://github.com/PIPOGit/OAuthBluesky"
+	},
+	"dev_to": {
+		"post": "https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h"
 	},
 	"neocities": {
 		"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",

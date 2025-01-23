@@ -50,8 +50,10 @@ let code_challenge					= null;
  **********************************************************/
 function step00Chech() {
 	const PREFIX = `[${MODULE_NAME}:step00Chech] `;
-	const PREFIX_AJAX = `[${MODULE_NAME}:step00Chech:Ajax] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:step00Chech][Fetch] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_AJAX = `${PREFIX}[Ajax] `;
+	const PREFIX_FETCH_BODY = `${PREFIX_FETCH}[Body] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
 	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
 
 	if (DEBUG) console.debug(PREFIX, "Received handle:", userHandle);
@@ -107,11 +109,11 @@ function step00Chech() {
 }
 
 function step01ResolveDIDForHandle() {
-	const PREFIX = `[${MODULE_NAME}:step01ResolveDIDForHandle] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:step01ResolveDIDForHandle][Fetch] `;
-	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:step01ResolveDIDForHandle][Fetch:Headers] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:step01ResolveDIDForHandle][Fetch:ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	const PREFIX = `[${MODULE_NAME}:step01] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[step01ResolveDIDForHandle]" );
 
 	if (DEBUG) console.debug(PREFIX, "Received handle:", userHandle);
 
@@ -156,11 +158,11 @@ function step01ResolveDIDForHandle() {
 }
 
 function step02ResolveDIDDocument() {
-	const PREFIX = `[${MODULE_NAME}:step02ResolveDIDDocument] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:step02ResolveDIDDocument][Fetch] `;
-	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:step02ResolveDIDDocument][Fetch:Headers] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:step02ResolveDIDDocument][Fetch:ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	const PREFIX = `[${MODULE_NAME}:step02] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[step02ResolveDIDDocument]" );
 
 	if (DEBUG) console.debug(PREFIX, "Received userDID:", userDID);
 
@@ -210,11 +212,11 @@ function step02ResolveDIDDocument() {
 }
 
 function step03ResolveAuthorizationServerURL() {
-	const PREFIX = `[${MODULE_NAME}:step03ResolveAuthorizationServerURL] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:step03ResolveAuthorizationServerURL][Fetch] `;
-	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:step03ResolveAuthorizationServerURL][Fetch:Headers] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:step03ResolveAuthorizationServerURL][Fetch:ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	const PREFIX = `[${MODULE_NAME}:step03] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[step03ResolveAuthorizationServerURL]" );
 
 	if (DEBUG) console.debug(PREFIX, "Received userDID:", userDID);
 
@@ -258,11 +260,11 @@ function step03ResolveAuthorizationServerURL() {
 }
 
 function step04ResolveAuthorizationServerMetadata() {
-	const PREFIX = `[${MODULE_NAME}:step04ResolveAuthorizationServerMetadata] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:step04ResolveAuthorizationServerMetadata][Fetch] `;
-	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:step04ResolveAuthorizationServerMetadata][Fetch:Headers] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:step04ResolveAuthorizationServerMetadata][Fetch:ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	const PREFIX = `[${MODULE_NAME}:step04] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[step04ResolveAuthorizationServerMetadata]" );
 
 	if (DEBUG) console.debug(PREFIX, "Received userDID:", userDID);
 
@@ -305,14 +307,14 @@ function step04ResolveAuthorizationServerMetadata() {
 }
 
 function step05PARAuthorization() {
-	const PREFIX = `[${MODULE_NAME}:step05PARAuthorization] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:step05PARAuthorization][Fetch] `;
-	const PREFIX_FETCH_CFV = `[${MODULE_NAME}:step05PARAuthorization][Fetch:CFV] `;
-	const PREFIX_FETCH_CFV_ERROR = `[${MODULE_NAME}:step05PARAuthorization][Fetch:CFV:ERROR] `;
-	const PREFIX_FETCH_PAR = `[${MODULE_NAME}:step05PARAuthorization][Fetch:PAR] `;
-	const PREFIX_FETCH_PAR_HEADERS = `[${MODULE_NAME}:step05PARAuthorization][Fetch:PAR:Headers] `;
-	const PREFIX_FETCH_PAR_ERROR = `[${MODULE_NAME}:step05PARAuthorization][Fetch:PAR:ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	const PREFIX = `[${MODULE_NAME}:step05] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_CFV = `${PREFIX_FETCH}[CFV] `;
+	const PREFIX_FETCH_CFV_ERROR = `${PREFIX_FETCH_CFV}[ERROR] `;
+	const PREFIX_FETCH_PAR = `${PREFIX_FETCH}[PAR] `;
+	const PREFIX_FETCH_PAR_HEADERS = `${PREFIX_FETCH_PAR}[Headers] `;
+	const PREFIX_FETCH_PAR_ERROR = `${PREFIX_FETCH_PAR}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[step05PARAuthorization]" );
 
 	if (DEBUG) console.debug(PREFIX, "Received userDID:", userDID);
 
@@ -422,8 +424,8 @@ function step05PARAuthorization() {
 }
 
 function step06AuthorizationServerRequest() {
-	const PREFIX = `[${MODULE_NAME}:step06AuthorizationServerRequest] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	const PREFIX = `[${MODULE_NAME}:step06] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[step06AuthorizationServerRequest]" );
 
 	// Preparamos la llamada.
 	let key = API.authServer.key.auth;
@@ -493,11 +495,12 @@ function retrieveDataFromLocalStorage() {
 }
 
 function retrieveUserTokenFromAuthServer(parsedSearch) {
-	const PREFIX = `[${MODULE_NAME}:retrieveUserTokenFromAuthServer] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:retrieveUserTokenFromAuthServer][Fetch] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:retrieveUserTokenFromAuthServer][Fetch:ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
-	
+	const PREFIX = `[${MODULE_NAME}:Token] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[retrieveUserTokenFromAuthServer]" );
+
 	// Update HTML page element values.
 	COMMON.renderHTMLElements(parsedSearch);
 
@@ -540,6 +543,24 @@ function retrieveUserTokenFromAuthServer(parsedSearch) {
 			throw(data);
 		} else {
 			if (DEBUG) console.debug(PREFIX_FETCH, "Received dpop:", COMMON.prettyJson(dpop));
+
+			// Recuperamos cosas del dpop.
+			let accessToken = dpop.access_token;
+			let dpopProof = dpop.dpopProofForAS.dpopProof;
+			let atHash = dpop.atHash;
+			let nonce = dpop.nonce;
+			if (DEBUG) console.debug(PREFIX_FETCH, "+ accessToken:", accessToken);
+			if (DEBUG) console.debug(PREFIX_FETCH, "+ dpopProof..:", dpopProof);
+			if (DEBUG) console.debug(PREFIX_FETCH, "+ atHash.....:", atHash);
+			if (DEBUG) console.debug(PREFIX_FETCH, "+ nonce......:", nonce);
+
+			// Update HTML fields
+			$("#access_token_jwt").removeAttr('data-highlighted');
+			$("#access_token_json").removeAttr('data-highlighted');
+			$("#access_token_jwt").text( accessToken );
+			$("#access_token_json").text( OAuth2.jwtToPrettyJSON( accessToken ) );
+			hljs.highlightAll();
+
 			// Ejecutar una llamada de ejemplo
 			if (GROUP_DEBUG) console.groupEnd();
 			tokenIntrospection(dpop);
@@ -557,10 +578,11 @@ function retrieveUserTokenFromAuthServer(parsedSearch) {
 
 function tokenIntrospection(dpop) {
 	const PREFIX = `[${MODULE_NAME}:tokenIntrospection] `;
-	const PREFIX_FETCH_DPoP = `[${MODULE_NAME}:tokenIntrospection][Fetch:DPoP] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:tokenIntrospection][Fetch] `;
-	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:tokenIntrospection][Fetch:Headers] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:tokenIntrospection][Fetch:ERROR] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_DPoP = `${PREFIX_FETCH}[DPoP] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let key = API.authServer.key.introspection;
 	let endpoint = userAuthServerDiscovery[key];
@@ -632,6 +654,7 @@ function tokenIntrospection(dpop) {
 			if (GROUP_DEBUG) console.groupEnd();
 		}).finally(() => {
 			// NEXT STEP
+			if (GROUP_DEBUG) console.groupEnd();
 			retrieveFollowers(dpop);
 		});
 		if (GROUP_DEBUG) console.groupEnd();
@@ -643,12 +666,12 @@ function tokenIntrospection(dpop) {
 
 function retrieveFollowers(dpop) {
 	const PREFIX = `[${MODULE_NAME}:retrieveFollowers] `;
-	const PREFIX_FETCH = `[${MODULE_NAME}:retrieveFollowers][Fetch] `;
-	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:retrieveFollowers][Fetch:Headers] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:retrieveFollowers][Fetch:ERROR] `;
-	const PREFIX_FETCH_DPoP = `[${MODULE_NAME}:retrieveFollowers][Fetch:DPoP] `;
-	const PREFIX_FETCH_CALL = `[${MODULE_NAME}:retrieveFollowers][Fetch:callAPI] `;
-	const PREFIX_FETCH_CALL_ERROR = `[${MODULE_NAME}:retrieveFollowers][Fetch:callAPI:ERROR] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	const PREFIX_FETCH_DPoP = `${PREFIX_FETCH}[DPoP] `;
+	const PREFIX_FETCH_CALL = `${PREFIX_FETCH}[callAPI] `;
+	const PREFIX_FETCH_CALL_ERROR = `${PREFIX_FETCH_CALL}[ERROR] `;
 
 	let endpoint = API.bluesky.XRPC.api.getFollowers;
 	if (GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+endpoint+"]");
@@ -691,13 +714,12 @@ function retrieveFollowers(dpop) {
 
 function callAuthenticatedResource(dpop) {
 	const PREFIX = `[${MODULE_NAME}:callAuthenticatedResource] `;
-	const PREFIX_FETCH_DPoP = `[${MODULE_NAME}:callAuthenticatedResource][Fetch:DPoP] `;
-	const PREFIX_FETCH_CALL = `[${MODULE_NAME}:callAuthenticatedResource][Fetch:callAPI] `;
-	const PREFIX_FETCH_CALL_ERROR = `[${MODULE_NAME}:callAuthenticatedResource][Fetch:callAPI:ERROR] `;
-
-	const PREFIX_FETCH = `[${MODULE_NAME}:callAuthenticatedResource][Fetch] `;
-	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:callAuthenticatedResource][Fetch:Headers] `;
-	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:callAuthenticatedResource][Fetch:ERROR] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	const PREFIX_FETCH_DPoP = `${PREFIX_FETCH}[DPoP] `;
+	const PREFIX_FETCH_CALL = `${PREFIX_FETCH}[callAPI] `;
+	const PREFIX_FETCH_CALL_ERROR = `${PREFIX_FETCH_CALL}[ERROR] `;
 
 	// let endpoint = API.bluesky.XRPC.api.getAccountInfo;
 	// let endpoint = API.bluesky.XRPC.api.describeRepo;
@@ -877,10 +899,5 @@ export function analizeCallbackURL() {
 		}
 	}
 }
-
-
-/**********************************************************
- * TESTING Functions / Part #2
- **********************************************************/
 
 

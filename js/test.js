@@ -20,6 +20,7 @@ import CONFIGURATION				from "./data/config.json" with { type: "json" };
 const getModuleName					= url => { return url.replace( /^.*[\\/]/, '' ).replace( /\.[^.]*$/, '' ); };
 const getTypeOf						= option => typeof option;
 const prettyJson					= obj => JSON.stringify( obj, null, "  " );
+const areEquals						= (str1,str2) => ( str1.trim().toUpperCase().localeCompare( str2.trim().toUpperCase() ) == 0 );
 
 // Module SELF constants
 const MODULE_NAME					= getModuleName( import.meta.url );
@@ -33,8 +34,12 @@ const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
 const API							= CONFIGURATION.api;
 const LSKEYS						= CONFIGURATION.localStorageKeys;
 
+// Fancy CSS style for the DevTools console.
+const CONSOLE_STYLE					= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
+
 // Crypto constants
 const SIGNING_ALGORITM				= "ECDSA";
+const KEY_ALGORITM					= "ES256";
 const CURVE_ALGORITM				= "P-256";
 const HASHING_ALGORITM				= "SHA-256";
 
@@ -45,6 +50,7 @@ const URL_RESOLVE_HANDLE			= "https://bsky.social/xrpc/com.atproto.identity.reso
 const URL_PLC_DIRECTORY				= "https://plc.directory/";
 const URL_PDS_METADATA				= "/.well-known/oauth-protected-resource";
 const URL_AUTH_DISCOVERY			= "/.well-known/oauth-authorization-server";
+const MAX_NOTIS_TO_RETRIEVE			= 25;
 
 
 /**********************************************************
@@ -65,8 +71,11 @@ let userAuthServerDiscovery			= null;
 let userAuthorizationEndPoint		= null;
 let userTokenEndPoint				= null;
 let userPAREndPoint					= null;
-let dpopNonce						= null;
 let userAuthServerRequestURI		= null;
+let dpopNonce						= null;
+let wwwAuthenticate					= null;
+let dpopNonceUsed					= null;
+let dpopNonceReceived				= null;
 
 // Auth variables
 let state							= null;
@@ -147,8 +156,8 @@ function bootstrap() {
 	};
 	*/
 
-	if (GROUP_DEBUG) console.groupEnd();
 	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
+	if (GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -212,8 +221,6 @@ async function createHash(accessToken, noPadding = false){
 }
 
 
-// Fancy CSS style for the DevTools console.
-const CONSOLE_STYLE					= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
 function analizeParsedResponse( parsedResponse ) {
 	const PREFIX = `[${MODULE_NAME}:analizeParsedResponse] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
@@ -221,11 +228,23 @@ function analizeParsedResponse( parsedResponse ) {
 	if (DEBUG) console.debug( PREFIX, "Received parsedResponse:", prettyJson( parsedResponse ) );
 
 	let headers = parsedResponse.headers;
+
+	// "dpop-nonce" header
 	if ( headers["dpop-nonce"] ) {
 		// Here, we gather the "dpop-nonce" header.
-		dpopNonce = headers["dpop-nonce"];
+		dpopNonceUsed				= dpopNonce;
+		dpopNonce					= headers["dpop-nonce"];
+		dpopNonceReceived			= dpopNonce;
 		localStorage.setItem(LSKEYS.request.dpop_nonce, dpopNonce);
 		if (DEBUG) console.info( PREFIX + "%cReceived dpop-nonce header: [" + dpopNonce + "]", CONSOLE_STYLE );
+	}
+
+	// "dpop-nonce" header
+	if ( headers["www-authenticate"] ) {
+		// Here, we gather the "www-authenticate" header.
+		wwwAuthenticate = headers["www-authenticate"];
+		localStorage.setItem(LSKEYS.request.www_authenticate, wwwAuthenticate);
+		if (DEBUG) console.info( PREFIX + "%cReceived www-authenticate header: [" + wwwAuthenticate + "]", CONSOLE_STYLE );
 	}
 
 	if (DEBUG) console.debug( PREFIX, "-- END" );
@@ -294,7 +313,9 @@ function printOutFetchResponse(prefix, data) {
 		if (DEBUG) console.debug(PREFIX, "  + Header["+pair[0]+"]:", pair[1]);
 	}
 	if (DEBUG) console.groupEnd(PREFIX);
-	return response;
+
+	// Analize the received data
+	analizeParsedResponse( response );
 }
 
 
@@ -330,6 +351,128 @@ function updateHTMLFields(parsedSearch){
 }
 
 
+function parseNotifications( notifications ) {
+	const PREFIX = `[${MODULE_NAME}:parseNotifications] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.debug( PREFIX, "Current notifications:", notifications );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[Response data]" );
+	if (DEBUG) console.debug( PREFIX, "Current notifications:", prettyJson( notifications ) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	// Parse the notifications
+	let notification					= null;
+	let unreadNotifications				= [];
+
+	// Detect ONLY the "unread" notifications...
+	for ( let key in notifications ) {
+		notification					= notifications[key];
+		if ( !notification.isRead ) {
+			unreadNotifications.push( notification );
+		}
+	}
+
+	// Show only info about the "unread"...
+	if (DEBUG) console.debug( PREFIX + "Currently, " + unreadNotifications.length + " UNREAD notifications:", CONSOLE_STYLE );
+	if (DEBUG) console.debug( PREFIX, "+ unread notifications:", unreadNotifications );
+	for ( let key in unreadNotifications ) {
+		htmlRenderNotification( unreadNotifications[key] );
+	}
+
+	// Update the HTML fields
+	$("#error").val("");
+	$("#errorDescription").val("");
+	$("#access_token_jwt").removeAttr('data-highlighted');
+	$("#access_token_json").removeAttr('data-highlighted');
+	$("#access_token_jwt").text( "Pendientes de leer: " + unreadNotifications.length );
+	$("#access_token_json").text( prettyJson( notifications ) );
+
+	// Update the highlight
+	hljs.highlightAll();
+
+	if (DEBUG) console.groupEnd(PREFIX);
+}
+
+
+function htmlRenderNotification( notification ) {
+	const PREFIX = `[${MODULE_NAME}:htmlRenderNotification] `;
+
+	// Vamos preparando el HTML para la notificación.
+	let jqRoot						= $( "#notifications" );
+
+	let cid							= notification.cid;
+	let isRead						= notification.isRead;
+	let notiReason					= notification.reason;
+	let when						= new Date( notification.indexedAt );
+
+	let author						= notification.author;
+	let authorHandle				= author.handle;
+	let authorName					= author.displayName || author.handle;
+	let authorDid					= author.did;
+	let authorDescription			= author.description;
+	let authorAvatar				= author.avatar;
+	let authorURL					= "https://bsky.app/profile/" + authorHandle;
+
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+authorName+"]" + " ["+notiReason+"]" + " ["+when.toLocaleString()+"]" );
+
+	// Actualizamos el HTML con el autor.
+	let html						= `<div id="notification-${cid}" name="notification${cid}" class="notification">`;
+	html							+= `<div class="header">`;
+	html							+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
+	html							+= `  <a href="${authorURL}"><strong>${authorName}</strong></a>`;
+	html							+= `</div>`;
+	html							+= `<ul style="margin: 0px 0px 8px 0px">`;
+	html							+= `  <li class="notificacion-data">Handle: <strong>${authorHandle}</strong></li>`;
+	html							+= `  <li class="notificacion-data">Did: <strong>${authorDid}</strong></li>`;
+	html							+= `  <li class="notificacion-data">Description: <strong>${authorDescription}</strong></li>`;
+
+	if (DEBUG) console.debug(PREFIX, "Updating Notification:");
+	if (DEBUG) console.debug(PREFIX, "+ notification:", notification);
+	if (DEBUG) console.debug(PREFIX, "+ isRead:", isRead);
+	if (DEBUG) console.debug(PREFIX, "+ when:", when.toLocaleString() );
+	if (DEBUG) console.debug(PREFIX, "+ Author:", authorName);
+	if (DEBUG) console.debug(PREFIX, "  > handle:", authorHandle);
+	if (DEBUG) console.debug(PREFIX, "  > did:", authorDid);
+	if (DEBUG) console.debug(PREFIX, "  > description:", authorDescription);
+	if (DEBUG) console.debug(PREFIX, "  > avatar:", authorAvatar);
+	if (DEBUG) console.debug(PREFIX, "  > URL:", authorURL);
+
+	/*
+	 * Possible reasons:
+		"reason": "follow",
+		"reason": "like",
+		"reason": "reply",
+		"reason": "repost",
+	*/
+	if (DEBUG) console.debug(PREFIX, "+ Reason:", notiReason);
+
+	if ( areEquals( notiReason, "follow" ) ) {
+		// It's a "follow" notification.
+		html						+= `  <li class="notificacion-data"><strong>${notiReason} you</strong></li>`;
+	} else {
+		// It's about an action on a post.
+		let notiURI					= "";
+		if ( areEquals( notiReason, "reply" ) ) {
+			notiURI					= notification.record.reply.parent.uri;
+		} else {
+			notiURI					= notification.record.subject.uri;
+		}
+		let notiURISplitted			= notiURI.substring(5).split("/")
+		let notiDID					= notiURISplitted[0];
+		let notiBluitID				= notiURISplitted[2];
+		let finalURL				= "https://bsky.app/profile/" + notiDID + "/post/" + notiBluitID;
+		if (DEBUG) console.debug(PREFIX, "+ finalURL:", finalURL);
+		html						+= `  <li class="notificacion-data">${notiReason} <a href="${finalURL}">this post</a></li>`;
+	}
+	html							+= `</ul>`;
+
+	// Pintamos el HTML.
+	html							+= '</div>';
+	jqRoot.append( html );
+
+	if (DEBUG) console.groupEnd(PREFIX);
+}
+
 
 /**********************************************************
  * PRIVATE Functions
@@ -349,11 +492,10 @@ async function test01RetrieveUserDID() {
  	let responseFromServer = await fetch( url ).then( response => {
         // Process the HTTP Response
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
-		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
-		analizeParsedResponse( parsedResponse );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
 		if ( !response.ok ) {
 			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+				throw new Error( `Error ${response.status}`, { cause: { step: "test01RetrieveUserDID", status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
         return response.json();
@@ -394,11 +536,10 @@ async function test02RetrieveUserDIDDocument() {
     let responseFromServer = await fetch( url ).then( response => {
         // Process the HTTP Response
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
-		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
-		analizeParsedResponse( parsedResponse );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
 		if ( !response.ok ) {
 			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+				throw new Error( `Error ${response.status}`, { cause: { step: "test02RetrieveUserDIDDocument", status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
         return response.json();
@@ -442,11 +583,10 @@ async function test03RetrievePDSServerMetadata() {
     let responseFromServer = await fetch( url ).then( response => {
         // Process the HTTP Response
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
-		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
-		analizeParsedResponse( parsedResponse );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
 		if ( !response.ok ) {
 			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+				throw new Error( `Error ${response.status}`, { cause: { step: "test03RetrievePDSServerMetadata", status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
         return response.json();
@@ -490,11 +630,10 @@ async function test04RetrieveAuthServerDiscoveryMetadata() {
     let responseFromServer = await fetch( url ).then( response => {
         // Process the HTTP Response
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
-		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
-		analizeParsedResponse( parsedResponse );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
 		if ( !response.ok ) {
 			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+				throw new Error( `Error ${response.status}`, { cause: { step: "test04RetrieveAuthServerDiscoveryMetadata", status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
         return response.json();
@@ -583,11 +722,10 @@ async function test05PARRequest() {
  	let responseFromServer = await fetch( url, fetchOptions ).then( response => {
         // Process the HTTP Response
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
-		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
-		analizeParsedResponse( parsedResponse );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
 		if ( !response.ok ) {
 			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+				throw new Error( `Error ${response.status}`, { cause: { step: "test05PARRequest", status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
         // Here, we gather the "dpop-nonce" header.
@@ -740,7 +878,7 @@ async function test11RetrieveTheUserAccessToken(code) {
     let uuid = self.crypto.randomUUID();
     let dpop_proof_header = {
         typ: "dpop+jwt",
-        alg: "ES256",
+        alg: KEY_ALGORITM,
         jwk: jwk
     };
     let dpop_proof_payload = {
@@ -820,11 +958,10 @@ async function test11RetrieveTheUserAccessToken(code) {
  	let responseFromServer = await fetch( url, fetchOptions ).then( response => {
         // Process the HTTP Response
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
-		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
-		analizeParsedResponse( parsedResponse );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
 		if ( !response.ok ) {
 			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+				throw new Error( `Error ${response.status}`, { cause: { step: "test11RetrieveTheUserAccessToken", status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
         return response.json();
@@ -856,13 +993,16 @@ async function test12RetrieveUserNotifications(code) {
 	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
 	const PREFIX_FETCH_BODY = `${PREFIX_FETCH}[Body] `;
 	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [test12RetrieveUserNotifications]" );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [test12RetrieveUserNotifications]: [MAX " + MAX_NOTIS_TO_RETRIEVE + " notifications to retrieve]" );
 
 	let endpoint = API.bluesky.XRPC.api.listNotifications;
-	// let root = userPDSURL + "/xrpc";
-	let root = API.bluesky.XRPC.public;
-	let url = root + endpoint;
+	let root = userPDSURL + "/xrpc";
+	// let root = API.bluesky.XRPC.public;
+	let url = root + endpoint + "?limit=" + MAX_NOTIS_TO_RETRIEVE;		// Not much; it's a test!
 	if (DEBUG) console.debug(PREFIX, "Fetching data from the (Authenticated) URL:", url);
+
+	// Let's group the following messages
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[PREFETCH]" );
 
 	// We already have the cryptoKey somewhere, from previous calls...
 	// + cryptoKey
@@ -874,7 +1014,7 @@ async function test12RetrieveUserNotifications(code) {
     let uuid = self.crypto.randomUUID();
     let dpop_proof_header = {
         typ: "dpop+jwt",
-        alg: "ES256",
+        alg: KEY_ALGORITM,
         jwk: jwk
     };
     let dpop_proof_payload = {
@@ -935,17 +1075,18 @@ async function test12RetrieveUserNotifications(code) {
 	if (DEBUG) console.debug( PREFIX, "headers:", prettyJson( headers ) );
 	if (DEBUG) console.debug( PREFIX, "fetchOptions:", prettyJson( fetchOptions ) );
 
+	if (GROUP_DEBUG) console.groupEnd();
+
     // Finally, perform the call
     // ------------------------------------------
  	if (DEBUG) console.debug( PREFIX, "Invoking URL:", url );
  	let responseFromServer = await fetch( url, fetchOptions ).then( response => {
         // Process the HTTP Response
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
-		let parsedResponse = printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
-		analizeParsedResponse( parsedResponse );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
 		if ( !response.ok ) {
 			return response.json().then( data => {
-				throw new Error( `Error ${response.status}`, { cause: { status: response.status, statusText: response.statusText, payload: data } } )
+				throw new Error( `Error ${response.status}`, { cause: { step: "test12RetrieveUserNotifications", status: response.status, statusText: response.statusText, payload: data } } )
 			});
 		}
         return response.json();
@@ -1018,6 +1159,9 @@ async function testAuthenticateWithBluesky( handle ) {
 
 async function testProcessCallback(parsedSearch) {
 	const PREFIX = `[${MODULE_NAME}:testProcessCallback] `;
+	const PREFIX_PREFETCH = `${PREFIX}[PREFETCH] `;
+	const PREFIX_ERROR = `${PREFIX}[ERROR] `;
+	const PREFIX_RETRY = `${PREFIX}[RETRY] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Update some HTML fields
@@ -1038,7 +1182,7 @@ async function testProcessCallback(parsedSearch) {
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", authServerResponse );
 
 		// Let's group the following messages
-		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[DETAIL]" );
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", prettyJson( authServerResponse ) );
 
 		// Parse the response
@@ -1060,6 +1204,8 @@ async function testProcessCallback(parsedSearch) {
 		if (DEBUG) console.debug( PREFIX, "Current userAuthentication:", prettyJson( userAuthentication ) );
 		if (DEBUG) console.debug( PREFIX, "Current userAccessToken:", userAccessToken );
 		if (DEBUG) console.debug( PREFIX, "Current userAccessToken:", jwtToPrettyJSON( userAccessToken ) );
+
+		// Update HTML fields
 		$("#access_token_jwt").removeAttr('data-highlighted');
 		$("#access_token_json").removeAttr('data-highlighted');
 		$("#access_token_jwt").text( userAccessToken );
@@ -1073,14 +1219,53 @@ async function testProcessCallback(parsedSearch) {
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", prettyJson( authServerResponse ) );
 
 		// Parse the response
-		let notifications					= authServerResponse;
+		parseNotifications( authServerResponse );
 
 	} catch (error) {
+		if (GROUP_DEBUG) console.groupEnd();
+
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ERROR );
 		if (DEBUG) console.warn( PREFIX, "ERROR:", error.message );
+		if (DEBUG) console.warn( PREFIX, "ERROR Step:", prettyJson( error.cause.step ) );
 		if (DEBUG) console.warn( PREFIX, "ERROR Cause:", prettyJson( error.cause ) );
+		if (DEBUG) console.warn( PREFIX, "ERROR dpopNonceUsed:", dpopNonceUsed );
+		if (DEBUG) console.warn( PREFIX, "ERROR dpopNonceReceived:", dpopNonceReceived );
+		if (GROUP_DEBUG) console.groupEnd();
+
 		// Update the HTML fields
 		$("#error").val(error.cause.payload.error);
 		$("#errorDescription").val(error.cause.payload.message);
+
+		// Check if the error is due to a different dpop-nonce in step 12...
+		if ( areEquals(error.cause.step, "test12RetrieveUserNotifications") && !areEquals(dpopNonceUsed, dpopNonceReceived) ) {
+			if (DEBUG) console.debug( PREFIX, "Let's retry..." );
+			if (GROUP_DEBUG) console.groupEnd();
+			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
+			try {
+				authServerResponse					= await test12RetrieveUserNotifications();
+
+				// Parse the response
+				parseNotifications( authServerResponse );
+
+			} catch (error) {
+				if (GROUP_DEBUG) console.groupEnd();
+
+				if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ERROR );
+				if (DEBUG) console.warn( PREFIX, "ERROR:", error.message );
+				if (DEBUG) console.warn( PREFIX, "ERROR Step:", prettyJson( error.cause.step ) );
+				if (DEBUG) console.warn( PREFIX, "ERROR Cause:", prettyJson( error.cause ) );
+				if (DEBUG) console.warn( PREFIX, "ERROR dpopNonceUsed:", dpopNonceUsed );
+				if (DEBUG) console.warn( PREFIX, "ERROR dpopNonceReceived:", dpopNonceReceived );
+
+				// Update the HTML fields
+				$("#error").val(error.cause.payload.error);
+				$("#errorDescription").val(error.cause.payload.message);
+
+				// Check if the error is due to a different dpop-nonce in step 12...
+				if (GROUP_DEBUG) console.groupEnd();
+			}
+			if (GROUP_DEBUG) console.groupEnd();
+		}
 	}
 
 	if (GROUP_DEBUG) console.groupEnd();
