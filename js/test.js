@@ -50,7 +50,7 @@ const URL_RESOLVE_HANDLE			= "https://bsky.social/xrpc/com.atproto.identity.reso
 const URL_PLC_DIRECTORY				= "https://plc.directory/";
 const URL_PDS_METADATA				= "/.well-known/oauth-protected-resource";
 const URL_AUTH_DISCOVERY			= "/.well-known/oauth-authorization-server";
-const MAX_NOTIS_TO_RETRIEVE			= 25;
+const MAX_NOTIS_TO_RETRIEVE			= 50;
 
 
 /**********************************************************
