@@ -18,9 +18,7 @@ import CONFIGURATION				from "./data/config.json" with { type: "json" };
  **********************************************************/
 // PreLoaded constants
 const getModuleName					= url => { return url.replace( /^.*[\\/]/, '' ).replace( /\.[^.]*$/, '' ); };
-const getTypeOf						= option => typeof option;
-const prettyJson					= obj => JSON.stringify( obj, null, "  " );
-const areEquals						= (str1,str2) => ( str1.trim().toUpperCase().localeCompare( str2.trim().toUpperCase() ) == 0 );
+
 
 // Module SELF constants
 const MODULE_NAME					= getModuleName( import.meta.url );
@@ -33,6 +31,8 @@ const DEBUG							= CONFIGURATION.global.debug;
 const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
 const API							= CONFIGURATION.api;
 const LSKEYS						= CONFIGURATION.localStorageKeys;
+const CONTENT_TYPE_JSON				= "application/json";
+const CONTENT_TYPE_FORM_ENCODED		= "application/x-www-form-urlencoded";
 
 // Fancy CSS style for the DevTools console.
 const CONSOLE_STYLE					= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
@@ -44,6 +44,7 @@ const CURVE_ALGORITM				= "P-256";
 const HASHING_ALGORITM				= "SHA-256";
 
 // Bluesky constants
+const URL_LOCALHOST					= "http://localhost/neocities/bsky/index.html";
 const APP_CLIENT_ID					= "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json";
 const APP_CALLBACK_URL				= "https://madrilenyer.neocities.org/bsky/oauth/callback/";
 const URL_RESOLVE_HANDLE			= "https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=";
@@ -51,6 +52,18 @@ const URL_PLC_DIRECTORY				= "https://plc.directory/";
 const URL_PDS_METADATA				= "/.well-known/oauth-protected-resource";
 const URL_AUTH_DISCOVERY			= "/.well-known/oauth-authorization-server";
 const MAX_NOTIS_TO_RETRIEVE			= 50;
+
+// Constant functions
+const getTypeOf						= option => typeof option;
+const prettyJson					= obj => JSON.stringify( obj, null, "  " );
+const areEquals						= (str1,str2) => ( str1.trim().toUpperCase().localeCompare( str2.trim().toUpperCase() ) == 0 );
+const isEmptyOrNull					= str => ( isUndefined(str) || isNull(str) || isEmpty(str) );
+const isEmpty						= str => (typeof str === "string" && str.length === 0);
+const isNull						= str => (str === null);
+const isUndefined					= str => (str === undefined);
+const showHide						= id => { $( "#" + id ).toggleClass( "hidden" ); }
+const show							= id => { $( "#" + id ).removeClass( "hidden" ).addClass( "visible" ); }
+const hide							= id => { $( "#" + id ).removeClass( "visible" ).addClass( "hidden" ); }
 
 
 /**********************************************************
@@ -71,6 +84,7 @@ let userAuthServerDiscovery			= null;
 let userAuthorizationEndPoint		= null;
 let userTokenEndPoint				= null;
 let userPAREndPoint					= null;
+let userRevocationEndPoint			= null;
 let userAuthServerRequestURI		= null;
 let dpopNonce						= null;
 let wwwAuthenticate					= null;
@@ -129,6 +143,8 @@ function bootstrap() {
 	window.BSKY.testAuthenticateWithBluesky = testAuthenticateWithBluesky;
 	window.BSKY.testProcessCallback = testProcessCallback;
 	window.BSKY.testRetrieveNotifications = testRetrieveNotifications;
+	window.BSKY.testViewAccessToken = testViewAccessToken;
+	window.BSKY.testLogout = testLogout;
 	if (DEBUG) console.debug( PREFIX, `Updated object: [window.BSKY].` );
 	if (DEBUG) console.debug( PREFIX, "window.BSKY object:", window.BSKY );
 
@@ -320,9 +336,45 @@ function printOutFetchResponse(prefix, data) {
 }
 
 
-function updateHTMLFields(parsedSearch){
+function updateHTMLError(error, errorDescription) {
+	const PREFIX = `[${MODULE_NAME}:updateHTMLError] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.debug(PREFIX, "Received:");
+	if (DEBUG) console.debug(PREFIX, "+ error:", error);
+	if (DEBUG) console.debug(PREFIX, "+ errorDescription:", errorDescription);
+
+	$("#error").html(error);
+	$("#errorDescription").val(errorDescription);
+
+	let idErrorPanel = "errorPanel";
+	$("#" + idErrorPanel).removeClass("hidden");
+	$("#" + idErrorPanel).addClass("visible");
+
+	if (DEBUG) console.groupEnd(PREFIX);
+}
+
+
+function clearHTMLError() {
+	const PREFIX = `[${MODULE_NAME}:clearHTMLError] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Clear and hide error fields and panel
+	$("#error").html("");
+	$("#errorDescription").val("");
+	hide("errorPanel");
+
+	if (DEBUG) console.groupEnd(PREFIX);
+}
+
+
+function updateHTMLFields(parsedSearch) {
 	const PREFIX = `[${MODULE_NAME}:updateHTMLFields] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Hide panels.
+	hide("accessTokenPanel");
+	hide("btnNotifications");
 
 	let iss = parsedSearch.get("iss");
 	let state = parsedSearch.get("state");
@@ -339,14 +391,15 @@ function updateHTMLFields(parsedSearch){
 
 	// Update HTML page element values.
 	// CSS Classes.
-	$("#rootPanel").removeClass("hidden");
-	$("#rootPanel").addClass("visible");
-
 	$("#iss").val(iss);
 	$("#state").val(state);
 	$("#code").val(code);
-	$("#error").val(error);
-	$("#errorDescription").val(errorDescription);
+
+	if ( !isEmptyOrNull(error) || !isEmptyOrNull(errorDescription) ) {
+		updateHTMLError(error, errorDescription);
+		if (DEBUG) console.groupEnd(PREFIX);
+		throw({ error, errorDescription });
+	}
 
 	if (DEBUG) console.groupEnd(PREFIX);
 }
@@ -380,16 +433,20 @@ function parseNotifications( notifications ) {
 		htmlRenderNotification( unreadNotifications[key] );
 	}
 
+	// Clear and hide error fields and panel
+	clearHTMLError();
+
 	// Update the HTML fields
-	$("#error").val("");
-	$("#errorDescription").val("");
-	$("#access_token_jwt").removeAttr('data-highlighted');
-	$("#access_token_json").removeAttr('data-highlighted');
-	$("#access_token_jwt").text( "Pendientes de leer: " + unreadNotifications.length );
-	$("#access_token_json").text( prettyJson( notifications ) );
+	$("#notificationsNumber").text( "Pendientes de leer: " + unreadNotifications.length );
+	$("#notifications_json").removeAttr('data-highlighted');
+	$("#notifications_json").text( prettyJson( notifications ) );
 
 	// Update the highlight
 	hljs.highlightAll();
+
+	// Hide "notificationsPanel" panel
+	show("notificationsPanel");
+	show("btnAccessToken");
 
 	if (DEBUG) console.groupEnd(PREFIX);
 }
@@ -510,6 +567,7 @@ async function test01RetrieveUserDID() {
     }).catch( error => {
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
 		throw( error );
     }).finally( () => {
 		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
@@ -555,6 +613,7 @@ async function test02RetrieveUserDIDDocument() {
     }).catch( error => {
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
 		throw( error );
     }).finally( () => {
 		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
@@ -602,6 +661,7 @@ async function test03RetrievePDSServerMetadata() {
     }).catch( error => {
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
 		throw( error );
     }).finally( () => {
 		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
@@ -642,15 +702,17 @@ async function test04RetrieveAuthServerDiscoveryMetadata() {
         // Process the HTTP Response Body
 		if (DEBUG) console.debug( PREFIX_FETCH_BODY, "Data:", prettyJson( data ) );
         // Here, we gather the "did" item in the received json.
-        userAuthServerDiscovery   = data;
-        userAuthorizationEndPoint = data.authorization_endpoint;
-        userTokenEndPoint         = data.token_endpoint;
-        userPAREndPoint           = data.pushed_authorization_request_endpoint;
+        userAuthServerDiscovery		= data;
+        userAuthorizationEndPoint	= data.authorization_endpoint;
+        userTokenEndPoint			= data.token_endpoint;
+        userPAREndPoint				= data.pushed_authorization_request_endpoint;
+        userRevocationEndPoint		= data.revocation_endpoint;
         // Return something
 		return data;
     }).catch( error => {
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
 		throw( error );
     }).finally( () => {
 		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
@@ -661,6 +723,7 @@ async function test04RetrieveAuthServerDiscoveryMetadata() {
 	if (DEBUG) console.debug( PREFIX, "Received userAuthorizationEndPoint:", userAuthorizationEndPoint );
 	if (DEBUG) console.debug( PREFIX, "Received userTokenEndPoint:", userTokenEndPoint );
 	if (DEBUG) console.debug( PREFIX, "Received userPAREndPoint:", userPAREndPoint );
+	if (DEBUG) console.debug( PREFIX, "Received userRevocationEndPoint:", userRevocationEndPoint );
 
 	if (DEBUG) console.debug( PREFIX_FETCH, "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -669,6 +732,7 @@ async function test04RetrieveAuthServerDiscoveryMetadata() {
 		, userAuthorizationEndPoint: userAuthorizationEndPoint
 		, userTokenEndPoint: userTokenEndPoint
 		, userPAREndPoint: userPAREndPoint
+		, userRevocationEndPoint: userRevocationEndPoint
 	};
 }
 
@@ -715,7 +779,7 @@ async function test05PARRequest() {
     let fetchOptions = {
         method: 'POST',
         headers: {
-            'Content-Type': "application/x-www-form-urlencoded"
+            'Content-Type': CONTENT_TYPE_FORM_ENCODED
         },
         body: body
     }
@@ -743,6 +807,7 @@ async function test05PARRequest() {
     }).catch( error => {
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
 		throw( error );
     }).finally( () => {
 		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
@@ -791,7 +856,7 @@ function test06RedirectUserToBlueskyAuthPage() {
 	localStorage.setItem(LSKEYS.pkce.code_challenge, codeChallenge);
 	localStorage.setItem(LSKEYS.request.dpop_nonce, dpopNonce);
 	localStorage.setItem(LSKEYS.user.authServerRequestURI, userAuthServerRequestURI);
-	
+
 	let savedInformation = {
 		userHandle: userHandle,
 		userDid: userDid,
@@ -803,6 +868,7 @@ function test06RedirectUserToBlueskyAuthPage() {
 		userAuthorizationEndPoint: userAuthorizationEndPoint,
 		userTokenEndPoint: userTokenEndPoint,
 		userPAREndPoint: userPAREndPoint,
+		userRevocationEndPoint: userRevocationEndPoint,
 		dpopNonce: dpopNonce,
 		userAuthServerRequestURI: userAuthServerRequestURI,
 		state: state,
@@ -834,6 +900,7 @@ function test10RestoreDataFromLocalStorage() {
 	userAuthorizationEndPoint = saved.userAuthorizationEndPoint;
 	userTokenEndPoint = saved.userTokenEndPoint;
 	userPAREndPoint = saved.userPAREndPoint;
+	userRevocationEndPoint = saved.userRevocationEndPoint;
 	dpopNonce = saved.dpopNonce;
 	userAuthServerRequestURI = saved.userAuthServerRequestURI;
 	state = saved.state;
@@ -942,7 +1009,7 @@ async function test11RetrieveTheUserAccessToken(code) {
     // ------------------------------------------
     let headers = {
         'DPOP': dpopProof,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': CONTENT_TYPE_FORM_ENCODED,
         'DPoP-Nonce': dpopNonce
     }
     let fetchOptions = {
@@ -976,6 +1043,7 @@ async function test11RetrieveTheUserAccessToken(code) {
     }).catch( error => {
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
 		throw( error );
     }).finally( () => {
 		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
@@ -1066,7 +1134,7 @@ async function test12RetrieveUserNotifications(code) {
     let headers = {
 		'Authorization': `DPoP ${userAccessToken}`,
 		'DPoP': dpopProof,
-		'Accept': 'application/json',
+		'Accept': CONTENT_TYPE_JSON,
         'DPoP-Nonce': dpopNonce
     }
     let fetchOptions = {
@@ -1101,6 +1169,7 @@ async function test12RetrieveUserNotifications(code) {
     }).catch( error => {
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
 		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
 		throw( error );
     }).finally( () => {
 		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
@@ -1117,9 +1186,15 @@ async function test12RetrieveUserNotifications(code) {
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
-async function testAuthenticateWithBluesky( handle ) {
+async function testAuthenticateWithBluesky( form, handle ) {
 	const PREFIX = `[${MODULE_NAME}:testAuthenticateWithBluesky] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Avoid form to be submitted.
+	event.preventDefault();
+
+	// Hide error panel.
+	hide( "errorPanel" );
 
 	let variable = null;
 
@@ -1146,6 +1221,7 @@ async function testAuthenticateWithBluesky( handle ) {
 	if (DEBUG) console.debug( PREFIX, "Current userAuthorizationEndPoint:", userAuthorizationEndPoint );
 	if (DEBUG) console.debug( PREFIX, "Current userTokenEndPoint:", userTokenEndPoint );
 	if (DEBUG) console.debug( PREFIX, "Current userPAREndPoint:", userPAREndPoint );
+	if (DEBUG) console.debug( PREFIX, "Current userRevocationEndPoint:", userRevocationEndPoint );
 
 	variable = await test05PARRequest();
 	// if (DEBUG) console.debug( PREFIX, "Received variable:", prettyJson( variable ) );
@@ -1154,16 +1230,22 @@ async function testAuthenticateWithBluesky( handle ) {
 	if (DEBUG) console.debug( PREFIX, "Redirecting user to the Bluesky Authorization Server page..." );
 	test06RedirectUserToBlueskyAuthPage();
 
+	if (DEBUG) console.debug( PREFIX, "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
 
 async function testProcessCallback(parsedSearch) {
 	const PREFIX = `[${MODULE_NAME}:testProcessCallback] `;
-	const PREFIX_PREFETCH = `${PREFIX}[PREFETCH] `;
+	const PREFIX_AFTER = `${PREFIX}[After] `;
 	const PREFIX_ERROR = `${PREFIX}[ERROR] `;
 	const PREFIX_RETRY = `${PREFIX}[RETRY] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Show panels
+	show( "rootContainer" );
+	show( "botoneraPanel" );
+	hide( "errorPanel" );
 
 	// Update some HTML fields
 	updateHTMLFields(parsedSearch);
@@ -1183,7 +1265,7 @@ async function testProcessCallback(parsedSearch) {
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", authServerResponse );
 
 		// Let's group the following messages
-		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER );
 		if (DEBUG) console.debug( PREFIX, "Current authServerResponse:", prettyJson( authServerResponse ) );
 
 		// Parse the response
@@ -1205,14 +1287,23 @@ async function testProcessCallback(parsedSearch) {
 		if (DEBUG) console.debug( PREFIX, "Current userAuthentication:", prettyJson( userAuthentication ) );
 		if (DEBUG) console.debug( PREFIX, "Current userAccessToken:", userAccessToken );
 		if (DEBUG) console.debug( PREFIX, "Current userAccessToken:", jwtToPrettyJSON( userAccessToken ) );
+		if (GROUP_DEBUG) console.groupEnd();
 
 		// Update HTML fields
+		if (DEBUG) console.debug( PREFIX, "Filling-in access token fields and panel..." );
+		$("#notifications_json").removeAttr('data-highlighted');
 		$("#access_token_jwt").removeAttr('data-highlighted');
 		$("#access_token_json").removeAttr('data-highlighted');
 		$("#access_token_jwt").text( userAccessToken );
 		$("#access_token_json").text( jwtToPrettyJSON( userAccessToken ) );
 		hljs.highlightAll();
-		if (GROUP_DEBUG) console.groupEnd();
+
+		// Show "accessTokenPanel" panel
+		show("accessTokenPanel");
+
+		// Also show "btnNotifications" button
+		show("btnNotifications");
+
 	} catch (error) {
 		if (GROUP_DEBUG) console.groupEnd();
 
@@ -1225,20 +1316,110 @@ async function testProcessCallback(parsedSearch) {
 		if (GROUP_DEBUG) console.groupEnd();
 
 		// Update the HTML fields
-		$("#error").val(error.cause.payload.error);
-		$("#errorDescription").val(error.cause.payload.message);
+		// $("#error").val(error.cause.payload.error);
+		// $("#errorDescription").val(error.cause.payload.message);
+		updateHTMLError(error.cause.payload.error, error.cause.payload.error_description);
+		throw( error );
 	}
 
+	if (DEBUG) console.debug( PREFIX, "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+async function testLogout() {
+	const PREFIX = `[${MODULE_NAME}:testLogout] `;
+	const PREFIX_FETCH = `${PREFIX}[Fetch] `;
+	const PREFIX_FETCH_HEADERS = `${PREFIX_FETCH}[Headers] `;
+	const PREFIX_FETCH_BODY = `${PREFIX_FETCH}[Body] `;
+	const PREFIX_FETCH_ERROR = `${PREFIX_FETCH}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+    let body = `token=${userAccessToken}`;
+    let fetchOptions = {
+        method: 'POST',
+        headers: {
+			'Authorization': `DPoP ${userAccessToken}`,
+            'Content-Type': CONTENT_TYPE_FORM_ENCODED
+        },
+        body: body
+    }
+    let url = userRevocationEndPoint;
+ 	if (DEBUG) console.debug( PREFIX, "Invoking URL:", url );
+ 	if (DEBUG) console.debug( PREFIX, "+ with this options:", prettyJson( fetchOptions ) );
+
+ 	let responseFromServer = await fetch( url, fetchOptions ).then( response => {
+        // Process the HTTP Response
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_FETCH );
+		printOutFetchResponse( PREFIX_FETCH_HEADERS, response );
+		if ( !response.ok ) {
+			return response.json().then( data => {
+				throw new Error( `Error ${response.status}`, { cause: { step: "testLogout", status: response.status, statusText: response.statusText, payload: data } } )
+			});
+		}
+        return response.text();
+    }).then( data => {
+        // Process the HTTP Response Body
+		if (DEBUG) console.debug( PREFIX_FETCH_BODY, "Data:", prettyJson( data ) );
+        // Return something
+		return ( data ) ? data : { logout: true };
+    }).catch( error => {
+		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR:", error.message );
+		if (DEBUG) console.debug( PREFIX_FETCH_ERROR, "ERROR Cause:", prettyJson( error.cause ) );
+		updateHTMLError(error.message, prettyJson( error.cause ));
+		throw( error );
+    }).finally( () => {
+		if (DEBUG) console.debug( PREFIX_FETCH, "-- FINALLY" );
+		if (GROUP_DEBUG) console.groupEnd();
+    });
+	if (DEBUG) console.debug( PREFIX, "Received responseFromServer:", prettyJson( responseFromServer ) );
+
+	if ( responseFromServer.logout ){
+		if (DEBUG) console.debug( PREFIX, "-- END" );
+		if (GROUP_DEBUG) console.groupEnd();
+		window.location = URL_LOCALHOST;
+	} else {
+		if (DEBUG) console.warn( PREFIX, "ERROR!" );
+		if (DEBUG) console.debug( PREFIX, "-- END" );
+		if (GROUP_DEBUG) console.groupEnd();
+	}
+}
+
+
+function testViewAccessToken() {
+	const PREFIX = `[${MODULE_NAME}:testViewAccessToken] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	const notificationsPanel = document.getElementById("notificationsPanel");
+	const accessTokenPanel = document.getElementById("accessTokenPanel");
+	if (DEBUG) console.debug( PREFIX, "Is notificationsPanel visible?", notificationsPanel.checkVisibility() );
+	if (DEBUG) console.debug( PREFIX, "Is accessTokenPanel.. visible?", accessTokenPanel.checkVisibility() );
+
+	if ( notificationsPanel.checkVisibility() ) {
+		hide("notificationsPanel");
+		show("accessTokenPanel");
+	} else {
+		hide("accessTokenPanel");
+		show("notificationsPanel");
+	}
+
+	if (DEBUG) console.debug( PREFIX, "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
 
 async function testRetrieveNotifications() {
 	const PREFIX = `[${MODULE_NAME}:testRetrieveNotifications] `;
-	const PREFIX_PREFETCH = `${PREFIX}[PREFETCH] `;
 	const PREFIX_ERROR = `${PREFIX}[ERROR] `;
 	const PREFIX_RETRY = `${PREFIX}[RETRY] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Clear and hide error fields and panel
+	clearHTMLError();
+
+	// Hide panels
+	hide("accessTokenPanel");
+	hide("notificationsPanel");
 
 	// Retrieve the access_token
 	let authServerResponse = null;
@@ -1250,7 +1431,6 @@ async function testRetrieveNotifications() {
 
 		// Parse the response
 		parseNotifications( authServerResponse );
-
 	} catch (error) {
 		if (GROUP_DEBUG) console.groupEnd();
 
@@ -1263,8 +1443,9 @@ async function testRetrieveNotifications() {
 		if (GROUP_DEBUG) console.groupEnd();
 
 		// Update the HTML fields
-		$("#error").val(error.cause.payload.error);
-		$("#errorDescription").val(error.cause.payload.message);
+		// $("#error").val(error.cause.payload.error);
+		// $("#errorDescription").val(error.cause.payload.message);
+		updateHTMLError(error.cause.payload.error, error.cause.payload.message);
 
 		// Check if the error is due to a different dpop-nonce in step 12...
 		if ( areEquals(error.cause.step, "test12RetrieveUserNotifications") && !areEquals(dpopNonceUsed, dpopNonceReceived) ) {
@@ -1274,9 +1455,11 @@ async function testRetrieveNotifications() {
 			try {
 				authServerResponse					= await test12RetrieveUserNotifications();
 
+				// Clear and hide error fields and panel
+				clearHTMLError();
+
 				// Parse the response
 				parseNotifications( authServerResponse );
-
 			} catch (error) {
 				if (GROUP_DEBUG) console.groupEnd();
 
@@ -1288,8 +1471,9 @@ async function testRetrieveNotifications() {
 				if (DEBUG) console.warn( PREFIX, "ERROR dpopNonceReceived:", dpopNonceReceived );
 
 				// Update the HTML fields
-				$("#error").val(error.cause.payload.error);
-				$("#errorDescription").val(error.cause.payload.message);
+				// $("#error").val(error.cause.payload.error);
+				// $("#errorDescription").val(error.cause.payload.message);
+				updateHTMLError(error.cause.payload.error, error.cause.payload.message);
 
 				// Check if the error is due to a different dpop-nonce in step 12...
 				if (GROUP_DEBUG) console.groupEnd();
@@ -1298,6 +1482,7 @@ async function testRetrieveNotifications() {
 		}
 	}
 
+	if (DEBUG) console.debug( PREFIX, "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
 

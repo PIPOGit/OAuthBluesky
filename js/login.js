@@ -81,7 +81,6 @@ function bootstrap() {
 	// Creamos el objeto raiz.
 	window.BSKY = {
 		// loginWithGoogle : loginWithGoogle
-		showHide: showHide,
 		authenticateWithBluesky: BLUESKY.authenticateWithBluesky,
 		analizeCallbackURL: BLUESKY.analizeCallbackURL
 	};
@@ -122,7 +121,7 @@ function bootstrap() {
 
 	let userHandle = localStorage.getItem(LSKEYS.user.handle);
 	if ( userHandle ) {
-		let $input = $( "#handle" );
+		let $input = $( "#userHandle" );
 		if (DEBUG) console.debug( PREFIX, "$input.length", $input.length );
 		if ( $input.length ) {
 			$input.val( userHandle );
@@ -134,14 +133,4 @@ function bootstrap() {
 	if (DEBUG) console.groupEnd();
 }
 
-
-/**********************************************************
- * HELPER Functions
- **********************************************************/
-function showHide( id ) {
-	let $target = $( "." + id );
-	// if (DEBUG) console.debug( "Visible", $target.is( ":visible" ) );
-	// if (DEBUG) console.debug( "Hidden", $target.is( ":hidden" ) );
-	$target.toggleClass( "hidden" );
-}
 

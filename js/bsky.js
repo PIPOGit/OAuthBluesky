@@ -76,7 +76,6 @@ function bootstrap() {
 	// ================================================================
 	// Creamos el objeto raiz.
 	window.BSKY = {
-		// loginWithGoogle : loginWithGoogle
 		authenticateWithBluesky: BLUESKY.authenticateWithBluesky
 	};
 	if (DEBUG) console.debug( PREFIX, `Created object: [window.BSKY].` );

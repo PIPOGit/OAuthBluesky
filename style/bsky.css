@@ -2,16 +2,27 @@
    HTML content. To learn how to do something, just try searching Google for questions like
    "how to change link color." */
 
+/* El BODY. */
 body {
   background-color: white;
   color: black;
+}
+.body-container {
   font-family: Verdana;
+  margin: auto;
+  width: 80%;
+  padding: 40px 40px;
+  /* border: 3px solid green; */
 }
 
+
+/* Los enlaces. */
 a, a:visited {
   color: navy;
 }
 
+
+/* Clases auxiliares. */
 .visible {
   visibility: visible;
   display: block;
@@ -20,18 +31,6 @@ a, a:visited {
   visibility: hidden;
   display: none;
 }
-
-.container {
-  margin: auto;
-  width: 80%;
-  padding: 10px 40px;
-  /* border: 3px solid green; */
-}
-
-.border-green {
-	border: 3px solid green;
-}
-
 .center {
   margin: auto;
   width: auto;
@@ -39,52 +38,62 @@ a, a:visited {
   padding: 10px 40px;
 }
 
-.theme-green {
-  border: 1px solid green;
-  background-color: palegreen;
+
+/* El panel global. */
+.theme-panel {
+  border: 1px solid navy;
+  background-color: aliceblue;
 }
 
-.theme-green .error {
-  padding: 1px 4px;
+
+/* El panel de los errores. */
+.theme-error {
+  border: 1px solid navy;
+  background-color: lightgoldenrodyellow;
+}
+.theme-error span#errorLabel {
+  color: navy;
   font-weight: bolder;
+  padding: 1px 16px;
+  border: 1px solid navy;
+}
+.theme-error span#error {
   color: red;
+  font-weight: bolder;
+  padding: 1px 16px;
+  border: 1px solid navy;
   background-color: yellow;
 }
-
-.theme-green .errorDescription {
-  padding: 1px 4px;
-  font-weight: bolder;
+.theme-error input#errorDescription {
   color: yellow;
+  padding: 1px 16px;
+  border: 1px solid navy;
   background-color: red;
 }
 
-.theme-yellow {
-  border: 1px solid black;
+
+/* El panel de la botonera. */
+.theme-botonera {
+  font-size: small;
+  border: 1px solid navy;
   background-color: lightgoldenrodyellow;
 }
-
-.theme-yellow span {
+.theme-botonera a,
+.theme-botonera button {
+  font-size: small;
+}
+.theme-botonera span {
   padding: 1px 4px;
   border: 1px solid navy;
   background-color: yellow;
 }
 
+
+/* El offcanvas. */
 .theme-docs {
   border: 1px solid black;
   background-color: aliceblue;
-  font-size: 0.7rem;
-  /*   font-size: 75%; */
-  /*   font-size: smaller; */
-  
-  /* Fixed dimensions */
-  position: absolute; top: 24px; right: 24px;
-  /* position: absolute; bottom: 24px; right: 24px; */
-  float: right;
-  height: 80%;
-  width: 500px; 
-  padding: 4px; 
 }
-
 .theme-docs-title {
   font-size: larger;
   font-weight: bolder;
@@ -92,58 +101,47 @@ a, a:visited {
   color: white;
   background-color: blue;
   padding: 4px;
-  margin-bottom: 4px;
 }
-
 .theme-docs-content {
-  height: 95%;
-  overflow: auto;
-  background: transparent;
+  font-size: small;
+  background-color: aliceblue;
+  margin: 0px;
 }
-
 .theme-docs ul {
   margin: 0px 0px 8px 0px;
 }
 
-fieldset {
-  border: none;
+
+/* El panel del access token. */
+.theme-access-token {
+  border: 1px solid black;
+  background-color: aliceblue;
 }
 
-fieldset > legend {
-  font-weight: bold;
+
+/* El panel de las notificaciones. */
+.theme-notifications {
+  border: 1px solid black;
+  background-color: aliceblue;
+}
+.theme-notifications pre {
+  max-height: 340px;
+  overflow-y: scroll;
 }
 
-.badge {
-  font-size: smaller;
-  border: 0px;
-  border-radius: 25px;
-  color: white;
-  background-color: red;
-  padding: 1px 4px;
-  margin: 0px;
-}
-
-.buttons {
-  margin-bottom: 8px
-}
-
-.notifications {
-}
-
+/* Cada notificación. */
 .notification {
   border: 1px solid green;
   background-color: lightyellow;
   margin: 0px;
   margin-bottom: 8px
 }
-
 .notification .header {
   font-size: larger;
   padding: 4px;
   background-color: gold;
   border-bottom: 1px solid green;
 }
-
 .notificacion-data {
   font-size: smaller;
   margin: 2px;
