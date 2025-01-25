@@ -65,16 +65,13 @@ function bootstrap() {
 
 	// ================================================================
 	// Module info.
-	if (DEBUG) console.debug( PREFIX, "import.meta.url:", import.meta.url );
-	if (DEBUG) console.debug( PREFIX, "MODULE_NAME:", MODULE_NAME );
+	if (DEBUG) console.debug( PREFIX, "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
 
 	if (DEBUG) console.debug( PREFIX, "Configuration:", CONFIGURATION );
 	if (DEBUG) console.debug( PREFIX, "API:", API );
 	if (DEBUG) console.debug( PREFIX, "CONST_URL:", CONST_URL );
 
-	if (DEBUG) console.debug( PREFIX, "DEBUG:", DEBUG );
-	if (DEBUG) console.debug( PREFIX, "DEBUG_FOLDED:", DEBUG_FOLDED );
-	if (DEBUG) console.debug( PREFIX, "GROUP_DEBUG:", GROUP_DEBUG );
+	if (DEBUG) console.debug( PREFIX, "DEBUG:", DEBUG, "DEBUG_FOLDED:", DEBUG_FOLDED, "GROUP_DEBUG:", GROUP_DEBUG );
 
 
 	// ================================================================
@@ -84,8 +81,7 @@ function bootstrap() {
 		authenticateWithBluesky: BLUESKY.authenticateWithBluesky,
 		analizeCallbackURL: BLUESKY.analizeCallbackURL
 	};
-	if (DEBUG) console.debug( PREFIX, `Created object: [window.BSKY].` );
-	if (DEBUG) console.debug( PREFIX, "window.BSKY object:", window.BSKY );
+	if (DEBUG) console.debug( PREFIX, `Created object: [window.BSKY].`, window.BSKY );
 
 	// ================================================================
 	// Page Tune-Up
@@ -122,10 +118,9 @@ function bootstrap() {
 	let userHandle = localStorage.getItem(LSKEYS.user.handle);
 	if ( userHandle ) {
 		let $input = $( "#userHandle" );
-		if (DEBUG) console.debug( PREFIX, "$input.length", $input.length );
 		if ( $input.length ) {
 			$input.val( userHandle );
-			if (DEBUG) console.debug( PREFIX, `Updated "${$input[0].id}" with "${userHandle}"` );
+			if (DEBUG) console.debug( PREFIX, `Updated field: "${$input[0].id}" with (localStorage) value: "${userHandle}"` );
 		}
 	}
 

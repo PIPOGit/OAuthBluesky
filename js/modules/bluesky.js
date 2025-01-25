@@ -886,10 +886,10 @@ export function analizeCallbackURL() {
 		let bskyData = localStorage.getItem( "BSKYDATA" );
 		if ( bskyData ) {
 			// Estamos en la de "TEST".
-			if (DEBUG) console.debug(PREFIX, "Processing the TEST: [testProcessCallback] ");
+			if (DEBUG) console.debug(PREFIX, "Processing the TEST: [processCallback] ");
 			if (GROUP_DEBUG) console.groupEnd();
 			// BSKY.callback();
-			BSKY.testProcessCallback(parsedSearch);
+			BSKY.processCallback(parsedSearch);
 		} else {
 			// Estamos en la "NORMAL".
 			// Recuperamos el token de usuario del Authorization Server

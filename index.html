@@ -1,7 +1,3 @@
-<!--
-	URL Localhost: http://localhost/neocities/bsky/index.html
-	URL Neocities: http://madrilenyer.neocities.org/bsky/index.html
-	-->
 <!DOCTYPE html>
 <html>
 	<head>
@@ -44,10 +40,10 @@
 		<script type="module" src="./js/login.js"></script>
 		<script type="module" src="./js/test.js"></script>
 	</head>
-	<body class="body-container">
+	<body>
 
 		<!-- El panel central -->
-		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-panel">
+		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root-div">
 
 			<!-- El título -->
 			<div class="row align-items-center">
@@ -62,7 +58,7 @@
 			</div>
 
 			<!-- El formulario de acceso -->
-			<form id="userHandleForm" name="userHandleForm" class="row align-items-center" onSubmit="BSKY.testAuthenticateWithBluesky( this.form, userHandleForm.userHandle.value )">
+			<form id="userHandleForm" name="userHandleForm" class="row align-items-center" onSubmit="BSKY.authenticateWithBluesky( this.form, userHandleForm.userHandle.value )">
 
 				<!-- Left column. -->
 				<div class="col col-auto">
@@ -103,7 +99,7 @@
 		</div>
 
 		<!-- Botonera inferior -->
-		<div class="container d-grid gap-2 d-md-flex justify-content-md-end center theme-botonera">
+		<div class="container d-grid gap-2 d-md-flex justify-content-md-end theme-botonera center">
 			<div class="col-auto">
 				Sources:
 				<a href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h" class="btn btn-sm btn-secondary link-light" target="dev_to">Dev.to</a>
