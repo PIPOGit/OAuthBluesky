@@ -4,6 +4,7 @@
 import CONFIGURATION				from "../data/config.json" with { type: "json" };
 
 
+
 /**********************************************************
  * Common function
  **********************************************************/
@@ -112,6 +113,9 @@ export async function loadBLOBFile( file ) {
 }
 
 // Bootstrap HTML functions
+export const showHide				= id => { $( "#" + id ).toggleClass( "hidden" ); }
+export const show					= id => { $( "#" + id ).removeClass( "hidden" ).addClass( "visible" ); }
+export const hide					= id => { $( "#" + id ).removeClass( "visible" ).addClass( "hidden" ); }
 export const showMessage			= message => {
 	$("#"+ID_TOAST_OK+"Body").html( message );
 	$("#"+ID_TOAST_OK).toast("show");

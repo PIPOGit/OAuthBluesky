@@ -7,7 +7,7 @@
 import * as COMMON					from "../common.functions.js";
 import CONFIGURATION				from "../../data/config.json" with { type: "json" };
 // For OAuth2 User Token retrieval / DPoP
-import * as JWT         			from "./jwt.js";
+import * as JWT         			from "./JWT.js";
 
 
 /**********************************************************

@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>The web site of madrilenyer</title>
+		<title>The OAuth2 callback page of madrilenyer</title>
 
 		<!-- Meta Bootstrap -->
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 		<!-- Favicon & Inner Stylesheet. -->
-		<link rel="icon" type="image/x-icon" href="./images/madrilenyer.png">
+		<link rel="icon" type="image/x-icon" href="../images/madrilenyer.png">
 
 		<!-- ========================================================== -->
 		<!--     CSS Section                                            -->
 		<!-- ========================================================== -->
 
 		<!-- CSS Inner -->
-		<link rel="stylesheet" type="text/css" href="./style/bsky.css" media="all">
+		<link rel="stylesheet" type="text/css" href="../style/bsky.css" media="all">
 
 		<!-- CSS highlight.js -->
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/pop.css">
@@ -37,57 +37,56 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
 		<!-- JS Internal -->
-		<script type="module" src="./js/bsky.js"></script>
+		<script type="module" src="../js/bsky.js"></script>
 	</head>
-	<body>
+	<body onLoad="BSKY.analizeCallbackURL();">
 
 		<!-- El panel central -->
-		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root-div">
+		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root-div hidden">
 
 			<!-- El título -->
 			<div class="row align-items-center">
 				<div class="col align-self-start">
-					<h1>Bluesky Access:</h1>
+					<h1>Bluesky OAuth2 Callback:</h1>
 				</div>
 			</div>
 
 			<!-- La entradilla -->
 			<div class="col-12">
-				<h4>Identificación:</h4>
+				<h4>Información recibida:</h4>
 			</div>
 
 			<!-- El formulario de acceso -->
-			<form id="userHandleForm" name="userHandleForm" class="row align-items-center" onSubmit="BSKY.authenticateWithBluesky( this.form, userHandleForm.userHandle.value )">
+			<form id="userHandleForm" name="userHandleForm" class="row align-items-center theme-callback">
 
-				<!-- Left column. -->
-				<div class="col col-auto">
-					<label for="basic-addon1" class="col-form-label">User Handle:</label>
-				</div>
-
-				<!-- Center column. -->
-				<div class="row col-9">
-					<div class="col-6">
-						<div class="input-group input-group-sm">
-							<span class="input-group-text">@</span>
-							<input type="text" size="60" class="form-control" id="userHandle" name="userHandle" placeholder="User handle" required>
-						</div>
-					</div>
-					<!-- Helping text. -->
-					<div class="col-auto">
-					<label for="userHandle">User handle (<i>example: "safety.bsky.app")</i></label>
+				<div class="row">
+					<label for="iss" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">ISS:</label>
+					<div class="col-sm-10">
+						<input type="email" class="form-control-plaintext form-control-sm" id="iss" name="iss" placeholder="Received iss" readonly>
 					</div>
 				</div>
 
-				<!-- Right column. -->
-				<div class="col col-auto">
-					<button type="submit" class="btn btn-sm btn-success">Sign in</button>
+				<div class="row">
+					<label for="state" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">State:</label>
+					<div class="col-sm-10">
+						<input type="email" class="form-control-plaintext form-control-sm" id="state" name="state" placeholder="Received state" readonly>
+					</div>
+				</div>
+
+				<div class="row">
+					<label for="code" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">Code:</label>
+					<div class="col-sm-10">
+						<input type="email" class="form-control-plaintext form-control-sm" id="code" name="code" placeholder="Received code" readonly>
+					</div>
+				</div>
+
+				<div class="row">
+					<label for="dpopNonce" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">DPoP Nonce:</label>
+					<div class="col-sm-10">
+						<input type="email" class="form-control-plaintext form-control-sm" id="dpopNonce" name="dpopNonce" placeholder="Received dpop-nonce" readonly>
+					</div>
 				</div>
 			</form>
-
-			<!-- El panel de información -->
-			<div id="infoPanel" name="infoPanel" class="col-12 mt-3 mb-0 px-2 align-items-start theme-info hidden">
-				<span id="infoStep" name="infoStep" class="" placeholder="Paso" aria-label="Paso">Paso:</span>
-			</div>
 		</div>
 
 		<!-- El panel de errores -->
@@ -103,7 +102,22 @@
 		</div>
 
 		<!-- Botonera inferior -->
-		<div class="container d-grid gap-2 d-md-flex justify-content-md-end theme-botonera center">
+		<div id="botoneraPanel" name="botoneraPanel" class="container d-grid gap-2 d-md-flex justify-content-md-end center theme-botonera hidden">
+			<div id="btnAccessToken" name="btnAccessToken" class="col-auto hidden">
+				<button class="btn btn-sm btn-primary" type="button" onClick="BSKY.switchViewAccessToken()">
+					Toggle Access Token
+				</button>
+			</div>
+			<div id="btnNotifications" name="btnNotifications" class="col-auto hidden">
+				<button class="btn btn-sm btn-primary" type="button" onClick="BSKY.retrieveUserNotifications()">
+					Get Notifications
+				</button>
+			</div>
+			<div id="btnLogout" name="btnLogout" class="col-auto">
+				<button class="btn btn-sm btn-danger" type="button" onClick="BSKY.logout()">
+					Logout
+				</button> |
+			</div>
 			<div class="col-auto">
 				Sources:
 				<a href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h" class="btn btn-sm btn-secondary link-light" target="dev_to">Dev.to</a>
@@ -114,6 +128,19 @@
 					View Docs
 				</button>
 			</div>
+		</div>
+
+		<!-- El panel del access_token -->
+		<div id="accessTokenPanel" name="accessTokenPanel" class="container p-2 center theme-access-token hidden">
+			<pre><code id="access_token_jwt"  name="access_token_jwt"  class="language-json"></code></pre>
+			<pre><code id="access_token_json" name="access_token_json" class="language-json"></code></pre><hr/>
+		</div>
+
+		<!-- El panel de las notificaciones -->
+		<div id="notificationsPanel" name="notificationsPanel" class="container p-2 center theme-notifications hidden">
+			<span id="notificationsNumber" name="notificationsNumber" class="input-group-text"></span>
+			<div id="notifications" name="notifications" class="notifications"></div>
+			<pre><code id="notifications_json" name="notifications_json" class="language-json"></code></pre><hr/>
 		</div>
 
 		<!-- El Off Canvas -->

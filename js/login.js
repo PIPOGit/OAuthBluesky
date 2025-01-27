@@ -30,6 +30,7 @@ const DEBUG							= CONFIGURATION.global.debug;
 const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
 const API							= CONFIGURATION.api;
 const LSKEYS						= CONFIGURATION.localStorageKeys;
+const NEOCITIES						= CONFIGURATION.neocities;
 
 
 /**********************************************************
@@ -76,11 +77,8 @@ function bootstrap() {
 
 	// ================================================================
 	// Creamos el objeto raiz.
-	window.BSKY = {
-		// loginWithGoogle : loginWithGoogle
-		authenticateWithBluesky: BLUESKY.authenticateWithBluesky,
-		analizeCallbackURL: BLUESKY.analizeCallbackURL
-	};
+	window.BSKY.authenticateWithBluesky = BLUESKY.authenticateWithBluesky;
+	window.BSKY.analizeCallbackURL = BLUESKY.analizeCallbackURL;
 	if (DEBUG) console.debug( PREFIX, `Created object: [window.BSKY].`, window.BSKY );
 
 	// ================================================================
@@ -100,7 +98,7 @@ function bootstrap() {
 	$( window ).on( "load", postBootstrap );
 	*/
 
-	
+
 	// Vanilla Javascript Events
 	/*
 	window.onload = (event) => {
@@ -115,6 +113,7 @@ function bootstrap() {
 	};
 	*/
 
+	// Update the "user handle" field with the value in localStorage, if any.
 	let userHandle = localStorage.getItem(LSKEYS.user.handle);
 	if ( userHandle ) {
 		let $input = $( "#userHandle" );

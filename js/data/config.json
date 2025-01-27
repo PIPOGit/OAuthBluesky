@@ -5,6 +5,23 @@
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.0.0"
 	},
+	"localhost": {
+		"root": "http://localhost/neocities/index.html"
+	},
+	"github": {
+		"repo": "https://github.com/PIPOGit/OAuthBluesky"
+	},
+	"dev_to": {
+		"post": "https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h"
+	},
+	"neocities": {
+		"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
+		"redirect_uri": "https://madrilenyer.neocities.org/bsky/oauth/callback/",
+		"redirect_delay": 3,
+		"protocol": "http",
+		"hostname": "localhost",
+		"pathname": "/neocities/oauth/callback.html"
+	},
 	"localStorageKeys": {
 		"user": {
 			"handle": "user_handle",
@@ -16,6 +33,8 @@
 			"authServerRequestURI": "user_auth_server_request_uri"
 		},
 		"request": {
+			"authentication": "authentication",
+			"access_token": "access_token",
 			"dpop_nonce": "dpop_nonce",
 			"www_authenticate": "www_authenticate"
 		},
@@ -23,18 +42,10 @@
 			"state": "pkce_state",
 			"code_verifier": "pkce_code_verifier",
 			"code_challenge": "pkce_code_challenge"
+		},
+		"crypto": {
+			"jwk": "jwk"
 		}
-	},
-	"github": {
-		"repo": "https://github.com/PIPOGit/OAuthBluesky"
-	},
-	"dev_to": {
-		"post": "https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h"
-	},
-	"neocities": {
-		"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
-		"redirect_delay": 2000,
-		"redirect_uri": "https://madrilenyer.neocities.org/bsky/oauth/callback/"
 	},
 	"api": {
 		"bluesky": {
@@ -42,6 +53,7 @@
 				"public": "https://public.api.bsky.app/xrpc",
 				"url": "https://bsky.social/xrpc",
 				"api": {
+					"resolveHandle": "/com.atproto.identity.resolveHandle",
 					"describeRepo": "/com.atproto.repo.describeRepo",
 					"getAccountInfo": "/com.atproto.admin.getAccountInfo",
 					"getFollowers": "/app.bsky.graph.getFollowers",

@@ -8,8 +8,8 @@ import CONFIGURATION				from "../data/config.json" with { type: "json" };
 import * as DPoP					from './OAuth2/dpopProof.js'
 import * as TokenClient				from './OAuth2/tokenClient.js';
 import * as APIClient				from './OAuth2/apiClient.js';
-import * as CryptoModule			from './OAuth2/crypto.js';
-import * as JWT						from './OAuth2/jwt.js';
+import * as CryptoModule			from './OAuth2/Crypto.js';
+import * as JWT						from './OAuth2/JWT.js';
 import * as JWTRenderer				from './OAuth2/jwtRender.js'
 
 

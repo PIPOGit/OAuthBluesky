@@ -37,13 +37,12 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
 		<!-- JS Internal -->
-		<script type="module" src="../../js/login.js"></script>
-		<script type="module" src="../../js/test.js"></script>
+		<script type="module" src="../../js/bsky.js"></script>
 	</head>
 	<body onLoad="BSKY.analizeCallbackURL();">
 
 		<!-- El panel central -->
-		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root-div hidden">
+		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root-div">
 
 			<!-- El título -->
 			<div class="row align-items-center">
@@ -88,6 +87,12 @@
 					</div>
 				</div>
 			</form>
+		</div>
+
+		<!-- La redirección -->
+		<div id="redirectPanel" name="redirectPanel" class="col-12 theme-redirect">
+			Se le redirigirá en <span id="redirectSeconds" name="redirectSeconds"></span> segundo(s).
+			Si no se le redirige, haga click <a href="javascript:void(0);" class="btn btn-sm btn-secondary link-light">aquí</a>.
 		</div>
 
 		<!-- El panel de errores -->
@@ -163,7 +168,7 @@
 							<li><a href="https://madrilenyer.neocities.org/bsky/">Bluesky Page</a></li>
 							<li><a href="https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json">client-metadata.json</a></li>
 							<li><a href="https://madrilenyer.neocities.org/bsky/index.html">Index Page</a></li>
-							<li><a href="https://madrilenyer.neocities.org/bsky/oauth/callback//index.html">Callback Page</a></li>
+							<li><a href="https://madrilenyer.neocities.org/bsky/oauth/callback/index.html">Callback Page</a></li>
 						</ul>
 					</li>
 					<li>Management of "Madrilenyer" @ Neocities:

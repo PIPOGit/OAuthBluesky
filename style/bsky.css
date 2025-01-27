@@ -2,6 +2,9 @@
  * El :root pseudo-element, para las variables.
  * ********************************************************/
 :root {
+  /* Global root panel width. */
+  --panel-root-width: 70%;
+
   /* Global font size. */
   --font-size: 16px/1.5;
 
@@ -22,7 +25,7 @@ html {
   /* Base styles go here */
   font: var(--font-size) Verdana, Arial, sans-serif;
   margin: auto;
-  width: 60%;
+  width: var(--panel-root-width);
   padding: 40px 40px;
   background-color: white;
 }
@@ -38,13 +41,11 @@ html {
 
 
 /* ********************************************************
- * El panel de los datos del callback.
+ * El panel de la info.
  * ********************************************************/
-.theme-callback input.form-control-plaintext {
+.theme-info {
   border: var(--panel-border-size) solid var(--panel-border-color);
-  color: white;
-  background-color: lightslategray;
-  padding: 1px 8px;
+  background-color: palegreen;
 }
 
 
@@ -104,6 +105,28 @@ html {
   padding: 1px 4px;
   border: var(--panel-border-size) solid var(--panel-border-color);
   background-color: yellow;
+}
+
+
+/* ********************************************************
+ * El panel de los datos del callback.
+ * ********************************************************/
+.theme-callback input.form-control-plaintext {
+  border: var(--panel-border-size) solid var(--panel-border-color);
+  color: white;
+  background-color: lightslategray;
+  padding: 1px 8px;
+}
+
+
+/* ********************************************************
+ * El panel de la redirección.
+ * ********************************************************/
+.theme-redirect {
+  border: var(--panel-border-size) solid var(--panel-border-color);
+  color: navy;
+  background-color: lightgoldenrodyellow;
+  padding: 1px 24px;
 }
 
 
