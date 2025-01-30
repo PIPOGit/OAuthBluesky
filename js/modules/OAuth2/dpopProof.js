@@ -4,13 +4,19 @@
  * See: https://github.com/udelt/dpop_js_test/blob/main/modules/dpopProof.js
  **********************************************************/
 // Common modules
-import * as COMMON					from "../common.functions.js";
 import CONFIGURATION				from "../../data/config.json" with { type: "json" };
-// For OAuth2 User Token retrieval / DPoP
-import * as JWT         			from "./JWT.js";
-import * as CryptoModule 			from "./Crypto.js";
-import * as uuid         			from './UUID.js';
-import * as tokenClient  			from './tokenClient.js'
+// Common functions
+import * as COMMON					from "../common.functions.js";
+// Common Classes and Exceptions ("Types")
+import * as TYPES					from "../common.types.js";
+// Common Base64 functions
+import * as Base64					from "./Base64Url.js";
+// Common Crypto functions
+import * as Crypto					from "./Crypto.js";
+// Common UUID functions
+import * as UUID					from "./UUID.js";
+// Common JWT functions
+import * as JWT						from "./JWT.js";
 
 
 /**********************************************************
@@ -21,10 +27,12 @@ const MODULE_NAME					= COMMON.getModuleName( import.meta.url );
 const MODULE_VERSION				= "1.0.0";
 const MODULE_PREFIX					= `[${MODULE_NAME}]: `;
 
-
 // Inner constants
 const DEBUG							= CONFIGURATION.global.debug;
 const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
+
+// DPoP constants
+const DPoP_HEADER_TYPE				= "dpop+jwt";
 
 
 /**********************************************************
@@ -36,67 +44,81 @@ let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
+async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenHash, url, dpopNonce=null, method="POST") {
+	const PREFIX = `[${MODULE_NAME}:createDPoPProofWithParams] `;
+	if (GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+url+"]");
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+    let dpopProofHeader = {
+        typ: DPoP_HEADER_TYPE,
+        alg: Crypto.KEY_ALGORITM,
+        jwk: jwk
+    };
+	if (DEBUG) console.debug( PREFIX + "dpopProofHeader:", COMMON.prettyJson( dpopProofHeader ) );
+
+	// Let's build up a new dpopProof Payload.
+	let dpopProofPayload = {};
+	dpopProofPayload.iss = clientId;
+	dpopProofPayload.jti = UUID.generateRandomState();
+	dpopProofPayload.htm = method;
+	dpopProofPayload.htu = url;
+	dpopProofPayload.iat = Math.floor(Date.now() / 1000);
+
+	// Depending on the incoming values...
+	if ( dpopNonce ) {
+		dpopProofPayload.nonce = dpopNonce;
+	}
+	if ( accessTokenHash ) {
+		dpopProofPayload.ath = accessTokenHash;
+	}
+	if (DEBUG) console.debug( PREFIX + "dpopProofPayload:", COMMON.prettyJson( dpopProofPayload ) );
+
+
+    // Crypt and sign the DPoP-Proof header+body
+    // ------------------------------------------
+    // + Prepare
+    const h = JSON.stringify(dpopProofHeader);
+    const p = JSON.stringify(dpopProofPayload);
+    const partialToken = [
+        Base64.toBase64Url(Base64.utf8ToUint8Array(h)),
+        Base64.toBase64Url(Base64.utf8ToUint8Array(p)),
+    ].join(".");
+
+    // + Sign
+    let signatureAsBase64 = await Crypto.sign(privateKey, partialToken)
+
+
+    // The DPoP-Proof
+    // ------------------------------------------
+    let dpopProof = `${partialToken}.${signatureAsBase64}`;
+	if (DEBUG) console.debug( PREFIX + "dpopProof:", dpopProof );
+	if (DEBUG) console.debug( PREFIX + "dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+	if (GROUP_DEBUG) console.groupEnd();
+    return dpopProof;
+}
+
 
 
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
-export async function createDPoPProof(atHash, jwk, key, resourceUrl, clientId, nonce, method="POST") {
+export async function createDPoPProof(dpopRequest) {
 	const PREFIX = `[${MODULE_NAME}:createDPoPProof] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+resourceUrl+"]");
-	if (DEBUG) console.debug(PREFIX, "atHash:", atHash);
-	if (DEBUG) console.debug(PREFIX, "jwk:", COMMON.prettyJson(jwk));
-	if (DEBUG) console.debug(PREFIX, "key:", COMMON.prettyJson(key));
-	if (DEBUG) console.debug(PREFIX, "resourceUrl:", resourceUrl);
-	if (DEBUG) console.debug(PREFIX, "clientId:", clientId);
-	if (DEBUG) console.debug(PREFIX, "nonce:", nonce);
-	if (DEBUG) console.debug(PREFIX, "method:", method);
-
-	var dpopProof = {
-        key: undefined,
-        jwk: undefined,
-        thumbprint: undefined
-    };
-    
-    var dpop_proof_payload = {
-        iss: clientId,	// Added
-        jti: await uuid.generate(),
-        htm: method,
-        htu: resourceUrl,
-        iat: Math.floor(Date.now() / 1000)
-    };
-
-	if (atHash)
-        dpop_proof_payload["ath"] = atHash;
-	if (nonce)
-        dpop_proof_payload["nonce"] = nonce;
-	if (DEBUG) console.debug(PREFIX, "dpop_proof_payload:", COMMON.prettyJson( dpop_proof_payload ));
-
-    var header = {
-        typ: "dpop+jwt",
-        alg: "ES256",
-        jwk: undefined
-    };
-
-    if (!key){
-        key = await CryptoModule.generateKey();
-		if (DEBUG) console.debug(PREFIX, "key:", COMMON.prettyJson(key));
-    }
-
-    if (!jwk){
-        jwk = await CryptoModule.exportJwk(key.publicKey);
-		if (DEBUG) console.debug(PREFIX, "jwk (original):", COMMON.prettyJson(jwk));
-        delete jwk.ext;
-        delete jwk.key_ops;
-		if (DEBUG) console.debug(PREFIX, "jwk:", COMMON.prettyJson(jwk));
-    }        
-
-    header.jwk = jwk;
-	if (DEBUG) console.debug(PREFIX, "header:", COMMON.prettyJson(header));
-    var dpopProof = await JWT.create(key.privateKey, header, dpop_proof_payload);
-	if (DEBUG) console.debug(PREFIX, "dpopProof:", dpopProof);
-	if (DEBUG) console.debug(PREFIX, "dpopProof (pretty):", JWT.jwtToPrettyJSON( dpopProof ));
+	if (GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+dpopRequest.url+"]");
+	
+	let dpopProof = await createDPoPProofWithParams(
+		dpopRequest.privateKey,
+		dpopRequest.jwk,
+		dpopRequest.clientId,
+		dpopRequest.accessTokenHash,
+		dpopRequest.url,
+		dpopRequest.dpopNonce,
+		dpopRequest.method
+	);
 
 	if (GROUP_DEBUG) console.groupEnd();
-    return { dpopProof: dpopProof, key: key, jwk: jwk };
+    return dpopProof;
 }
+

@@ -37,7 +37,10 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
 		<!-- JS Internal -->
-		<script type="module" src="./js/bsky.js"></script>
+		<!-- + Global JavaScript -->
+		<script type="module" src="./js/bluesky.js"></script>
+		<!-- + Page related -->
+		<script type="module" src="./js/login.js"></script>
 	</head>
 	<body>
 
@@ -105,7 +108,6 @@
 		<!-- Botonera inferior -->
 		<div class="container d-grid gap-2 d-md-flex justify-content-md-end theme-botonera center">
 			<div class="col-auto">
-				Sources:
 				<a href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h" class="btn btn-sm btn-secondary link-light" target="dev_to">Dev.to</a>
 				<a href="https://github.com/PIPOGit/OAuthBluesky" class="btn btn-sm btn-secondary link-light" target="github">GitHub</a>
 			</div>
@@ -142,10 +144,6 @@
 						<ul>
 							<li><a href="https://neocities.org/dashboard">Neocities: ROOT Dashboard</a></li>
 							<li><a href="https://neocities.org/dashboard?dir=bsky">Neocities: BSKY Dashboard</a></li>
-							<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Findex.html">Neocities|TextEdit: /index.html</a></li>
-							<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Fjs%2Fmodules%2Fbluesky.js">Neocities|TextEdit: /bsky/js/modules/bluesky.js</a></li>
-							<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Foauth%2Fclient-metadata.json">Neocities|TextEdit: /bsky/oauth/client-metadata.json</a></li>
-							<li><a href="https://neocities.org/site_files/text_editor?filename=bsky%2Foauth%2Fcallback%2Findex.html">Neocities|TextEdit: /bsky/oauth/callback/index.html</a></li>
 						</ul>
 					</li>
 				</ul>
@@ -223,6 +221,7 @@
 				Bootstrap Related:
 				<ul>
 					<li><a href="https://www.getbootstrap.com/">Get Bootstrap</a></li>
+					<li><a href="https://www.getbootstrap.com/docs/">Bootstrap Docs</a></li>
 					<li><a href="https://getbootstrap.com/docs/5.3/getting-started/introduction/">Get started with Bootstrap</a></li>
 					<li><a href="https://icons.getbootstrap.com/">Bootstrap Icons</a></li>
 					<li>Bootstrap Examples:

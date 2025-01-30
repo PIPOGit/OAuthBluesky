@@ -20,31 +20,23 @@
 		"redirect_delay": 3,
 		"protocol": "http",
 		"hostname": "localhost",
+		"dashboard": "/neocities/dashboard.html",
 		"pathname": "/neocities/oauth/callback.html"
 	},
 	"localStorageKeys": {
-		"user": {
-			"handle": "user_handle",
-			"did": "user_did",
-			"didDoc": "user_did_document",
-			"pdsUrl": "user_pds_url",
-			"authServerUrl": "user_auth_server_url",
-			"authServerDiscovery": "user_auth_server_discovery",
-			"authServerRequestURI": "user_auth_server_request_uri"
-		},
-		"request": {
-			"authentication": "authentication",
-			"access_token": "access_token",
-			"dpop_nonce": "dpop_nonce",
-			"www_authenticate": "www_authenticate"
-		},
-		"pkce": {
-			"state": "pkce_state",
-			"code_verifier": "pkce_code_verifier",
-			"code_challenge": "pkce_code_challenge"
-		},
+		"BSKYDATA": "BSKYDATA",
+		"LOGOUT": "LOGOUT",
 		"crypto": {
 			"jwk": "jwk"
+		},
+		"request": {
+			"access_token": "access_token",
+			"authentication": "authentication",
+			"dpop_nonce": "dpop_nonce",
+			"refresh_token": "refresh_token"
+		},
+		"user": {
+			"handle": "user_handle"
 		}
 	},
 	"api": {
@@ -57,6 +49,7 @@
 					"describeRepo": "/com.atproto.repo.describeRepo",
 					"getAccountInfo": "/com.atproto.admin.getAccountInfo",
 					"getFollowers": "/app.bsky.graph.getFollowers",
+					"getPosts": "/app.bsky.feed.getPosts",
 					"getProfile": "/app.bsky.actor.getProfile",
 					"resolveHandle": "/com.atproto.identity.resolveHandle",
 					"listNotifications": "/app.bsky.notification.listNotifications"

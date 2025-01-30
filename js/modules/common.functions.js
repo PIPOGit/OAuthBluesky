@@ -4,6 +4,12 @@
 import CONFIGURATION				from "../data/config.json" with { type: "json" };
 
 
+/**********************************************************
+ * Common constants
+ **********************************************************/
+// Fancy CSS style for the DevTools console.
+export const CONSOLE_STYLE					= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
+
 
 /**********************************************************
  * Common function
@@ -57,7 +63,7 @@ export const isFunction				= obj => ( getTypeOf( obj ).trim().toUpperCase().loca
 export const isEmpty				= str => (typeof str === "string" && str.length === 0);
 export const isNull					= str => (str === null);
 export const isUndefined			= str => (str === undefined);
-export const isEmptyOrNull			= str => ( isUndefined(str) || isNull(str) || isEmpty(str) );
+export const isNullOrEmpty			= str => ( isUndefined(str) || isNull(str) || isEmpty(str) );
 
 // String functions
 export const removeTrailingSlash	= str => ( str.endsWith('/') ? str.slice(0, -1) : str );
@@ -125,36 +131,6 @@ export const showError				= message => {
 	$("#"+ID_TOAST_KO).toast("show");
 }
 
-export function printOutFetchResponse(prefix, data) {
-	let PREFIX = prefix + "[RESPONSE=="+(data.ok?"OK":"ERROR")+" ("+data.status+")]";
-	if (DEBUG) console.groupCollapsed(PREFIX);
-	if (DEBUG) console.debug(PREFIX, "Received response:", prettyJson(data));
-
-	let response = {};
-	response.bodyUsed = data.bodyUsed;
-	if (DEBUG) console.debug(PREFIX, "+ Response[bodyUsed]:", data.bodyUsed);
-	response.ok = data.ok;
-	if (DEBUG) console.debug(PREFIX, "+ Response[ok]:", data.ok);
-	response.redirected = data.redirected;
-	if (DEBUG) console.debug(PREFIX, "+ Response[redirected]:", data.redirected);
-	response.status = data.status;
-	if (DEBUG) console.debug(PREFIX, "+ Response[status]:", data.status);
-	response.statusText = data.statusText;
-	if (DEBUG) console.debug(PREFIX, "+ Response[statusText]:", data.statusText);
-	response.type = data.type;
-	if (DEBUG) console.debug(PREFIX, "+ Response[type]:", data.type);
-	response.url = data.url;
-	if (DEBUG) console.debug(PREFIX, "+ Response[url]:", data.url);
-	response.headers = {};
-	if (DEBUG) console.debug(PREFIX, "+ Response Headers:");
-	for (var pair of data.headers.entries()) {
-		response.headers[pair[0]] = pair[1];
-		if (DEBUG) console.debug(PREFIX, "  + Header["+pair[0]+"]:", pair[1]);
-	}
-	if (DEBUG) console.groupEnd(PREFIX);
-	return response;
-}
-
 export function renderHTMLElements(parsedSearch) {
 	const PREFIX = `[${MODULE_NAME}:renderHTMLElements] `;
 	if (DEBUG) console.groupCollapsed(PREFIX);
@@ -170,12 +146,12 @@ export function renderHTMLElements(parsedSearch) {
 	let error = parsedSearch.get("error");
 	let errorDescription = parsedSearch.get("error_description");
 
-	if (DEBUG) console.debug(PREFIX, "Updating HTML Elements:");
-	if (DEBUG) console.debug(PREFIX, "+ iss:", iss);
-	if (DEBUG) console.debug(PREFIX, "+ state:", state);
-	if (DEBUG) console.debug(PREFIX, "+ code:", code);
-	if (DEBUG) console.debug(PREFIX, "+ error:", error);
-	if (DEBUG) console.debug(PREFIX, "+ errorDescription:", errorDescription);
+	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
+	if (DEBUG) console.debug(PREFIX + "+ iss:", iss);
+	if (DEBUG) console.debug(PREFIX + "+ state:", state);
+	if (DEBUG) console.debug(PREFIX + "+ code:", code);
+	if (DEBUG) console.debug(PREFIX + "+ error:", error);
+	if (DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
 
 	$("#iss").val(iss);
 	$("#state").val(state);
@@ -195,7 +171,7 @@ export function renderHTMLElements(parsedSearch) {
 export function renderHTMLErrorElements(errorObject) {
 	const PREFIX = `[${MODULE_NAME}:renderHTMLErrorElements] `;
 	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
-	if (DEBUG) console.debug(PREFIX, "Received:", errorObject);
+	if (DEBUG) console.debug(PREFIX + "Received:", errorObject);
 
 	// CSS Classes.
 	$(".container .center").removeClass("hidden");
@@ -204,7 +180,7 @@ export function renderHTMLErrorElements(errorObject) {
 	let error = null;
 	let errorDescription = null;
 	let isAnObject = ( typeof errorObject === 'object' && !Array.isArray(errorObject) && errorObject !== null );
-	if (DEBUG) console.debug(PREFIX, "isAnObject:", isAnObject);
+	if (DEBUG) console.debug(PREFIX + "isAnObject:", isAnObject);
 	if ( isAnObject ) {
 		error = errorObject.error;
 		errorDescription = errorObject.message;
@@ -213,9 +189,9 @@ export function renderHTMLErrorElements(errorObject) {
 		errorDescription = errorObject;
 	}
 
-	if (DEBUG) console.debug(PREFIX, "Updating HTML Elements:");
-	if (DEBUG) console.debug(PREFIX, "+ error:", error);
-	if (DEBUG) console.debug(PREFIX, "+ errorDescription:", errorDescription);
+	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
+	if (DEBUG) console.debug(PREFIX + "+ error:", error);
+	if (DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
 
 	$("#error").val(error);
 	$("#errorDescription").val(errorDescription);

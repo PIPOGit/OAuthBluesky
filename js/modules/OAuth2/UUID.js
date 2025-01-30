@@ -50,3 +50,13 @@ export async function generate() {
     var crypto = window.crypto || window.msCrypto;
     return 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, randomDigit);
 }
+
+export function generateRandomState() {
+	return self.crypto.randomUUID();
+}
+
+export function generateRandomCodeVerifier() {
+    let randomData = new Uint32Array(28);
+    window.crypto.getRandomValues(randomData);
+    return Array.from(randomData, dec => ('0' + dec.toString(16)).substr(-2)).join('');
+}

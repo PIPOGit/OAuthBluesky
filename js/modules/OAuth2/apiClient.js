@@ -43,13 +43,13 @@ export async function callAPI(accessToken, dpopProof, resourceUrl) {
 	const PREFIX_FETCH = `[${MODULE_NAME}:callAPI][Fetch] `;
 	const PREFIX_FETCH_HEADERS = `[${MODULE_NAME}:callAPI][Fetch:Headers] `;
 	const PREFIX_FETCH_ERROR = `[${MODULE_NAME}:callAPI][Fetch:ERROR] `;
-
 	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
-	if (DEBUG) console.debug(PREFIX, "+ resourceUrl:", resourceUrl);
-	if (DEBUG) console.debug(PREFIX, "+ accessToken:", accessToken);
-	if (DEBUG) console.debug(PREFIX, "+ accessToken (pretty):", JWT.jwtToPrettyJSON( accessToken ));
-	if (DEBUG) console.debug(PREFIX, "+ dpopProof:", dpopProof);
-	if (DEBUG) console.debug(PREFIX, "+ dpopProof (pretty):", JWT.jwtToPrettyJSON( dpopProof ));
+
+	if (DEBUG) console.debug(PREFIX + "+ resourceUrl:", resourceUrl);
+	if (DEBUG) console.debug(PREFIX + "+ accessToken:", accessToken);
+	if (DEBUG) console.debug(PREFIX + "+ accessToken (pretty):", JWT.jwtToPrettyJSON( accessToken ));
+	if (DEBUG) console.debug(PREFIX + "+ dpopProof:", dpopProof);
+	if (DEBUG) console.debug(PREFIX + "+ dpopProof (pretty):", JWT.jwtToPrettyJSON( dpopProof ));
 
 	let headers = {
 		'Authorization': `DPoP ${accessToken}`,
@@ -63,25 +63,25 @@ export async function callAPI(accessToken, dpopProof, resourceUrl) {
 		headers: headers,            
 	};
 
-	if (DEBUG) console.debug(PREFIX, "----------------------------------------------------------------------------");
-	if (DEBUG) console.debug(PREFIX, "Calling url..........:", resourceUrl);
-	if (DEBUG) console.debug(PREFIX, "+ with this 'headers':", COMMON.prettyJson(headers));
-	if (DEBUG) console.debug(PREFIX, "----------------------------------------------------------------------------");
+	if (DEBUG) console.debug(PREFIX + "----------------------------------------------------------------------------");
+	if (DEBUG) console.debug(PREFIX + "Calling url..........:", resourceUrl);
+	if (DEBUG) console.debug(PREFIX + "+ with this 'headers':", COMMON.prettyJson(headers));
+	if (DEBUG) console.debug(PREFIX + "----------------------------------------------------------------------------");
 	var response = await fetch(resourceUrl, fetchOptions).then(response => {
 		COMMON.printOutFetchResponse(PREFIX_FETCH_HEADERS, response);
 		return response.json();
 	}).then(json => {
 		if (GROUP_DEBUG) console.groupCollapsed(PREFIX_FETCH);
-		if (DEBUG) console.debug(PREFIX_FETCH, "Received data:", COMMON.prettyJson(json));
+		if (DEBUG) console.debug(PREFIX_FETCH + "Received data:", COMMON.prettyJson(json));
 		if (GROUP_DEBUG) console.groupEnd();
 		return json;
 	}).catch(function(error){
 		if (GROUP_DEBUG) console.groupCollapsed(PREFIX_FETCH_ERROR);
-		if (DEBUG) console.error(PREFIX_FETCH_ERROR, "[CATCH] API Call error!", COMMON.prettyJson(error));
+		if (DEBUG) console.error(PREFIX_FETCH_ERROR + "[CATCH] API Call error!", COMMON.prettyJson(error));
 		if (GROUP_DEBUG) console.groupEnd();
 		throw(error);
 	});
-	if (DEBUG) console.debug(PREFIX, "Received response:", response);
+	if (DEBUG) console.debug(PREFIX + "Received response:", response);
 
 	if (GROUP_DEBUG) console.groupEnd();
 	return response;
