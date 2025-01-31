@@ -3,7 +3,8 @@
 		"debug": true,
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
-		"appVersion": "1.0.0"
+		"appVersion": "1.0.0",
+		"refresh_dashboard": 10
 	},
 	"localhost": {
 		"root": "http://localhost/neocities/index.html"
@@ -36,11 +37,15 @@
 			"refresh_token": "refresh_token"
 		},
 		"user": {
-			"handle": "user_handle"
+			"handle": "user_handle",
+			"profile": "user_profile"
 		}
 	},
 	"api": {
 		"bluesky": {
+			"profile": {
+				"url": "https://bsky.app/profile/"
+			},
 			"XRPC": {
 				"public": "https://public.api.bsky.app/xrpc",
 				"url": "https://bsky.social/xrpc",

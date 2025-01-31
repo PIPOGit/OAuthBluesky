@@ -33,6 +33,7 @@ const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
 const API								= CONFIGURATION.api;
+const LSKEYS							= CONFIGURATION.localStorageKeys;
 
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
@@ -85,7 +86,7 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 	let authorAvatar					= author.avatar;
 	let authorURL						= "https://bsky.app/profile/" + authorHandle;
 
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+authorName+"]" + " ["+notiReason+"]" + " ["+when.toLocaleString()+"]" );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+notiReason+"] ["+authorName+"] ["+when.toLocaleString()+"]" );
 
 	// Actualizamos el HTML con el autor.
 	let html							= jqRoot.html() + `<div id="notification-${cid}" name="notification${cid}" class="notification">`;
@@ -182,15 +183,14 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 		// Agregamos la info al html...
 		let referredText				= `Not detected yet for ${notiReason}!`;
 		switch ( notiReason.toLowerCase() ) {
-			case "follow":
-				break;
 			case "like":
 				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
 				break;
 			case "reply":
-				referredText			= bluit.embed.record.value.text;
+				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
 				break;
 			case "repost":
+				referredText			= `Not detected yet for ${notiReason}!`;
 				break;
 			default:
 				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
@@ -319,16 +319,19 @@ export function updateHTMLFields(parsedSearch) {
 	let code							= null;
 	let dpopNonce						= null;
 
+	let response						= null;
 	if ( isInstanceOfURLSearchParams ) {
 		iss								= parsedSearch.get("iss");
 		state							= parsedSearch.get("state");
 		code							= parsedSearch.get("code");
 		dpopNonce						= parsedSearch.get("dpopNonce");
+		response						= new TYPES.CallbackData( iss, state, code, dpopNonce );
 	} else {
 		iss								= parsedSearch.iss;
 		state							= parsedSearch.state;
 		code							= parsedSearch.code;
 		dpopNonce						= parsedSearch.dpopNonce;
+		response						= parsedSearch;
 	}
 
 	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
@@ -336,9 +339,6 @@ export function updateHTMLFields(parsedSearch) {
 	if (DEBUG) console.debug(PREFIX + "+ state:", state);
 	if (DEBUG) console.debug(PREFIX + "+ code:", code);
 	if (DEBUG) console.debug(PREFIX + "+ dpopNonce:", dpopNonce);
-
-	// Prepare an object to return
-	let response						= new TYPES.CallbackData( iss, state, code, dpopNonce );
 
 	// Update HTML page element values.
 	// CSS Classes.
@@ -380,11 +380,20 @@ export async function parseNotifications( notifications, userAccessToken, client
 	clearHTMLError();
 	let totalUnread						= unreadNotifications.length;
 	let currentUnread					= 0;
+	$( "#pill-notifications-badge" ).html(""+totalUnread);
 	if ( totalUnread == 0) {
 		if (DEBUG) console.debug( PREFIX + "Currently, no UNREAD notifications." );
+
+		// Ponemos el badge a 0 y lo ocultamos
+		COMMON.hide("pill-notifications-badge");
 	} else {
 		if (DEBUG) console.debug( PREFIX + "%cCurrently, " + totalUnread + " UNREAD notifications:", COMMON.CONSOLE_STYLE );
 		if (DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
+
+		// Actualizamos el badge y lo mostramos
+		COMMON.show("pill-notifications-badge");
+
+		// Ponemos el badge a 0 y lo ocultamos
 		for ( let key in unreadNotifications ) {
 			currentUnread++;
 			if (DEBUG) console.groupCollapsed( PREFIX + `[Noti ${currentUnread}/${totalUnread}]` );
@@ -447,6 +456,7 @@ export function htmlRenderUserAccessToken( userAuthentication ) {
 export function htmlRenderUserProfile( profile ) {
 	const STEP_NAME						= "htmlRenderUserProfile";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.debug( PREFIX + "User Profile:", profile );
@@ -460,7 +470,7 @@ export function htmlRenderUserProfile( profile ) {
 			"displayName": "Madrileñer",
 			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:tjc27aje4uwxtw5ab6wwm4km/bafkreieq35674mas2u5dwxnaupsx5s5f7muhvahgqjjczqkfb5pw2pummm@jpeg",
 			"associated": {
-				"lists": 2,
+				"lists": 8,
 				"feedgens": 0,
 				"starterPacks": 0,
 				"labeler": false,
@@ -481,9 +491,9 @@ export function htmlRenderUserProfile( profile ) {
 			"description": "De aquí, de Madrid",
 			"indexedAt": "2024-11-17T11:17:42.829Z",
 			"banner": "https://cdn.bsky.app/img/banner/plain/did:plc:tjc27aje4uwxtw5ab6wwm4km/bafkreiarzagn6jt6acaufnnvt7pf3kkssrbl53cxmtzicljvijs3suzriu@jpeg",
-			"followersCount": 632,
-			"followsCount": 966,
-			"postsCount": 3928
+			"followersCount": 636,
+			"followsCount": 967,
+			"postsCount": 4045
 		}
 
 	 */
@@ -497,10 +507,65 @@ export function htmlRenderUserProfile( profile ) {
 	$( "#profile-handle" ).html( profile.handle );
 	$( "#profile-handle-top" ).html( profile.handle );
 
-	$( "#profileFollowers" ).html( profile.followersCount );
-	$( "#profileFollowing" ).html( profile.followsCount );
-	$( "#profilePosts" ).html( profile.postsCount );
-	$( "#profileDescription" ).html( profile.description );
+	$( "#profile-followers" ).html( profile.followersCount );
+	$( "#profile-following" ).html( profile.followsCount );
+	$( "#profile-posts" ).html( profile.postsCount );
+	$( "#profile-description" ).html( profile.description );
+
+	// El enlace
+	let $link							= $( "#profile-handle-link" );
+	let href							= API.bluesky.profile.url + profile.handle;
+	$link.attr("href",  href);
+	$link.attr("alt",   `ALT: ${profile.description}`);
+	$link.attr("title", `TITLE: ${profile.description}`);
+
+	// Let's compare
+	// + Retrieve the previous...
+	let userProfileSaved				= localStorage.getItem(LSKEYS.user.profile);
+	let userProfilePREV					= ( COMMON.isNullOrEmpty(userProfileSaved) ) ? null : JSON.parse( userProfileSaved );
+	// + Save the new one
+	localStorage.setItem(LSKEYS.user.profile, JSON.stringify( profile ));
+	if ( userProfilePREV ) {
+		// if (DEBUG) console.debug( PREFIX_COMPARE + "+ PREV userProfile:", COMMON.prettyJson( userProfilePREV ) );
+		// if (DEBUG) console.debug( PREFIX_COMPARE + "+ NEW  userProfile:", COMMON.prettyJson( profile ) );
+
+		// TODO: Comparamos y ponemos el toast
+
+		/*
+		 *
+		 * Comparamos:
+		 *  + "followersCount": 635,
+		 *  + "followsCount": 967,
+		 *  + "postsCount": 4051
+		 *
+		 * Si hay cambios, en un toast:
+		 *   See: https://getbootstrap.com/docs/5.3/components/toasts/#live-example
+		 */
+		let following					= profile.followsCount;
+		let followers					= profile.followersCount;
+		let diffFollowing				= following - userProfilePREV.followsCount;
+		let diffFollowers				= followers - userProfilePREV.followersCount;
+
+		if ( (diffFollowing>0) || (diffFollowers>0)) {
+			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
+			// El toast.
+			let toastDivID				= "toast-followers-change";
+			let $toast					= $( `#${toastDivID}` );
+			let $toastImg				= $( `#${toastDivID} > .toast-header > img` );
+			let $toastBody				= $( `#${toastDivID} > .toast-body` );
+			let html					= `Diferencia de ${diffFollowers} followers y de ${diffFollowing} following`;
+			let delay					= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
+
+			$toastImg.attr( "src", profile.avatar );
+			$toastBody.html( html );
+			$toast.show({"animation": true, "autohide": true, "delay": 1000});
+			setTimeout(() => { $toast.hide({"animation": true}); }, delay );
+		} else {
+			if (DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
+		}
+		
+		if (GROUP_DEBUG) console.groupEnd();
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();

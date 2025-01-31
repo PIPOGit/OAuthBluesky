@@ -39,6 +39,7 @@ const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
  * Module Variables
  **********************************************************/
 let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
+let timerId							= 0;
 
 
 /**********************************************************
@@ -75,20 +76,28 @@ async function bootstrap() {
 	// Module info.
 	if (DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
 
+	// ================================================================
+	// Module END
 	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (DEBUG) console.groupEnd();
+
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
 
 	// HTML L&F
+	COMMON.hide( "errorPanel" );
 	COMMON.hide( "infoPanel" );
 
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB();
 
 	// Perform dashboard operations
+	// + Call first.
 	BSKY.dashboard();
+	// + Call every "refreshTime" seconds.
+	const refreshTime					= CONFIGURATION.global.refresh_dashboard * 1000;
+	timerId								= setInterval(() => BSKY.dashboard(), refreshTime);
 }
 

@@ -78,7 +78,7 @@ export class AccessTokenError extends Error {
 	message					= null;
 	valid					= false;
 	code					= 0;
-	constructor( code, message ) {
+	constructor( { code, message } ) {
 		super( "Error: " + message );
 		this.code			= code;
 		this.message		= message;

@@ -115,11 +115,6 @@ async function bootstrap() {
 	// Module info.
 	if (DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
 
-	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (DEBUG) console.groupEnd();
-
-
 	// ================================================================
 	// Actualizamos el objeto raiz.
 	// + Functions
@@ -127,9 +122,17 @@ async function bootstrap() {
 	if (DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
 
 	// ================================================================
+	// Module END
+	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (DEBUG) console.groupEnd();
+
+
+	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
 
 	// HTML L&F
+	COMMON.hide( "errorPanel" );
 	COMMON.hide( "infoPanel" );
 
 	// Check whether we come from LOGOUT.
@@ -139,7 +142,7 @@ async function bootstrap() {
 	await DB.checkCryptoKeyInDB(comeFromLogout);
 
 	// Update the "userHandle" field
-	BSKY.checkUserHandle();
+	checkUserHandle();
 }
 
 
@@ -303,7 +306,7 @@ function step06RedirectUserToBlueskyAuthPage() {
 	// IN localStorage BEFORE LEAVING!!!
     // ------------------------------------------
  	if (DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
-	fnSaveRuntimeDataInLocalStorage();
+	saveRuntimeLoginDataInLocalStorage();
 
     // Buld up the URL.
     // ------------------------------------------
@@ -335,8 +338,8 @@ function checkIfComesFromLogout() {
 	return comeFromLogout;
 }
 
-function fnSaveRuntimeDataInLocalStorage() {
-	const STEP_NAME						= "fnSaveRuntimeDataInLocalStorage";
+function saveRuntimeLoginDataInLocalStorage() {
+	const STEP_NAME						= "saveRuntimeLoginDataInLocalStorage";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+userHandle+"]" );
 
@@ -373,6 +376,30 @@ function fnSaveRuntimeDataInLocalStorage() {
 	localStorage.setItem(LSKEYS.BSKYDATA, JSON.stringify( savedInformation ));
  	if (DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
 
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGIN PROCESS.
+ *
+ * Function to be executed in the "login page".
+ * -------------------------------------------------------- */
+function checkUserHandle() {
+	const STEP_NAME						= "checkUserHandle";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Update the "user handle" field with the value in localStorage, if any.
+	let userHandle						= localStorage.getItem(LSKEYS.user.handle);
+	if ( userHandle ) {
+		let $input						= $( "#userHandle" );
+		if ( $input.length ) {
+			$input.val( userHandle );
+			if (DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${userHandle}"` );
+		}
+	}
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }

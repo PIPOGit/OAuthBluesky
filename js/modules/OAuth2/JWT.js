@@ -68,7 +68,18 @@ export function getParts(accessToken){
     return {header, payload, signature};
 }
 
-export function getJWTAsString(accessToken){
+export function partToJson(section) {
+    var b64 = Base64.ToBase64UrlString(section);
+    var str = atob(b64);
+    return JSON.parse(str);
+}
+
+function prettyJWTString(section){
+    var json = partToJson(section);
+    return JSON.stringify(json, null, "    ");
+}
+
+export function getJWTAsSemiJSON(accessToken){
     var parts = getParts(accessToken);
 
     var headerString = prettyJWTString(parts.header);
@@ -78,24 +89,8 @@ export function getJWTAsString(accessToken){
     return {header: headerString, payload: payloadString, signature: signatureBase64Url}
 }
 
-function prettyJWTString(section){
-    var b64 = Base64.ToBase64UrlString(section);
-    var str = atob(b64);
-    var json = JSON.parse(str);
-    var pretty = JSON.stringify(json, null, "    ");
-    return pretty;
-}
-
-export function partToJson(section) {
-    var b64 = Base64.ToBase64UrlString(section);
-    var str = atob(b64);
-    var json = JSON.parse(str);
-    return json;
-}
-
-
 export function jwtToPrettyJSON( jwt ) {
-    let partsAsString = getJWTAsString(jwt);
+    let partsAsString = getJWTAsSemiJSON(jwt);
     return `${partsAsString.header}.${partsAsString.payload}.${partsAsString.signature}`;
 }
 

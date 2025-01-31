@@ -21,6 +21,14 @@
   /* background-color: antiquewhite; */
 }
 
+.badge-adjusted {
+  transform: translate(50%, -160%) !important;
+}
+
+a.nav-link {
+  height: 32px;
+}
+
 
 /* ********************************************************
  * El panel del access token.

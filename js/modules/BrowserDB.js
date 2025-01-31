@@ -95,7 +95,7 @@ export async function connect() {
 		},
 		terminated() {
 			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_TERMINATED );
-			if (DEBUG) console.debug( PREFIX_TERMINATED + "Database TERMINATED:", DB_NAME );
+			if (DEBUG) console.debug( PREFIX_TERMINATED + "DELETED Database:", DB_NAME );
 			if (DEBUG) console.debug( PREFIX_TERMINATED + "-- END" );
 			if (GROUP_DEBUG) console.groupEnd();
 		}

@@ -166,32 +166,31 @@ async function bootstrap() {
 	window.BSKY.data.wwwAuthenticate	= null;
 	// + Functions
 	window.BSKY.analizeCallbackURL		= fnAnalizeCallbackURL;
-	window.BSKY.checkUserHandle			= fnCheckUserHandle;
 	window.BSKY.dashboard				= fnDashboard;
 	window.BSKY.logout					= fnLogout;
-	window.BSKY.getUserNotifications	= fnRetrieveUserNotifications;
 	if (DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
 
 	// ================================================================
 	// Page Events
 
-	// JQuery Events
 	/*
-	$( window ).on( "load", function(jqEvent) {
-		if (DEBUG) console.debug( PREFIX + `[$(window).on("load")] window is loaded` );
-	});
-	$( window ).on( "load", postBootstrap );
+		// JQuery Events
+		$( window ).on( "load", function(jqEvent) {
+			if (DEBUG) console.debug( PREFIX + `[$(window).on("load")] window is loaded` );
+		});
+		$( window ).on( "load", postBootstrap );
 	*/
 
-
-	// Vanilla Javascript Events
 	/*
-	window.onload = (event) => {
-		// executes when complete page is fully loaded, including all frames, objects and images
-		if (DEBUG) console.debug( PREFIX + `[window.onload] window is loaded` );
-	};
+		// Vanilla Javascript Events
+		window.onload = (event) => {
+			// executes when complete page is fully loaded, including all frames, objects and images
+			if (DEBUG) console.debug( PREFIX + `[window.onload] window is loaded` );
+		};
 	*/
 
+	// ================================================================
+	// Module END
 	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (DEBUG) console.groupEnd();
@@ -204,6 +203,11 @@ async function bootstrap() {
 
 	// Geolocation
 	await geoLocationInformation();
+
+	// La configuración de HighlightJS
+	hljs.configure({
+		ignoreUnescapedHTML: true
+	});
 }
 
 async function geoLocationInformation() {
@@ -255,8 +259,8 @@ async function geoLocationInformation() {
  * HELPER Functions
  **********************************************************/
 // Local Storage Helper functions
-function fnSaveRuntimeDataInLocalStorage() {
-	const STEP_NAME						= "fnSaveRuntimeDataInLocalStorage";
+function saveRuntimeDataInLocalStorage() {
+	const STEP_NAME						= "saveRuntimeDataInLocalStorage";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+userHandle+"]" );
 
@@ -410,6 +414,9 @@ async function retrieveNotifications(renderHTMLErrors=true) {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}] [MAX ${MAX_NOTIS_TO_RETRIEVE} notifications to retrieve]` );
 
+	// TODO: Primero hay que preguntar si hay...
+	//   See: https://docs.bsky.app/docs/api/app-bsky-notification-get-unread-count
+
 	// Prepare the URL..
 	let endpoint						= API.bluesky.XRPC.api.listNotifications;
 	// let root = API.bluesky.XRPC.public;
@@ -505,6 +512,279 @@ async function retrieveTheUserProfile() {
 
 
 /**********************************************************
+ * LOGGED-IN PRIVATE Functions
+ **********************************************************/
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve notifications.
+ * -------------------------------------------------------- */
+async function getTheUserNotifications() {
+	const STEP_NAME						= "getTheUserNotifications";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
+	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Clear and hide error fields and panel
+	HTML.clearHTMLError();
+
+	// Hide panels
+	// COMMON.hide("accessTokenPanel");
+	// COMMON.hide("notificationsPanel");
+
+	let apiCallResponse					= null;
+	try {
+		// Let's gather the user's notifications.
+		// ------------------------------------------
+		apiCallResponse					= await retrieveNotifications(false);
+		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+
+		// Parse the response
+		await HTML.parseNotifications( apiCallResponse, userAccessToken, APP_CLIENT_ID, accessTokenHash );
+	} catch (error) {
+		if (GROUP_DEBUG) console.groupEnd();
+
+		// Check if the error is due to a different dpop-nonce in step 12...
+		if ( COMMON.areEquals(error.step, "retrieveNotifications") && !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived) ) {
+			// Show the error and update the HTML fields
+			HTML.updateHTMLError(error, false);
+
+			if (DEBUG) console.debug( PREFIX + "Let's retry..." );
+			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
+			try {
+				apiCallResponse			= await retrieveNotifications( true );
+				if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
+
+				// Clear and hide error fields and panel
+				HTML.clearHTMLError();
+
+				// Parse the response
+				await HTML.parseNotifications( apiCallResponse, userAccessToken, APP_CLIENT_ID, accessTokenHash );
+			} catch (error) {
+				if (GROUP_DEBUG) console.groupEnd();
+
+				// Show the error and update the HTML fields
+				HTML.updateHTMLError(error);
+				throw( error );
+			}
+			if (GROUP_DEBUG) console.groupEnd();
+		} else {
+
+			// Show the error and update the HTML fields
+			HTML.updateHTMLError(error);
+		}
+	}
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve user Profile.
+ * -------------------------------------------------------- */
+async function getTheUserProfile() {
+	const STEP_NAME						= "getTheUserProfile";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
+	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Now, the user's profile.
+	let apiCallResponse					= null;
+	try {
+		if (DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
+
+		// Retrieve user's profile to show
+		// ------------------------------------------
+		apiCallResponse					= await retrieveTheUserProfile();
+
+		// Lo pintamos en su sitio.
+		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+		HTML.htmlRenderUserProfile( apiCallResponse );
+	} catch (error) {
+		if (GROUP_DEBUG) console.groupEnd();
+
+		// Show the error and update the HTML fields
+		HTML.updateHTMLError(error);
+		throw( error );
+	}
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": postProcessAccessToken.
+ * -------------------------------------------------------- */
+async function postProcessAccessToken() {
+	const STEP_NAME						= "postProcessAccessToken";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Swho some more information
+	if (DEBUG) console.debug( PREFIX + "Current cryptoKey:", BSKY.data.cryptoKey );
+	if (DEBUG) console.debug( PREFIX + "Current cryptoKey:", COMMON.prettyJson( BSKY.data.cryptoKey ) );
+	if (DEBUG) console.debug( PREFIX + "Current jwk:", BSKY.data.jwk );
+	if (DEBUG) console.debug( PREFIX + "Current jwk:", COMMON.prettyJson( BSKY.data.jwk ) );
+	if (DEBUG) console.debug( PREFIX + "Current userAuthentication:", userAuthentication );
+	if (DEBUG) console.debug( PREFIX + "Current userAuthentication:", COMMON.prettyJson( userAuthentication ) );
+	if (DEBUG) console.debug( PREFIX + "Current userAccessToken:", userAccessToken );
+	if (DEBUG) console.debug( PREFIX + "Current userAccessToken:", JWT.jwtToPrettyJSON( userAccessToken ) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	// Let's backup the current data.
+	saveRuntimeDataInLocalStorage();
+
+	// Let's render the user's access token.
+	// if (DEBUG) console.debug( PREFIX + "userAuthentication:", userAuthentication );
+	if (DEBUG) console.debug( PREFIX + "Rendering the access token fields and panel..." );
+	HTML.htmlRenderUserAccessToken( userAuthentication );
+
+	// Update HTML fields
+	if (DEBUG) console.debug( PREFIX + "Filling-in access token fields and panel..." );
+	$("#notifications_json").removeAttr('data-highlighted');
+	$("#access_token_jwt").removeAttr('data-highlighted');
+	$("#access_token_json").removeAttr('data-highlighted');
+	$("#access_token_jwt").text( userAccessToken );
+	$("#access_token_json").text( JWT.jwtToPrettyJSON( userAccessToken ) );
+	hljs.highlightAll();
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Validates the access token.
+ * -------------------------------------------------------- */
+async function validateAccessToken() {
+	const STEP_NAME						= "validateAccessToken";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_AFTER					= `${PREFIX}[After] `;
+	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
+	const PREFIX_RETRY					= `${PREFIX}[Retry] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// ------------------------------------------
+	// Retrieve the access_token
+	let apiCallResponse					= null;
+	let isAccessTokenValid				= false;
+
+	if (DEBUG) console.debug( PREFIX + `Let's see whether we have a "valid" user access token...` );
+	if (DEBUG) console.debug( PREFIX + "+ Current userAccessToken:", userAccessToken );
+	if (DEBUG) console.debug( PREFIX + "+ Current userAuthServerDiscovery:", userAuthServerDiscovery );
+	if (DEBUG) console.debug( PREFIX + "+ Current userAuthentication:", userAuthentication );
+	
+	// Do we have access token?
+	if (COMMON.isNullOrEmpty(userAccessToken)) {
+		// NO. Let's see if this is the first time after login.
+
+		if (DEBUG) console.debug( PREFIX + "MISS userAccessToken." );
+
+		// Retrieve the "code"...
+		if (DEBUG) console.debug( PREFIX + "Let's see if we have a code to retrieve the userAccessToken." );
+		if (DEBUG) console.debug( PREFIX + "Current code:", callbackData.code );
+
+		if (COMMON.isNullOrEmpty(callbackData.code)) {
+			// NO. No token and no code. Throw an error.
+			if (GROUP_DEBUG) console.groupEnd();
+			throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_02 );
+		} else {
+			// YES. Let's retrieve the token
+
+			// With the "code", let's retrieve the user access_token from the server.
+			apiCallResponse					= await retrieveTheUserAccessToken(callbackData.code);
+			if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+			
+			// Let's group the following messages
+			if (DEBUG) console.debug( PREFIX_AFTER + "Current apiCallResponse:", COMMON.prettyJson( apiCallResponse ) );
+
+			// Parse the response
+			userAuthentication				= apiCallResponse.userAuthentication;
+			userAccessToken					= apiCallResponse.userAccessToken;
+
+			// Let's create also the access token HASH...
+			accessTokenHash					= await Crypto.createHash(userAccessToken, true);
+			if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", accessTokenHash);
+		}
+	} else {
+		// YES. Let's see if it's valid.
+
+		if (DEBUG) console.debug( PREFIX + "GET userAccessToken" );
+
+		isAccessTokenValid				= OAuth2.validateAccessToken( userAccessToken, userAuthServerDiscovery, userAuthentication, userDidDocument, userPDSMetadata );
+		if ( isAccessTokenValid ) {
+			if (DEBUG) console.debug( PREFIX + `We have a VALID user access token. Continue` );
+		} else {
+			throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_07 );
+		}
+	}
+
+	// Update some HTML fields
+	// Prepare an object to pass
+	HTML.updateHTMLFields(callbackData);
+
+	/*
+		try {
+			// If this is the first time (reload page...)
+			isAccessTokenValid				= OAuth2.validateAccessToken( userAccessToken, userAuthServerDiscovery, userAuthentication );
+		} catch (error) {
+			// Update some HTML fields
+			// Prepare an object to pass
+			HTML.updateHTMLFields(callbackData);
+
+			// Capture the error and do nothing.
+			// Show the error and update the HTML fields
+			HTML.updateHTMLError(error, false);
+		}
+		if (DEBUG) console.debug( PREFIX + "Current isAccessTokenValid:", isAccessTokenValid );
+
+		// Check the user Access Token
+		// ------------------------------------------
+		if ( isAccessTokenValid ) {
+			if (DEBUG) console.debug( PREFIX + `We have an user access token. Continue` );
+		} else {
+			if (DEBUG) console.debug( PREFIX + `We do NOT have an user access token. Let's request it` );
+
+			// Retrieve the "code"...
+			if (DEBUG) console.debug( PREFIX + "Current code:", callbackData.code );
+
+			// With the "code", let's retrieve the user access_token from the server.
+			apiCallResponse					= await retrieveTheUserAccessToken(callbackData.code);
+			if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+			
+			// Let's group the following messages
+			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER );
+			if (DEBUG) console.debug( PREFIX_AFTER + "Current apiCallResponse:", COMMON.prettyJson( apiCallResponse ) );
+
+			// Parse the response
+			userAuthentication				= apiCallResponse.userAuthentication;
+			userAccessToken					= apiCallResponse.userAccessToken;
+
+			// Let's create also the access token HASH...
+			accessTokenHash					= await Crypto.createHash(userAccessToken, true);
+			if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", accessTokenHash);
+			if (GROUP_DEBUG) console.groupEnd();
+		}
+	*/
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return true;
+}
+
+
+/**********************************************************
  * PUBLIC Functions
  *
  * "public" == Available thru "BSKY" global variable.
@@ -512,29 +792,6 @@ async function retrieveTheUserProfile() {
  * No need to declare them as "exported".
  * All of them are available thru the "window.BSKY" object.
  **********************************************************/
-/* --------------------------------------------------------
- * LOGIN PROCESS.
- *
- * Function to be executed in the "login page".
- * -------------------------------------------------------- */
-function fnCheckUserHandle() {
-	const STEP_NAME						= "fnCheckUserHandle";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Update the "user handle" field with the value in localStorage, if any.
-	let userHandle						= localStorage.getItem(LSKEYS.user.handle);
-	if ( userHandle ) {
-		let $input						= $( "#userHandle" );
-		if ( $input.length ) {
-			$input.val( userHandle );
-			if (DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${userHandle}"` );
-		}
-	}
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-}
-
 /* --------------------------------------------------------
  * LOGIN PROCESS.
  *
@@ -603,7 +860,7 @@ function fnAnalizeCallbackURL() {
 		// Cogemos los datos de la URL y nos los guardamos para redirigir a una página limpia y procesarlos ahí.
 		// Guardamos toda la info y redirigimos a una "página (URL) limpia"
 		if (DEBUG) console.debug( PREFIX + "Saving data in localStorage..." );
-		fnSaveRuntimeDataInLocalStorage();
+		saveRuntimeDataInLocalStorage();
 
 		// Modify the URL...
 		if (DEBUG) console.debug(PREFIX + "Processing the URL:", thisURL.toString());
@@ -624,10 +881,10 @@ function fnAnalizeCallbackURL() {
  * "Landing function" after successfull login.
  * -------------------------------------------------------- */
 async function fnDashboard() {
-	const STEP_NAME = "fnDashboard";
-	const PREFIX = `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_AFTER = `${PREFIX}[After] `;
-	const PREFIX_ERROR = `${PREFIX}[ERROR] `;
+	const STEP_NAME						= "fnDashboard";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_AFTER					= `${PREFIX}[After] `;
+	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Show panels
@@ -640,187 +897,24 @@ async function fnDashboard() {
 
 	// ------------------------------------------
 	// Retrieve the access_token
-	let apiCallResponse = null;
-	try {
-		// First, let's validate the access token.
-		// ------------------------------------------
-		if (DEBUG) console.debug( PREFIX + `Let's see whether we have a "valid" user access token...` );
-		let isAccessTokenValid = false;
-		try {
-			// If this is the first time (reload page...)
-			isAccessTokenValid = OAuth2.validateAccessToken( userAccessToken, userAuthServerDiscovery, userAuthentication );
-		} catch (error) {
-			// Update some HTML fields
-			// Prepare an object to pass
-			HTML.updateHTMLFields(callbackData);
-
-			// Capture the error and do nothing.
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error, false);
-		}
-		if (DEBUG) console.debug( PREFIX + "Current isAccessTokenValid:", isAccessTokenValid );
-
-		// Check the user Access Token
-		// ------------------------------------------
-		if ( isAccessTokenValid ) {
-			if (DEBUG) console.debug( PREFIX + `We have an user access token. Continue` );
-		} else {
-			if (DEBUG) console.debug( PREFIX + `We do NOT have an user access token. Let's request it` );
-
-			// Retrieve the "code"...
-			if (DEBUG) console.debug( PREFIX + "Current code:", callbackData.code );
-
-			// With the "code", let's retrieve the user access_token from the server.
-			apiCallResponse						= await retrieveTheUserAccessToken(callbackData.code);
-			if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
-			
-			// Let's group the following messages
-			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current apiCallResponse:", COMMON.prettyJson( apiCallResponse ) );
-
-			// Parse the response
-			userAuthentication					= apiCallResponse.userAuthentication;
-			userAccessToken						= apiCallResponse.userAccessToken;
-
-			// Let's create also the access token HASH...
-			accessTokenHash						= await Crypto.createHash(userAccessToken, true);
-			if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", accessTokenHash);
-
-			// Some information
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current cryptoKey:", BSKY.data.cryptoKey );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current cryptoKey:", COMMON.prettyJson( BSKY.data.cryptoKey ) );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current jwk:", BSKY.data.jwk );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current jwk:", COMMON.prettyJson( BSKY.data.jwk ) );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current userAuthentication:", userAuthentication );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current userAuthentication:", COMMON.prettyJson( userAuthentication ) );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current userAccessToken:", userAccessToken );
-			if (DEBUG) console.debug( PREFIX_AFTER + "Current userAccessToken:", JWT.jwtToPrettyJSON( userAccessToken ) );
-			if (GROUP_DEBUG) console.groupEnd();
-
-			// Let's backup the current data.
-			fnSaveRuntimeDataInLocalStorage();
-
-			// Let's analize the user's access token.
-			if (DEBUG) console.debug( PREFIX + "userAuthentication:", userAuthentication );
-			HTML.htmlRenderUserAccessToken( userAuthentication );
-
-			// Update HTML fields
-			if (DEBUG) console.debug( PREFIX + "Filling-in access token fields and panel..." );
-			$("#notifications_json").removeAttr('data-highlighted');
-			$("#access_token_jwt").removeAttr('data-highlighted');
-			$("#access_token_json").removeAttr('data-highlighted');
-			$("#access_token_jwt").text( userAccessToken );
-			$("#access_token_json").text( JWT.jwtToPrettyJSON( userAccessToken ) );
-			hljs.highlightAll();
-
-			// Show "accessTokenPanel" panel
-			// COMMON.show("accessTokenPanel");
-
-			// Also show "btnNotifications" button
-			// COMMON.show("btnNotifications");
-		}
-
-		// Later, retrieve the rest of things.
-		// ------------------------------------------
-
-		// Retrieve user's profile to show
-		apiCallResponse					= await retrieveTheUserProfile();
-
-		// Lo pintamos en su sitio.
-		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
-		HTML.htmlRenderUserProfile( apiCallResponse );
-	} catch (error) {
-		if (GROUP_DEBUG) console.groupEnd();
-
-		// Show the error and update the HTML fields
-		HTML.updateHTMLError(error);
-		throw( error );
-	}
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-}
-
-/* --------------------------------------------------------
- * LOGGED-IN PROCESS.
- *
- * "Business function": Retrieve notifications.
- * -------------------------------------------------------- */
-async function fnRetrieveUserNotifications() {
-	const STEP_NAME						= "fnRetrieveUserNotifications";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
-	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Clear and hide error fields and panel
-	HTML.clearHTMLError();
-
-	// Hide panels
-	// COMMON.hide("accessTokenPanel");
-	// COMMON.hide("notificationsPanel");
-
-	// Retrieve the access_token
 	let apiCallResponse					= null;
 	try {
 		// First, let's validate the access token.
 		// ------------------------------------------
-		if (DEBUG) console.debug( PREFIX + `Let's see whether we have a "valid" user access token...` );
-		OAuth2.validateAccessToken( userAccessToken, userAuthServerDiscovery, userAuthentication );
+		apiCallResponse					= await validateAccessToken();
 
-		// Now, let's gather the user's notifications.
+		// Do something with the token information.
 		// ------------------------------------------
-		// The call
-		apiCallResponse					= await retrieveNotifications(false);
-		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+		apiCallResponse					= await postProcessAccessToken();
 
-		// Parse the response
-		await HTML.parseNotifications( apiCallResponse, userAccessToken, APP_CLIENT_ID, accessTokenHash );
-	} catch (error) {
-		if (GROUP_DEBUG) console.groupEnd();
-
-		// Check if the error is due to a different dpop-nonce in step 12...
-		if ( COMMON.areEquals(error.step, "retrieveNotifications") && !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived) ) {
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error, false);
-
-			if (DEBUG) console.debug( PREFIX + "Let's retry..." );
-			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
-			try {
-				apiCallResponse			= await retrieveNotifications( true );
-				if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
-
-				// Clear and hide error fields and panel
-				HTML.clearHTMLError();
-
-				// Parse the response
-				await HTML.parseNotifications( apiCallResponse, userAccessToken, APP_CLIENT_ID, accessTokenHash );
-			} catch (error) {
-				if (GROUP_DEBUG) console.groupEnd();
-
-				// Show the error and update the HTML fields
-				HTML.updateHTMLError(error);
-				throw( error );
-			}
-			if (GROUP_DEBUG) console.groupEnd();
-		} else {
-
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error);
-		}
-	}
-	
-	// Now, the user's profile.
-	try {
-		if (DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
-
-		// Retrieve user's profile to show
+		// Later, retrieve the rest of things.
 		// ------------------------------------------
-		apiCallResponse					= await retrieveTheUserProfile();
 
-		// Lo pintamos en su sitio.
-		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
-		HTML.htmlRenderUserProfile( apiCallResponse );
+		// Retrieve the user's notifications.
+		apiCallResponse					= await getTheUserNotifications();
+
+		// Retrieve the user's profile to show
+		apiCallResponse					= await getTheUserProfile();
 	} catch (error) {
 		if (GROUP_DEBUG) console.groupEnd();
 
@@ -832,6 +926,7 @@ async function fnRetrieveUserNotifications() {
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
+
 
 /* --------------------------------------------------------
  * LOGGED-IN PROCESS.
@@ -864,6 +959,7 @@ async function fnLogout() {
 	if ( header.ok && header.status == 204 ) {
 		// Remove things from localStorage
 		localStorage.removeItem(LSKEYS.BSKYDATA);
+		localStorage.removeItem(LSKEYS.user.profile);
 
 		// Set, in localStorage, we come from "LOGOUT"
 		localStorage.setItem(LSKEYS.LOGOUT, true);
