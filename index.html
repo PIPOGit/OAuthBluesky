@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>The web site of madrilenyer</title>
+		<title>LOGIN | The web site of madrilenyer</title>
 
 		<!-- Meta Bootstrap -->
 		<meta charset="UTF-8">
@@ -44,8 +44,71 @@
 	</head>
 	<body>
 
+		<!-- Botonera superior -->
+		<div id="panel-botonera" name="panel-botonera" class="container justify-content-between center py-1 gap-2 theme-botonera">
+
+			<div class="row justify-content-between align-items-center">
+
+				<!-- El panel izquierdo, de información del usuario -->
+				<div class="col-3">
+
+					<!-- El perfil del usuario. -->
+					<div class="card bg-transparent border-0 hidden">
+						<div class="row g-0">
+							<div class="col-2">
+								<img id="profile-avatar" name="profile-avatar" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg" class="img-fluid rounded-start">
+							</div>
+							<div class="col-10">
+								<div class="card-body p-1">
+									<h5 class="card-title mb-0"><span id="profile-name" name="profile-name">Account Display Name</span></h5>
+									<div class="card-text"><span id="profile-handle" name="profile-handle">@handle</span></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+
+				<!-- El panel de los tiempos -->
+				<div class="col-5 d-flex justify-content-end">
+
+					<!-- El timeout de caducidad del token. -->
+					<!--
+					<div class="col-4">
+						<div class="input-group input-group-sm">
+							<span class="input-group-text">Timeout:</span>
+							<input id="currentTokenTimeout" name="currentTokenTimeout" type="text" aria-label="Current Token Timeout" class="form-control" readonly>
+						</div>
+					</div>
+					-->
+
+					<!-- La fecha y hora. -->
+					<div class="col-auto">
+						<div class="input-group input-group-sm">
+							<span class="input-group-text">Date/time:</span>
+							<input id="currentDateTime" name="currentDateTime" type="text" aria-label="Current Date & Time" class="form-control" readonly>
+						</div>
+					</div>
+				</div>
+
+				<!-- Los botones de acción general -->
+				<div class="col-4 d-flex justify-content-end">
+					<div class="col-auto pe-2">
+						<a class="btn btn-sm btn-secondary link-light" target="dev_to" href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h">Dev.to</a>
+						<a class="btn btn-sm btn-secondary link-light" target="github" href="https://github.com/PIPOGit/OAuthBluesky">GitHub</a>
+					</div>
+					<div class="col-auto ps-2 border-start border-success">
+						<button id="button-show-docs" name="button-show-docs" class="btn btn-sm btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offCanvasDocuments" aria-controls="#offCanvasDocuments">View Docs</button>
+						<button id="button-logout" name="button-logout" class="btn btn-sm btn-danger hidden" type="button" onClick="BSKY.logout()">Logout</button>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+
 		<!-- El panel central -->
-		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root-div">
+		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root">
 
 			<!-- El título -->
 			<div class="row align-items-center">
@@ -60,15 +123,15 @@
 			</div>
 
 			<!-- El formulario de acceso -->
-			<form id="userHandleForm" name="userHandleForm" class="row align-items-center" onSubmit="BSKY.authenticateWithBluesky( this.form, userHandleForm.userHandle.value )">
+			<form id="userHandleForm" name="userHandleForm" class="row justify-content-between align-items-center" onSubmit="BSKY.authenticateWithBluesky( this.form, userHandleForm.userHandle.value )">
 
 				<!-- Left column. -->
-				<div class="col col-auto">
+				<div class="col-2">
 					<label for="basic-addon1" class="col-form-label">User Handle:</label>
 				</div>
 
 				<!-- Center column. -->
-				<div class="row col-9">
+				<div class="row col-8">
 					<div class="col-6">
 						<div class="input-group input-group-sm">
 							<span class="input-group-text">@</span>
@@ -77,13 +140,13 @@
 					</div>
 					<!-- Helping text. -->
 					<div class="col-auto">
-					<label for="userHandle">User handle (<i>example: "safety.bsky.app")</i></label>
+						<label for="userHandle">User handle (<i>example: "safety.bsky.app")</i></label>
 					</div>
 				</div>
 
 				<!-- Right column. -->
-				<div class="col col-auto">
-					<button type="submit" class="btn btn-sm btn-success">Sign in</button>
+				<div class="col-2 d-grid gap-2 mx-auto">
+					<button id="button-login" name="button-login" type="submit" class="btn btn-sm btn-success">Sign in</button>
 				</div>
 			</form>
 
@@ -102,19 +165,6 @@
 				<span id="error" name="error" class="input-group-text" placeholder="Error" aria-label="Error">Error:</span>
 				<!-- Mensaje de error. -->
 				<input type="text" id="errorDescription" name="errorDescription" class="form-control" placeholder="Error Description" aria-label="Error Description">
-			</div>
-		</div>
-
-		<!-- Botonera inferior -->
-		<div class="container d-grid gap-2 d-md-flex justify-content-md-end theme-botonera center">
-			<div class="col-auto">
-				<a href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h" class="btn btn-sm btn-secondary link-light" target="dev_to">Dev.to</a>
-				<a href="https://github.com/PIPOGit/OAuthBluesky" class="btn btn-sm btn-secondary link-light" target="github">GitHub</a>
-			</div>
-			<div class="col-auto">
-				| <button class="btn btn-sm btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offCanvasDocuments" aria-controls="#offCanvasDocuments">
-					View Docs
-				</button>
 			</div>
 		</div>
 

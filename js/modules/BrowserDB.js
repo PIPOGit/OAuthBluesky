@@ -196,8 +196,8 @@ export async function checkCryptoKeyInDB(comeFromLogout=false) {
 	}
 
 	// Set values
-	window.BSKY.cryptoKey			= savedCryptoKey.cryptoKey;
-	window.BSKY.jwk					= savedCryptoKey.jwk;
+	window.BSKY.data.cryptoKey			= savedCryptoKey.cryptoKey;
+	window.BSKY.data.jwk				= savedCryptoKey.jwk;
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -212,8 +212,8 @@ export async function deleteDatabase() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[KEY=${Crypto.JWK_DB_KEY}] [DB=${DB_NAME}] [TABLENAME=${DB_JWK_TABLENAME}]` );
 
 	// Delete values
-	window.BSKY.cryptoKey			= null;
-	window.BSKY.jwk					= null;
+	window.BSKY.data.cryptoKey			= null;
+	window.BSKY.data.jwk				= null;
 
 	// Delete the database
 	let deletedDB						= await terminate().then( deleted => {

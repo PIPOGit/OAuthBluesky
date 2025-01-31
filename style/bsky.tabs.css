@@ -1,0 +1,66 @@
+/* ********************************************************
+ * TABS: El tamaño
+ * ********************************************************/
+ /* Toda la sección. */
+.theme-tabs {
+  /* font-size: smaller; */
+  border: var(--panel-border-size) solid var(--panel-offcanvas-border-color);
+}
+
+ /* Solo la sección de la navegación. */
+.navbar-custom {
+  border-bottom: var(--panel-border-size) solid var(--panel-offcanvas-border-color);
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+ /* La sección de la navegación y los botones. */
+.navbar-custom,
+.navbar-custom a {
+  padding: 0.2rem 1rem;
+  /* background-color: antiquewhite; */
+}
+
+
+/* ********************************************************
+ * El panel del access token.
+ * ********************************************************/
+.theme-access-token {
+  border: var(--panel-border-size) solid var(--panel-border-color);
+  background-color: aliceblue;
+}
+
+
+/* ********************************************************
+ * El panel de las notificaciones.
+ * ********************************************************/
+.theme-notifications {
+  border: var(--panel-border-size) solid var(--panel-border-color);
+  background-color: aliceblue;
+}
+.theme-notifications pre {
+  max-height: 340px;
+  overflow-y: scroll;
+}
+
+
+/* ********************************************************
+ * El panel de los following.
+ * ********************************************************/
+.theme-following {
+}
+
+
+/* ********************************************************
+ * El panel de los followers.
+ * ********************************************************/
+.theme-followers {
+}
+
+
+/* ********************************************************
+ * El panel de my profile.
+ * ********************************************************/
+.theme-my-profile {
+}
+

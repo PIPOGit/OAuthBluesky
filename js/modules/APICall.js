@@ -136,18 +136,18 @@ function analizeResponseHeaders(response) {
 	// "dpop-nonce" header
 	if ( response.headers["dpop-nonce"] ) {
 		// Here, we gather the "dpop-nonce" header.
-		BSKY.dpopNonceUsed				= BSKY.dpopNonce;
-		BSKY.dpopNonce					= response.headers["dpop-nonce"];
-		BSKY.dpopNonceReceived			= BSKY.dpopNonce;
-		$("#dpopNonce").val(BSKY.dpopNonce);
-		if (DEBUG) console.info( PREFIX + "%cReceived dpop-nonce header: [" + BSKY.dpopNonce + "]", COMMON.CONSOLE_STYLE );
+		BSKY.data.dpopNonceUsed			= BSKY.data.dpopNonce;
+		BSKY.data.dpopNonce				= response.headers["dpop-nonce"];
+		BSKY.data.dpopNonceReceived		= BSKY.data.dpopNonce;
+		$("#dpopNonce").val(BSKY.data.dpopNonce);
+		if (DEBUG) console.info( PREFIX + "%cReceived dpop-nonce header: [" + BSKY.data.dpopNonce + "]", COMMON.CONSOLE_STYLE );
 	}
 
 	// "www-authenticate" header
 	if ( response.headers["www-authenticate"] ) {
 		// Here, we gather the "www-authenticate" header.
-		BSKY.wwwAuthenticate			= response.headers["www-authenticate"];
-		if (DEBUG) console.info( PREFIX + "%cReceived www-authenticate header: [" + BSKY.wwwAuthenticate + "]", COMMON.CONSOLE_STYLE );
+		BSKY.data.wwwAuthenticate		= response.headers["www-authenticate"];
+		if (DEBUG) console.info( PREFIX + "%cReceived www-authenticate header: [" + BSKY.data.wwwAuthenticate + "]", COMMON.CONSOLE_STYLE );
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );

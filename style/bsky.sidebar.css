@@ -1,0 +1,23 @@
+/* ********************************************************
+ * El panel del offcanvas.
+ * ********************************************************/
+.theme-docs {
+  border: var(--panel-border-size) solid var(--panel-offcanvas-border-color);
+  background-color: aliceblue;
+}
+.theme-docs-title {
+  font-size: larger;
+  font-weight: bolder;
+  border: var(--panel-border-size) solid var(--panel-offcanvas-border-color);
+  color: white;
+  background-color: blue;
+  padding: 4px;
+}
+.theme-docs-content {
+  font-size: small;
+  background-color: aliceblue;
+  margin: 0px;
+}
+.theme-docs ul {
+  margin: 0px 0px 8px 0px;
+}

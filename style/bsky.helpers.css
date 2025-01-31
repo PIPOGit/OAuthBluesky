@@ -1,0 +1,27 @@
+/* ********************************************************
+ * Helpers: enlaces.
+ * ********************************************************/
+a, a:visited {
+  color: navy;
+}
+
+
+/* ********************************************************
+ * Helpers: Clases auxiliares.
+ * ********************************************************/
+.visible {
+  display: block;
+  visibility: visible;
+}
+.hidden {
+  display: none !important;
+  visibility: hidden;
+}
+.center {
+  margin: auto;
+  width: auto;
+  padding: 10px 40px;
+}
+
+
+

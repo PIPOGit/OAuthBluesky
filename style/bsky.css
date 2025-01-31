@@ -1,4 +1,15 @@
 /* ********************************************************
+ * IMPORTs externos
+ * ********************************************************/
+@import url("bsky.botonera.css");		/* Para la botonera */
+@import url("bsky.error.css");			/* Todo lo relacionado con los errores. */
+@import url("bsky.tabs.css");			/* Las tabs y los paneles */
+@import url("bsky.helpers.css");		/* Los helpers */
+@import url("bsky.notifications.css");	/* Las notificaciones */
+@import url("bsky.sidebar.css");		/* Para el OffCanvas */
+
+
+/* ********************************************************
  * El :root pseudo-element, para las variables.
  * ********************************************************/
 :root {
@@ -34,7 +45,7 @@ html {
 /* ********************************************************
  * El panel global.
  * ********************************************************/
-.theme-root-div {
+.theme-root {
   border: var(--panel-border-size) solid var(--panel-border-color);
   background-color: aliceblue;
 }
@@ -46,65 +57,6 @@ html {
 .theme-info {
   border: var(--panel-border-size) solid var(--panel-border-color);
   background-color: palegreen;
-}
-
-
-/* ********************************************************
- * El panel de los errores.
- * ********************************************************/
-.theme-error {
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: lightgoldenrodyellow;
-}
-.theme-error span#errorLabel {
-  color: navy;
-  font-weight: bolder;
-  padding: 1px 16px;
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  font-size: inherit;
-}
-.theme-error span#error {
-  color: red;
-  padding: 1px 16px;
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: yellow;
-  font-size: inherit;
-}
-.theme-error input#errorDescription {
-  /*
-  color: yellow;
-  background-color: red;
-
-  // POSSIBLE BGColors:
-  background-color: black;
-  background-color: maroon;
-  background-color: mediumvioletred;
-  */
-  font-weight: bolder;
-  font-size: inherit;
-  color: white;
-  background-color: red;
-  padding: 1px 16px;
-  border: var(--panel-border-size) solid var(--panel-border-color);
-}
-
-
-/* ********************************************************
- * El panel de la botonera.
- * ********************************************************/
-.theme-botonera {
-  font-size: small;
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: lightgoldenrodyellow;
-}
-.theme-botonera a,
-.theme-botonera button {
-  font-size: small;
-}
-.theme-botonera span {
-  padding: 1px 4px;
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: yellow;
 }
 
 
@@ -126,100 +78,7 @@ html {
   border: var(--panel-border-size) solid var(--panel-border-color);
   color: navy;
   background-color: lightgoldenrodyellow;
-  padding: 1px 24px;
+  padding: 4px 24px;
 }
 
-
-/* ********************************************************
- * El panel del offcanvas.
- * ********************************************************/
-.theme-docs {
-  border: var(--panel-border-size) solid var(--panel-offcanvas-border-color);
-  background-color: aliceblue;
-}
-.theme-docs-title {
-  font-size: larger;
-  font-weight: bolder;
-  border: var(--panel-border-size) solid var(--panel-offcanvas-border-color);
-  color: white;
-  background-color: blue;
-  padding: 4px;
-}
-.theme-docs-content {
-  font-size: small;
-  background-color: aliceblue;
-  margin: 0px;
-}
-.theme-docs ul {
-  margin: 0px 0px 8px 0px;
-}
-
-
-/* ********************************************************
- * El panel del access token.
- * ********************************************************/
-.theme-access-token {
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: aliceblue;
-}
-
-
-/* ********************************************************
- * El panel de las notificaciones.
- * ********************************************************/
-.theme-notifications {
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: aliceblue;
-}
-.theme-notifications pre {
-  max-height: 340px;
-  overflow-y: scroll;
-}
-
-
-/* ********************************************************
- * El estilo de cada notificación.
- * ********************************************************/
-.notification {
-  border: var(--panel-border-size) solid var(--panel-notification-border-color);
-  background-color: lightyellow;
-  margin: 0px;
-  margin-bottom: 8px
-}
-.notification .header {
-  font-size: larger;
-  padding: 4px;
-  background-color: gold;
-  border-bottom: var(--panel-border-size) solid var(--panel-notification-border-color);
-}
-.notificacion-data {
-  font-size: smaller;
-  margin: 2px;
-}
-
-
-/* ********************************************************
- * Helpers: enlaces.
- * ********************************************************/
-a, a:visited {
-  color: navy;
-}
-
-
-/* ********************************************************
- * Helpers: Clases auxiliares.
- * ********************************************************/
-.visible {
-  visibility: visible;
-  display: block;
-}
-.hidden {
-  visibility: hidden;
-  display: none;
-}
-.center {
-  margin: auto;
-  width: auto;
-  padding: 10px 40px;
-}
 

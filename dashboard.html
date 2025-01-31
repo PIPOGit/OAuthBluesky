@@ -44,8 +44,69 @@
 	</head>
 	<body>
 
+		<!-- Botonera superior -->
+		<div id="panel-botonera" name="panel-botonera" class="container justify-content-between center py-1 gap-2 theme-botonera">
+
+			<div class="row justify-content-between align-items-center">
+
+				<!-- El panel izquierdo, de información del usuario -->
+				<div class="col-3">
+
+					<!-- El perfil del usuario. -->
+					<div class="card bg-transparent border-0">
+						<div class="row g-0">
+							<div class="col-2">
+								<img id="profile-avatar-top" name="profile-avatar-top" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
+							</div>
+							<div class="col-10">
+								<div class="card-body p-1">
+									<h5 class="card-title mb-0"><span id="profile-name-top" name="profile-name-top">Account Display Name</span></h5>
+									<div class="card-text"><span id="profile-handle-top" name="profile-handle-top">@handle</span></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+				</div>
+
+				<!-- El panel de los tiempos -->
+				<div class="col-5 d-flex justify-content-end">
+
+					<!-- El timeout de caducidad del token. -->
+					<div class="col-4">
+						<div class="input-group input-group-sm">
+							<span class="input-group-text">Timeout:</span>
+							<input id="currentTokenTimeout" name="currentTokenTimeout" type="text" aria-label="Current Token Timeout" class="form-control" readonly>
+						</div>
+					</div>
+
+					<!-- La fecha y hora. -->
+					<div class="col-auto">
+						<div class="input-group input-group-sm">
+							<span class="input-group-text">Date/time:</span>
+							<input id="currentDateTime" name="currentDateTime" type="text" aria-label="Current Date & Time" class="form-control" readonly>
+						</div>
+					</div>
+				</div>
+
+				<!-- Los botones de acción general -->
+				<div class="col-4 d-flex justify-content-end">
+					<div class="col-auto pe-2">
+						<a class="btn btn-sm btn-secondary link-light" target="dev_to" href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h">Dev.to</a>
+						<a class="btn btn-sm btn-secondary link-light" target="github" href="https://github.com/PIPOGit/OAuthBluesky">GitHub</a>
+					</div>
+					<div class="col-auto ps-2 border-start border-success">
+						<button id="button-show-docs" name="button-show-docs" class="btn btn-sm btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offCanvasDocuments" aria-controls="#offCanvasDocuments">View Docs</button>
+						<button id="button-logout" name="button-logout" class="btn btn-sm btn-danger" type="button" onClick="BSKY.logout()">Logout</button>
+					</div>
+				</div>
+
+			</div>
+
+		</div>
+
 		<!-- El panel central -->
-		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root-div hidden">
+		<div id="rootContainer" name="rootContainer" class="container mt-6 p-4 theme-root hidden">
 
 			<!-- La distribución -->
 			<div class="row">
@@ -102,35 +163,43 @@
 				<div id="userPanel" name="userPanel" class="container-fluid col-4">
 
 					<!-- El timeout de caducidad del token y la fecha/hora. -->
+					<!--
 					<div class="row g-0 p-0 m-0 mb-2">
+					-->
 
 						<!-- El timeout de caducidad del token. -->
+						<!--
 						<div class="col-4">
 							<div class="input-group input-group-sm">
 								<span class="input-group-text">Timeout:</span>
 								<input id="currentTokenTimeout" name="currentTokenTimeout" type="text" aria-label="Current Token Timeout" class="form-control" readonly>
 							</div>
 						</div>
+						-->
 
 						<!-- La fecha y hora. -->
+						<!--
 						<div class="col-8 d-flex flex-nowrap">
 							<div class="input-group input-group-sm">
 								<span class="input-group-text">Date/time:</span>
 								<input id="currentDateTime" name="currentDateTime" type="text" aria-label="Current Date & Time" class="form-control" readonly>
 							</div>
 						</div>
+						-->
+					<!--
 					</div>
+					-->
 
 					<!-- El perfil del usuario. -->
 					<div class="card mb-3 bg-body mb-2">
 						<div class="row g-0 p-1">
 							<div class="col-md-2">
-								<img id="profileAvatar" name="profileAvatar" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg" class="img-fluid rounded-start">
+								<img id="profile-avatar" name="profile-avatar" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
 							</div>
 							<div class="col-md-10">
 								<div class="card-body p-1">
-									<h5 class="card-title mb-0"><span id="profileName" name="profileName">Account Display Name</span></h5>
-									<div class="card-text"><span id="profileHandle" name="profileHandle">@handle</span></div>
+									<h5 class="card-title mb-0"><span id="profile-name" name="profile-name">Account Display Name</span></h5>
+									<div class="card-text"><span id="profile-handle" name="profile-handle">@handle</span></div>
 									<div class="card-text">
 										<small class="text-body-secondary">
 											<span id="profileFollowers" name="profileFollowers" class="fw-semibold">----</span> followers,
@@ -166,45 +235,85 @@
 			</div>
 		</div>
 
-		<!-- Botonera inferior -->
-		<div id="botoneraPanel" name="botoneraPanel" class="container d-grid gap-2 d-md-flex justify-content-md-end center theme-botonera hidden">
-			<div id="btnAccessToken" name="btnAccessToken" class="col-auto hidden">
-				<button class="btn btn-sm btn-primary" type="button" onClick="BSKY.switchViewAccessToken()">
-					Toggle Access Token
-				</button>
-			</div>
-			<div id="btnNotifications" name="btnNotifications" class="col-auto hidden">
-				<button class="btn btn-sm btn-primary" type="button" onClick="BSKY.retrieveUserNotifications()">
-					Get Notifications
-				</button>
-			</div>
-			<div id="btnLogout" name="btnLogout" class="col-auto">
-				<button class="btn btn-sm btn-danger" type="button" onClick="BSKY.logout()">
-					Logout
-				</button> |
-			</div>
-			<div class="col-auto">
-				<a href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h" class="btn btn-sm btn-secondary link-light" target="dev_to">Dev.to</a>
-				<a href="https://github.com/PIPOGit/OAuthBluesky" class="btn btn-sm btn-secondary link-light" target="github">GitHub</a>
-			</div>
-			<div class="col-auto">
-				| <button class="btn btn-sm btn-info" type="button" data-bs-toggle="offcanvas" data-bs-target="#offCanvasDocuments" aria-controls="#offCanvasDocuments">
-					View Docs
-				</button>
-			</div>
-		</div>
+		<!-- El panel de las pestañas -->
+		<div id="tabsPanel" name="tabsPanel" class="container p-0 center theme-tabs">
 
-		<!-- El panel del access_token -->
-		<div id="accessTokenPanel" name="accessTokenPanel" class="container p-2 center theme-access-token hidden">
-			<pre><code id="access_token_jwt"  name="access_token_jwt"  class="language-json"></code></pre>
-			<pre><code id="access_token_json" name="access_token_json" class="language-json"></code></pre><hr/>
-		</div>
+			<!-- La barra de navegación -->
+			<nav class="nav nav-pills nav-justified navbar-custom">
+				<a class="nav-link active" id="pill-my-profile"    name="pill-my-profile"    href="#" data-bs-toggle="tab" data-bs-target="#panel-my-profile"    type="button" role="tab" aria-controls="panel-my-profile"    aria-selected="false">My Profile</a>
+				<a class="nav-link nav-link-sm"        id="pill-access-token"  name="pill-access-token"  href="#" data-bs-toggle="tab" data-bs-target="#panel-access-token"  type="button" role="tab" aria-controls="panel-access-token"  aria-selected="true" aria-current="page">AccessToken</a>
+				<a class="nav-link"        id="pill-notifications" name="pill-notifications" href="#" data-bs-toggle="tab" data-bs-target="#panel-notifications" type="button" role="tab" aria-controls="panel-notifications" aria-selected="false">Notifications</a>
+				<a class="nav-link"        id="pill-following"     name="pill-following"     href="#" data-bs-toggle="tab" data-bs-target="#panel-following"     type="button" role="tab" aria-controls="panel-following"     aria-selected="false">Following</a>
+				<a class="nav-link"        id="pill-followers"     name="pill-followers"     href="#" data-bs-toggle="tab" data-bs-target="#panel-followers"     type="button" role="tab" aria-controls="panel-followers"     aria-selected="false">Followers</a>
+				<a class="nav-link"        id="pill-my-lists"      name="pill-my-lists"      href="#" data-bs-toggle="tab" data-bs-target="#panel-my-lists"      type="button" role="tab" aria-controls="panel-my-lists"      aria-selected="false">My Lists</a>
+				<a class="nav-link"        id="pill-in-lists"      name="pill-in-lists"      href="#" data-bs-toggle="tab" data-bs-target="#panel-in-lists"      type="button" role="tab" aria-controls="panel-in-lists"      aria-selected="false">In Lists</a>
+				<a class="nav-link"        id="pill-blocking"      name="pill-blocking"      href="#" data-bs-toggle="tab" data-bs-target="#panel-blocking"      type="button" role="tab" aria-controls="panel-blocking"      aria-selected="false">Blocking</a>
+				<a class="nav-link"        id="pill-blockers"      name="pill-blockers"      href="#" data-bs-toggle="tab" data-bs-target="#panel-blockers"      type="button" role="tab" aria-controls="panel-blockers"      aria-selected="false">Blockers</a>
+				<a class="nav-link"        id="pill-muting"        name="pill-muting"        href="#" data-bs-toggle="tab" data-bs-target="#panel-muting"        type="button" role="tab" aria-controls="panel-muting"        aria-selected="false">Muting</a>
+				<a class="nav-link"        id="pill-muted-by"      name="pill-muted-by"      href="#" data-bs-toggle="tab" data-bs-target="#panel-muted-by"      type="button" role="tab" aria-controls="panel-muted-by"      aria-selected="false">Muted By</a>
+			</nav>
 
-		<!-- El panel de las notificaciones -->
-		<div id="notificationsPanel" name="notificationsPanel" class="container p-2 center theme-notifications hidden">
-			<span id="notificationsNumber" name="notificationsNumber" class="input-group-text"></span>
-			<div id="notifications" name="notifications" class="notifications"></div>
-			<pre><code id="notifications_json" name="notifications_json" class="language-json"></code></pre><hr/>
+			<!-- El div de los paneles -->
+			<div class="tab-content p-1" id="myTabContent" name="myTabContent">
+
+				<!-- El panel de My Profile -->
+				<div id="panel-my-profile" name="panel-my-profile" class="tab-pane fade show active theme-my-profile" role="tabpanel" aria-labelledby="pill-my-profile" tabindex="0">
+					My Profile
+				</div>
+
+				<!-- El panel del access_token -->
+				<div id="panel-access-token" name="panel-access-token" class="tab-pane fade theme-access-token" role="tabpanel" aria-labelledby="pill-access-token" tabindex="0">
+					<pre><code id="access_token_jwt"  name="access_token_jwt"  class="language-json"></code></pre>
+					<pre><code id="access_token_json" name="access_token_json" class="language-json"></code></pre><hr/>
+				</div>
+
+				<!-- El panel de las notificaciones -->
+				<div id="panel-notifications" name="panel-notifications" class="tab-pane fade theme-notifications" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+					<span id="notificationsNumber" name="notificationsNumber" class="input-group-text"></span>
+					<div id="notifications" name="notifications" class="notifications"></div>
+					<pre><code id="notifications_json" name="notifications_json" class="language-json"></code></pre><hr/>
+				</div>
+
+				<!-- El panel de los following -->
+				<div id="panel-following" name="panel-following" class="tab-pane fade theme-following" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+					following
+				</div>
+
+				<!-- El panel de los followers -->
+				<div id="panel-followers" name="panel-followers" class="tab-pane fade theme-followers" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+					followers
+				</div>
+
+				<!-- El panel de mis listas -->
+				<div id="panel-my-lists" name="panel-my-lists" class="tab-pane fade theme-my-lists" role="tabpanel" aria-labelledby="pill-my-lists" tabindex="0">
+					My Lists
+				</div>
+
+				<!-- El panel de los en listas-->
+				<div id="panel-in-lists" name="panel-in-lists" class="tab-pane fade theme-in-lists" role="tabpanel" aria-labelledby="pill-in-lists" tabindex="0">
+					In Lists
+				</div>
+
+				<!-- El panel de los blocking -->
+				<div id="panel-blocking" name="panel-blocking" class="tab-pane fade theme-blocking" role="tabpanel" aria-labelledby="pill-blocking" tabindex="0">
+					Blocking
+				</div>
+
+				<!-- El panel de los blockers -->
+				<div id="panel-blockers" name="panel-blockers" class="tab-pane fade theme-blockers" role="tabpanel" aria-labelledby="pill-blockers" tabindex="0">
+					Blockers
+				</div>
+
+				<!-- El panel de los muteados -->
+				<div id="panel-muting" name="panel-muting" class="tab-pane fade theme-muting" role="tabpanel" aria-labelledby="pill-muting" tabindex="0">
+					Muting
+				</div>
+
+				<!-- El panel de los que me mutean -->
+				<div id="panel-muted-by" name="panel-muted-by" class="tab-pane fade theme-muted-by" role="tabpanel" aria-labelledby="pill-muted-by" tabindex="0">
+					Muted By
+				</div>
+			</div>
 		</div>
 
 		<!-- El Off Canvas -->

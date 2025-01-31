@@ -1,0 +1,19 @@
+/* ********************************************************
+ * El estilo de cada notificación.
+ * ********************************************************/
+.notification {
+  border: var(--panel-border-size) solid var(--panel-notification-border-color);
+  background-color: lightyellow;
+  margin: 0px;
+  margin-bottom: 8px
+}
+.notification .header {
+  font-size: larger;
+  padding: 4px;
+  background-color: gold;
+  border-bottom: var(--panel-border-size) solid var(--panel-notification-border-color);
+}
+.notificacion-data {
+  font-size: smaller;
+  margin: 2px;
+}

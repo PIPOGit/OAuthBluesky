@@ -1,0 +1,37 @@
+/* ********************************************************
+ * El panel de la botonera.
+ * ********************************************************/
+.theme-botonera {
+  font-size: small;
+  border: var(--panel-border-size) solid var(--panel-border-color);
+  background-color: lightgoldenrodyellow;
+}
+
+/*
+.theme-botonera > .row > div {
+  border: var(--panel-border-size) solid var(--panel-border-color);
+}
+*/
+/*
+.theme-botonera > .row > div > div {
+  border: var(--panel-border-size) solid var(--panel-border-color);
+}
+*/
+
+.theme-botonera a,
+.theme-botonera button,
+.theme-botonera input {
+  font-size: small;
+}
+.theme-botonera span {
+  padding: 1px 4px;
+/*
+  border: var(--panel-border-size) solid var(--panel-border-color);
+  background-color: yellow;
+*/
+}
+
+.theme-botonera .card-title {
+  font-size: 1.1rem;
+}
+

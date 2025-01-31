@@ -148,7 +148,7 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 			if (DEBUG) console.debug(PREFIX + "Testing to retrieve the bluit:");
 			if (DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
 
-			let dpopRequest				= new TYPES.DPoPRequest(BSKY.cryptoKey.privateKey, BSKY.jwk, clientId, userAccessToken, accessTokenHash, bluitUrl, BSKY.dpopNonce, APICall.HTML_GET);
+			let dpopRequest				= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, clientId, userAccessToken, accessTokenHash, bluitUrl, BSKY.data.dpopNonce, APICall.HTML_GET);
 			let dpopProof				= await DPOP.createDPoPProof(dpopRequest)
 			if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
@@ -282,9 +282,9 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$("#errorDescription").val(error.message);
 		}
 	}
-	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.dpopNonce );
-	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.dpopNonceUsed );
-	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.dpopNonceReceived );
+	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
+	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
+	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
 
 	if (GROUP_DEBUG) console.groupEnd(PREFIX);
 }
@@ -309,8 +309,8 @@ export function updateHTMLFields(parsedSearch) {
 	if (DEBUG) console.debug(PREFIX + "Instancia de URLSearchParams:", isInstanceOfURLSearchParams );
 
 	// Hide panels.
-	COMMON.hide("accessTokenPanel");
-	COMMON.hide("btnNotifications");
+	// COMMON.hide("accessTokenPanel");
+	// COMMON.hide("btnNotifications");
 
 	let iss								= null;
 	let state							= null;
@@ -482,29 +482,17 @@ export function htmlRenderUserProfile( profile ) {
 			"postsCount": 3928
 		}
 
-								<img id="profileAvatar" name="profileAvatar" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg" class="img-fluid rounded-start">
-							</div>
-							<div class="col-md-10">
-								<div class="card-body p-1">
-									<h5 class="card-title"><span id="profileName" name="profileName">Madrilenyer</span></h5>
-									<div class="card-text"><span id="profileHandle" name="profileHandle">@madrilenyer.bsky.social</span></div>
-									<div class="card-text">
-										<small class="text-body-secondary">
-											<span id="profileFollowers" name="profileFollowers">1000</span> followers
-											<span id="profileFollowing" name="profileFollowing">1000</span> following
-											<span id="profilePosts"     name="profilePosts">1000</span> posts
-										</small>
-									</div>
-								</div>
-							</div>
-							<div class="col-md">
-								<span id="profileDescription" name="profileDescription">Bugs, feature requests, feedback: support@bsky.app</span>
-
 	 */
 	
-	$( "#profileAvatar" ).attr( "src", profile.avatar );
-	$( "#profileName" ).html( profile.displayName );
-	$( "#profileHandle" ).html( profile.handle );
+	$( "#profile-avatar" ).attr( "src", profile.avatar );
+	$( "#profile-avatar-top" ).attr( "src", profile.avatar );
+
+	$( "#profile-name" ).html( profile.displayName );
+	$( "#profile-name-top" ).html( profile.displayName );
+
+	$( "#profile-handle" ).html( profile.handle );
+	$( "#profile-handle-top" ).html( profile.handle );
+
 	$( "#profileFollowers" ).html( profile.followersCount );
 	$( "#profileFollowing" ).html( profile.followsCount );
 	$( "#profilePosts" ).html( profile.postsCount );
