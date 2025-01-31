@@ -6,62 +6,58 @@
  *
  **********************************************************/
 // Common modules
-import CONFIGURATION				from "../data/config.json" with { type: "json" };
+import CONFIGURATION					from "../data/config.json" with { type: "json" };
 // Common functions
-import * as COMMON					from "./common.functions.js";
+import * as COMMON						from "./common.functions.js";
 // Common Classes and Exceptions ("Types")
-import * as TYPES					from "./common.types.js";
+import * as TYPES						from "./common.types.js";
 // To perform API calls
-import * as APICall					from "./APICall.js";
+import * as APICall						from "./APICall.js";
 // Common DPOP functions
-import * as DPOP					from "./OAuth2/dpopProof.js";
+import * as DPOP						from "./OAuth2/dpopProof.js";
 // Common JWT functions
-import * as JWT						from "./OAuth2/JWT.js";
+import * as JWT							from "./OAuth2/JWT.js";
 
 
 /**********************************************************
  * Module Constants
  **********************************************************/
 // Module SELF constants
-const MODULE_NAME					= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION				= "1.0.0";
-const MODULE_PREFIX					= `[${MODULE_NAME}]: `;
+const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
+const MODULE_VERSION					= "1.0.0";
+const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
 
 // Logging constants
-const DEBUG							= CONFIGURATION.global.debug;
-const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
+const DEBUG								= CONFIGURATION.global.debug;
+const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
-const API							= CONFIGURATION.api;
+const API								= CONFIGURATION.api;
 
 // HTML constants
-const MILLISECONDS					= 250;
-const LOCALE_SPAIN					= 'es-ES';
-const LOCALE_OPTIONS				= { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", seconds: "2-digit", hour12: true };
-const DIV_TOKEN_TIMEOUT				= "currentTokenTimeout";
-const DIV_DATE_TIME					= "currentDateTime";
+const LOCALE_SPAIN						= 'es-ES';
+const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true };
+const DIV_TOKEN_TIMEOUT					= "currentTokenTimeout";
+const DIV_DATE_TIME						= "currentDateTime";
 
 
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
-let momentReceivedToken				= null;
-let expiration						= 0;
-let secondsToExpire					= 0;
+let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
+let momentReceivedToken					= null;
+let expiration							= 0;
 
 
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-function clock() {
-
+function tokenExpiration() {
 	// La fecha y hora actual
 	const now = new Date();
-	$( "#" + DIV_DATE_TIME ).val( now.toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS ) );
 
 	// Los segundos de expiración del token
-	secondsToExpire = parseInt( expiration - ( now.getTime() - momentReceivedToken.getTime() ) / 1000 );
+	let secondsToExpire					= parseInt( expiration - ( now.getTime() - momentReceivedToken.getTime() ) / 1000 );
 	$( "#" + DIV_TOKEN_TIMEOUT ).val( secondsToExpire );
 }
 
@@ -215,6 +211,12 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
+export function clock() {
+	// La fecha y hora actual
+	const now = new Date();
+	$( "#" + DIV_DATE_TIME ).val( now.toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS ) );
+}
+
 export function updateHTMLError(error, renderHTMLErrors=true) {
 	const STEP_NAME						= "makeAPICall";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -427,22 +429,24 @@ export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
 }
 
 export function htmlRenderUserAccessToken( userAuthentication ) {
-	const PREFIX = `[${MODULE_NAME}:htmlRenderUserAccessToken] `;
+	const STEP_NAME						= "htmlRenderUserAccessToken";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.debug( PREFIX + "User Authentication:", userAuthentication );
 
 	// Planificamos la renovación del token en (dentro de) "expires_in" segundos
-	momentReceivedToken = new Date();
-	expiration = userAuthentication.expires_in;
-	setInterval(() => clock(), MILLISECONDS );
+	momentReceivedToken					= new Date();
+	expiration							= userAuthentication.expires_in;
+	setInterval(() => tokenExpiration(), BSKY.data.MILLISECONDS );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
 export function htmlRenderUserProfile( profile ) {
-	const PREFIX = `[${MODULE_NAME}:htmlRenderUserProfile] `;
+	const STEP_NAME						= "htmlRenderUserProfile";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.debug( PREFIX + "User Profile:", profile );

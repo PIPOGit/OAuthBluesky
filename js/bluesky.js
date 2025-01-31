@@ -157,6 +157,7 @@ async function bootstrap() {
 	// ================================================================
 	// Actualizamos el objeto raiz.
 	// + Properties
+	window.BSKY.data.MILLISECONDS		= 250;
 	window.BSKY.data.cryptoKey			= null;
 	window.BSKY.data.jwk				= null;
 	window.BSKY.data.dpopNonce			= null;
@@ -197,6 +198,9 @@ async function bootstrap() {
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
+
+	// El reloj
+	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
 
 	// Geolocation
 	await geoLocationInformation();
