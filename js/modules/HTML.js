@@ -5,7 +5,7 @@
  * See: https://gist.github.com/ahmetgeymen/a9dcd656a1527f6c73d9c712ea2d9d7e
  *
  **********************************************************/
-// Common modules
+// Global configuration
 import CONFIGURATION					from "../data/config.json" with { type: "json" };
 // Common functions
 import * as COMMON						from "./common.functions.js";
@@ -54,8 +54,9 @@ let expiration							= 0;
  * PRIVATE Functions
  **********************************************************/
 function tokenExpiration() {
+	// TODO: Refresh token: https://developer.okta.com/docs/guides/dpop/nonoktaresourceserver/main/#refresh-an-access-token
 	// La fecha y hora actual
-	const now = new Date();
+	const now							= new Date();
 
 	// Los segundos de expiración del token
 	let secondsToExpire					= parseInt( expiration - ( now.getTime() - momentReceivedToken.getTime() ) / 1000 );
@@ -67,9 +68,6 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 
 	// Vamos preparando el HTML para la notificación.
-	// TODO: To render the noti: SEE: https://getbootstrap.com/docs/5.3/components/card/#horizontal
-	// TODO: To get the post data: SEE: https://docs.bsky.app/docs/api/app-bsky-feed-get-posts
-	//       XRPC.api.getPosts
 	let jqRoot							= $( "#notifications" );
 
 	let cid								= notification.cid;
@@ -213,7 +211,7 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
  **********************************************************/
 export function clock() {
 	// La fecha y hora actual
-	const now = new Date();
+	const now							= new Date();
 	$( "#" + DIV_DATE_TIME ).val( now.toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS ) );
 }
 
@@ -424,7 +422,8 @@ export async function parseNotifications( notifications, userAccessToken, client
 }
 
 export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
-	const PREFIX = `[${MODULE_NAME}:processAPICallErrorResponse] `;
+	const STEP_NAME						= "processAPICallErrorResponse";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors=${renderHTMLErrors}]` );
 
 	if (DEBUG) console.debug( PREFIX + "ERROR:", error.message );
@@ -460,43 +459,6 @@ export function htmlRenderUserProfile( profile ) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.debug( PREFIX + "User Profile:", profile );
-	/*
-	 * // TODO: SEE: https://getbootstrap.com/docs/5.3/components/card/#horizontal
-	 * Sample received profile:
-	 *
-		{
-			"did": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-			"handle": "madrilenyer.bsky.social",
-			"displayName": "Madrileñer",
-			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:tjc27aje4uwxtw5ab6wwm4km/bafkreieq35674mas2u5dwxnaupsx5s5f7muhvahgqjjczqkfb5pw2pummm@jpeg",
-			"associated": {
-				"lists": 8,
-				"feedgens": 0,
-				"starterPacks": 0,
-				"labeler": false,
-				"chat": {
-					"allowIncoming": "all"
-				}
-			},
-			"labels": [
-				{
-					"src": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-					"uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.actor.profile/self",
-					"cid": "bafyreiavezlxjtf354k3z37z5mn33e4wyey4sa36nwo4zzj2tv2nmnx4ju",
-					"val": "!no-unauthenticated",
-					"cts": "2024-11-13T14:16:08.560Z"
-				}
-			],
-			"createdAt": "2024-11-13T14:16:09.483Z",
-			"description": "De aquí, de Madrid",
-			"indexedAt": "2024-11-17T11:17:42.829Z",
-			"banner": "https://cdn.bsky.app/img/banner/plain/did:plc:tjc27aje4uwxtw5ab6wwm4km/bafkreiarzagn6jt6acaufnnvt7pf3kkssrbl53cxmtzicljvijs3suzriu@jpeg",
-			"followersCount": 636,
-			"followsCount": 967,
-			"postsCount": 4045
-		}
-
-	 */
 	
 	$( "#profile-avatar" ).attr( "src", profile.avatar );
 	$( "#profile-avatar-top" ).attr( "src", profile.avatar );
@@ -529,18 +491,6 @@ export function htmlRenderUserProfile( profile ) {
 		// if (DEBUG) console.debug( PREFIX_COMPARE + "+ PREV userProfile:", COMMON.prettyJson( userProfilePREV ) );
 		// if (DEBUG) console.debug( PREFIX_COMPARE + "+ NEW  userProfile:", COMMON.prettyJson( profile ) );
 
-		// TODO: Comparamos y ponemos el toast
-
-		/*
-		 *
-		 * Comparamos:
-		 *  + "followersCount": 635,
-		 *  + "followsCount": 967,
-		 *  + "postsCount": 4051
-		 *
-		 * Si hay cambios, en un toast:
-		 *   See: https://getbootstrap.com/docs/5.3/components/toasts/#live-example
-		 */
 		let following					= profile.followsCount;
 		let followers					= profile.followersCount;
 		let diffFollowing				= following - userProfilePREV.followsCount;
@@ -560,11 +510,10 @@ export function htmlRenderUserProfile( profile ) {
 			$toastBody.html( html );
 			$toast.show({"animation": true, "autohide": true, "delay": 1000});
 			setTimeout(() => { $toast.hide({"animation": true}); }, delay );
+			if (GROUP_DEBUG) console.groupEnd();
 		} else {
 			if (DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 		}
-		
-		if (GROUP_DEBUG) console.groupEnd();
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );

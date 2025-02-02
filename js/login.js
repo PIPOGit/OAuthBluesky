@@ -18,6 +18,8 @@ import * as COMMON						from "./modules/common.functions.js";
 import * as APICall						from "./modules/APICall.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/BrowserDB.js";
+// Common GEO functions
+import * as GEO							from "./modules/GEO.js";
 // Common PKCE functions
 import * as PKCE						from "./modules/PKCE.js";
 // Common Crypto functions
@@ -109,6 +111,7 @@ async function bootstrap() {
 
 	const STEP_NAME						= "bootstrap";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
 	if (DEBUG) console.groupCollapsed( PREFIX );
 
 	// ================================================================
@@ -130,6 +133,7 @@ async function bootstrap() {
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
+	if (DEBUG) console.groupCollapsed( PREFIX_INNER );
 
 	// HTML L&F
 	COMMON.hide( "errorPanel" );
@@ -143,6 +147,13 @@ async function bootstrap() {
 
 	// Update the "userHandle" field
 	checkUserHandle();
+
+	// Geolocation Information
+	let geolocationInfo					= await GEO.getGeolocationInformation();
+	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (DEBUG) console.groupEnd();
 }
 
 
@@ -179,7 +190,7 @@ async function stop02RetrieveUserDIDDocument() {
 	// Info step
 	$( "#infoStep" ).html( `Retrieving didDocument for ${userHandle}...` );
 
-    let url								= API.plc.url + "/" + userDid;
+    let url								= API.bluesky.plc.url + "/" + userDid;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
 	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -202,7 +213,7 @@ async function step03RetrievePDSServerMetadata() {
 	// Info step
 	$( "#infoStep" ).html( `Retrieving PDS Server Metadata for ${userHandle}...` );
 
-    let url								= userPDSURL + API.pds.api.metadata;
+    let url								= userPDSURL + API.bluesky.pds.api.metadata;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
 	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -225,7 +236,7 @@ async function step04RetrieveAuthServerDiscoveryMetadata() {
 	// Info step
 	$( "#infoStep" ).html( `Retrieving Authentication Server URL...` );
 
-    let url								= userAuthServerURL + API.authServer.api.discovery;
+    let url								= userAuthServerURL + API.bluesky.authServer.api.discovery;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
 	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );

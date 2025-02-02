@@ -412,27 +412,35 @@ async function retrieveTheUserAccessToken(code) {
 async function retrieveNotifications(renderHTMLErrors=true) {
 	const STEP_NAME						= "retrieveNotifications";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}] [MAX ${MAX_NOTIS_TO_RETRIEVE} notifications to retrieve]` );
+
+	let endpoint						= null;
 
 	// TODO: Primero hay que preguntar si hay...
 	//   See: https://docs.bsky.app/docs/api/app-bsky-notification-get-unread-count
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.listNotifications;
+	endpoint							= API.bluesky.XRPC.api['app.bsky.notification.getUnreadCount'];
+ 	if (DEBUG) console.debug( PREFIX + "Preguntamos si hay... Invoking endpoint:", endpoint );
+
+
+	// Prepare the URL..
+	endpoint							= API.bluesky.XRPC.api.listNotifications;
 	// let root = API.bluesky.XRPC.public;
 	let root							= userPDSURL + "/xrpc";
 	let url								= root + endpoint + "?limit=" + MAX_NOTIS_TO_RETRIEVE;		// Not much; it's a test!
 	if (DEBUG) console.debug(PREFIX + "Fetching data from the (Authenticated) URL:", url);
 
 	// Let's group the following messages
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[PREFETCH]" );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
 
     // Create the DPoP-Proof 'body' for this request.
 	// We already have the cryptoKey somewhere, from previous calls...
     // ------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+	if (DEBUG) console.debug( PREFIX_PREFETCH + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
     // ------------------------------------------
@@ -446,8 +454,8 @@ async function retrieveNotifications(renderHTMLErrors=true) {
         method: HTML_GET,
         headers: headers
     }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+	if (DEBUG) console.debug( PREFIX_PREFETCH + "headers:", COMMON.prettyJson( headers ) );
+	if (DEBUG) console.debug( PREFIX_PREFETCH + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
 	if (GROUP_DEBUG) console.groupEnd();
 
@@ -564,10 +572,24 @@ async function getTheUserNotifications() {
 				await HTML.parseNotifications( apiCallResponse, userAccessToken, APP_CLIENT_ID, accessTokenHash );
 			} catch (error) {
 				if (GROUP_DEBUG) console.groupEnd();
-
-				// Show the error and update the HTML fields
-				HTML.updateHTMLError(error);
-				throw( error );
+				
+				// TODO: Si el error es de expiración del token [401]
+				// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
+				/*
+				 */
+				if (   ( error.status==401 )									// authentication error
+					&& ( error.isJson )											// json format
+					&& ( areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
+					// Redirigir a "logout".
+					if (DEBUG) console.debug( PREFIX + "-- END" );
+					if (GROUP_DEBUG) console.groupEnd();
+					await fnLogout();
+				} else {
+					// Show the error and update the HTML fields
+					if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
+					HTML.updateHTMLError(error);
+					throw( error );
+				}
 			}
 			if (GROUP_DEBUG) console.groupEnd();
 		} else {
@@ -627,17 +649,19 @@ async function getTheUserProfile() {
 async function postProcessAccessToken() {
 	const STEP_NAME						= "postProcessAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_RAWDATA				= `${PREFIX}[RawData] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Swho some more information
-	if (DEBUG) console.debug( PREFIX + "Current cryptoKey:", BSKY.data.cryptoKey );
-	if (DEBUG) console.debug( PREFIX + "Current cryptoKey:", COMMON.prettyJson( BSKY.data.cryptoKey ) );
-	if (DEBUG) console.debug( PREFIX + "Current jwk:", BSKY.data.jwk );
-	if (DEBUG) console.debug( PREFIX + "Current jwk:", COMMON.prettyJson( BSKY.data.jwk ) );
-	if (DEBUG) console.debug( PREFIX + "Current userAuthentication:", userAuthentication );
-	if (DEBUG) console.debug( PREFIX + "Current userAuthentication:", COMMON.prettyJson( userAuthentication ) );
-	if (DEBUG) console.debug( PREFIX + "Current userAccessToken:", userAccessToken );
-	if (DEBUG) console.debug( PREFIX + "Current userAccessToken:", JWT.jwtToPrettyJSON( userAccessToken ) );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RAWDATA );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current cryptoKey:", BSKY.data.cryptoKey );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current cryptoKey:", COMMON.prettyJson( BSKY.data.cryptoKey ) );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current jwk:", BSKY.data.jwk );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current jwk:", COMMON.prettyJson( BSKY.data.jwk ) );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAuthentication:", userAuthentication );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAuthentication:", COMMON.prettyJson( userAuthentication ) );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", userAccessToken );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", JWT.jwtToPrettyJSON( userAccessToken ) );
 	if (GROUP_DEBUG) console.groupEnd();
 
 	// Let's backup the current data.
@@ -670,6 +694,7 @@ async function postProcessAccessToken() {
 async function validateAccessToken() {
 	const STEP_NAME						= "validateAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_RAWDATA				= `${PREFIX}[RawData] `;
 	const PREFIX_AFTER					= `${PREFIX}[After] `;
 	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
 	const PREFIX_RETRY					= `${PREFIX}[Retry] `;
@@ -681,10 +706,12 @@ async function validateAccessToken() {
 	let isAccessTokenValid				= false;
 
 	if (DEBUG) console.debug( PREFIX + `Let's see whether we have a "valid" user access token...` );
-	if (DEBUG) console.debug( PREFIX + "+ Current userAccessToken:", userAccessToken );
-	if (DEBUG) console.debug( PREFIX + "+ Current userAuthServerDiscovery:", userAuthServerDiscovery );
-	if (DEBUG) console.debug( PREFIX + "+ Current userAuthentication:", userAuthentication );
-	
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RAWDATA );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAccessToken:", userAccessToken );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAuthServerDiscovery:", userAuthServerDiscovery );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAuthentication:", userAuthentication );
+	if (GROUP_DEBUG) console.groupEnd();
+
 	// Do we have access token?
 	if (COMMON.isNullOrEmpty(userAccessToken)) {
 		// NO. Let's see if this is the first time after login.
@@ -977,3 +1004,13 @@ async function fnLogout() {
 	}
 }
 
+
+
+
+/*
+https://public.api.bsky.app/xrpc/com.atproto.admin.getAccountInfo?did=did%3Dplc%3Dtjc27aje4uwxtw5ab6wwm4km
+https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.admin.getAccountInfo?did=did%3Dplc%3Dtjc27aje4uwxtw5ab6wwm4km
+https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.sync.getRepoStatus?did=did%3Dplc%3Dtjc27aje4uwxtw5ab6wwm4km%23atproto
+https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.sync.listRepos
+
+*/

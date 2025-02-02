@@ -9,41 +9,41 @@
  * See: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
  *
  **********************************************************/
-// Common modules
-import CONFIGURATION				from "../data/config.json" with { type: "json" };
+// Global configuration
+import CONFIGURATION					from "../data/config.json" with { type: "json" };
 // Common functions
-import * as COMMON					from "./common.functions.js";
+import * as COMMON						from "./common.functions.js";
 // Common Crypto functions
-import * as Crypto					from "./OAuth2/Crypto.js";
+import * as Crypto						from "./OAuth2/Crypto.js";
 // IDB functions
-import { openDB, deleteDB }			from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
+import { openDB, deleteDB }				from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
 
 /**********************************************************
  * Module Constants
  **********************************************************/
 // Module SELF constants
-const MODULE_NAME					= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION				= "1.0.0";
-const MODULE_PREFIX					= `[${MODULE_NAME}]: `;
+const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
+const MODULE_VERSION					= "1.0.0";
+const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
 
 // Inner constants
-const DEBUG							= CONFIGURATION.global.debug;
-const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
+const DEBUG								= CONFIGURATION.global.debug;
+const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Database variables
-export const DB_NAME				= "BlueskyDB";
-export const DB_VERSION				= 4;
-export const DB_JWK_TABLENAME		= "JWK";
+export const DB_NAME					= "BlueskyDB";
+export const DB_VERSION					= 4;
+export const DB_JWK_TABLENAME			= "JWK";
 
 
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
+let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 
 // Database variables
-let database						= null;
+let database							= null;
 
 // While using IDB
 

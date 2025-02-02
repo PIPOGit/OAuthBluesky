@@ -4,16 +4,16 @@
  * OAuth2 HELPER FUNCTIONS
  *
  **********************************************************/
-// Common modules
-import CONFIGURATION				from "../data/config.json" with { type: "json" };
+// Global configuration
+import CONFIGURATION					from "../data/config.json" with { type: "json" };
 // Common functions
-import * as COMMON					from "./common.functions.js";
+import * as COMMON						from "./common.functions.js";
 // Common Classes and Exceptions ("Types")
-import * as TYPES					from "./common.types.js";
+import * as TYPES						from "./common.types.js";
 // Common HTML functions
-import * as HTML					from "./HTML.js";
+import * as HTML						from "./HTML.js";
 // Common JWT functions
-import * as JWT						from "./OAuth2/JWT.js";
+import * as JWT							from "./OAuth2/JWT.js";
 
 
 /**********************************************************
@@ -38,15 +38,17 @@ export const CONTENT_TYPE_JSON_UTF8		= "application/json; charset=utf-8";
 export const CONTENT_TYPE_FORM_ENCODED	= "application/x-www-form-urlencoded";
 
 // Inner constants
-let responseHeaders						= null;
-let responseBody						= null;
-let responseError						= null;
 
 
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
+let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
+
+// Inner variables
+let responseHeaders						= null;
+let responseBody						= null;
+let responseError						= null;
 
 
 /**********************************************************

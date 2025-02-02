@@ -1,26 +1,27 @@
 /**********************************************************
  * Module imports
  **********************************************************/
-import CONFIGURATION				from "../data/config.json" with { type: "json" };
+// Global configuration
+import CONFIGURATION					from "../data/config.json" with { type: "json" };
 
 
 /**********************************************************
  * Common constants
  **********************************************************/
 // Fancy CSS style for the DevTools console.
-export const CONSOLE_STYLE					= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
+export const CONSOLE_STYLE				= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
 
 
 /**********************************************************
  * Common function
  **********************************************************/
-export const getModuleName			= url => {
+export const getModuleName				= url => {
 	// Otra manera
 	// let re = /([\w\d_-]*)\.?[^\\\/]*$/i;
 	// let fileNameWithoutExtension = url.match(re)[1];
 	// console.debug( "[getModuleName] fileNameWithoutExtension", fileNameWithoutExtension );
-	let withoutURL					= url.replace( /^.*[\\/]/, '' );
-	let withoutExtension			= withoutURL.replace( /\.[^.]*$/, '' );
+	let withoutURL						= url.replace( /^.*[\\/]/, '' );
+	let withoutExtension				= withoutURL.replace( /\.[^.]*$/, '' );
 	return withoutExtension;
 }
 
@@ -29,53 +30,53 @@ export const getModuleName			= url => {
  * Module Constants
  **********************************************************/
 // Module SELF constants
-const MODULE_NAME					= getModuleName( import.meta.url );
-const MODULE_VERSION				= "1.0.0";
-const MODULE_PREFIX					= `[${MODULE_NAME}]: `;
+const MODULE_NAME						= getModuleName( import.meta.url );
+const MODULE_VERSION					= "1.0.0";
+const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
 
 
 // Inner constants
-const DEBUG							= CONFIGURATION.global.debug;
-const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
-const LSKEYS						= CONFIGURATION.localStorageKeys;
+const DEBUG								= CONFIGURATION.global.debug;
+const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
+const LSKEYS							= CONFIGURATION.localStorageKeys;
 
 // Toast IDs
-const ID_TOAST_OK					= "myToastOK";
-const ID_TOAST_KO					= "myToastKO";
+const ID_TOAST_OK						= "myToastOK";
+const ID_TOAST_KO						= "myToastKO";
 
 
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
+let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 
 
 // Conversion objects.
-export const localeDefault			= 'es-ES';
-export const numberFormatter		= new Intl.NumberFormat( localeDefault, {style: "currency", currency: "EUR", MinimumIntegerDigits: 6});
-export const dateFormatOptions		= { DateStyle: 'short', year: 'numeric', month: '2-digit', day: '2-digit' };
-export const prettyJson				= obj => JSON.stringify( obj, null, "  " );
+export const localeDefault				= 'es-ES';
+export const numberFormatter			= new Intl.NumberFormat( localeDefault, {style: "currency", currency: "EUR", MinimumIntegerDigits: 6});
+export const dateFormatOptions			= { DateStyle: 'short', year: 'numeric', month: '2-digit', day: '2-digit' };
+export const prettyJson					= obj => JSON.stringify( obj, null, "  " );
 
 // Comparison functions
-export const getTypeOf				= option => typeof option;
-export const areEquals				= (str1,str2) => ( str1.trim().toUpperCase().localeCompare( str2.trim().toUpperCase() ) == 0 );
-export const isFunction				= obj => ( getTypeOf( obj ).trim().toUpperCase().localeCompare( 'FUNCTION' ) == 0 );
-export const isEmpty				= str => (typeof str === "string" && str.length === 0);
-export const isNull					= str => (str === null);
-export const isUndefined			= str => (str === undefined);
-export const isNullOrEmpty			= str => ( isUndefined(str) || isNull(str) || isEmpty(str) );
+export const getTypeOf					= option => typeof option;
+export const areEquals					= (str1,str2) => ( str1.trim().toUpperCase().localeCompare( str2.trim().toUpperCase() ) == 0 );
+export const isFunction					= obj => ( getTypeOf( obj ).trim().toUpperCase().localeCompare( 'FUNCTION' ) == 0 );
+export const isEmpty					= str => (typeof str === "string" && str.length === 0);
+export const isNull						= str => (str === null);
+export const isUndefined				= str => (str === undefined);
+export const isNullOrEmpty				= str => ( isUndefined(str) || isNull(str) || isEmpty(str) );
 
 // String functions
-export const removeTrailingSlash	= str => ( str.endsWith('/') ? str.slice(0, -1) : str );
+export const removeTrailingSlash		= str => ( str.endsWith('/') ? str.slice(0, -1) : str );
 
 // Filename functions
-export const getFileExtension		= filename => filename.split('.').pop();
-export const getFileNameFromPath	= filename => filename.split( '/' ).pop();
-export const fnGetById				= id => document.getElementById( id );
+export const getFileExtension			= filename => filename.split('.').pop();
+export const getFileNameFromPath		= filename => filename.split( '/' ).pop();
+export const fnGetById					= id => document.getElementById( id );
 
 // LocalStorage
-export const lsSave					= ( key, value ) => localStorage.setItem( key, value );
-export const lsGet					= ( key ) => localStorage.getItem( key );
+export const lsSave						= ( key, value ) => localStorage.setItem( key, value );
+export const lsGet						= ( key ) => localStorage.getItem( key );
 
 // Object LOAD functions
 export async function loadJSONFile( file ) {
@@ -93,11 +94,11 @@ export async function loadJSONFile( file ) {
 		};
 		const response = await fetch( file, options );
 		*/
-		const response = await fetch( file );
+		const response					= await fetch( file );
 		if ( !response.ok ) {
 			throw new Error( `File[${file}] not found. HTTP error[${response.status}]: ${response.statusText}` );
 		}
-		const data = await response.json();
+		const data						= await response.json();
 		return data;
 	} catch (error) {
 		console.error(`Could not get JSON file[${file}]: ${error}`);
@@ -107,7 +108,7 @@ export async function loadJSONFile( file ) {
 
 export async function loadBLOBFile( file ) {
 	try {
-		const response = await fetch( file );
+		const response					= await fetch( file );
 		if ( !response.ok ) {
 			throw new Error( `File[${file}] not found. HTTP error[${response.status}]: ${response.statusText}` );
 		}
@@ -119,20 +120,21 @@ export async function loadBLOBFile( file ) {
 }
 
 // Bootstrap HTML functions
-export const showHide				= id => { $( "#" + id ).toggleClass( "hidden" ); }
-export const show					= id => { $( "#" + id ).removeClass( "hidden" ).addClass( "visible" ); }
-export const hide					= id => { $( "#" + id ).removeClass( "visible" ).addClass( "hidden" ); }
-export const showMessage			= message => {
+export const showHide					= id => { $( "#" + id ).toggleClass( "hidden" ); }
+export const show						= id => { $( "#" + id ).removeClass( "hidden" ).addClass( "visible" ); }
+export const hide						= id => { $( "#" + id ).removeClass( "visible" ).addClass( "hidden" ); }
+export const showMessage				= message => {
 	$("#"+ID_TOAST_OK+"Body").html( message );
 	$("#"+ID_TOAST_OK).toast("show");
 }
-export const showError				= message => {
+export const showError					= message => {
 	$("#"+ID_TOAST_KO+"Body").html( message );
 	$("#"+ID_TOAST_KO).toast("show");
 }
 
 export function renderHTMLElements(parsedSearch) {
-	const PREFIX = `[${MODULE_NAME}:renderHTMLElements] `;
+	const STEP_NAME						= "renderHTMLElements";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (DEBUG) console.groupCollapsed(PREFIX);
 
 	// CSS Classes.
@@ -140,11 +142,11 @@ export function renderHTMLElements(parsedSearch) {
 	$("#rootPanel").addClass("visible");
 
 	// Retrieve the "code"...
-	let iss = parsedSearch.get("iss");
-	let state = parsedSearch.get("state");
-	let code = parsedSearch.get("code");
-	let error = parsedSearch.get("error");
-	let errorDescription = parsedSearch.get("error_description");
+	let iss								= parsedSearch.get("iss");
+	let state							= parsedSearch.get("state");
+	let code							= parsedSearch.get("code");
+	let error							= parsedSearch.get("error");
+	let errorDescription				= parsedSearch.get("error_description");
 
 	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
 	if (DEBUG) console.debug(PREFIX + "+ iss:", iss);
@@ -169,7 +171,8 @@ export function renderHTMLElements(parsedSearch) {
 }
 
 export function renderHTMLErrorElements(errorObject) {
-	const PREFIX = `[${MODULE_NAME}:renderHTMLErrorElements] `;
+	const STEP_NAME						= "renderHTMLErrorElements";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
 	if (DEBUG) console.debug(PREFIX + "Received:", errorObject);
 
@@ -177,16 +180,16 @@ export function renderHTMLErrorElements(errorObject) {
 	$(".container .center").removeClass("hidden");
 	$(".container .center").addClass("visible");
 
-	let error = null;
-	let errorDescription = null;
-	let isAnObject = ( typeof errorObject === 'object' && !Array.isArray(errorObject) && errorObject !== null );
+	let error							= null;
+	let errorDescription				= null;
+	let isAnObject						= ( typeof errorObject === 'object' && !Array.isArray(errorObject) && errorObject !== null );
 	if (DEBUG) console.debug(PREFIX + "isAnObject:", isAnObject);
 	if ( isAnObject ) {
-		error = errorObject.error;
-		errorDescription = errorObject.message;
+		error							= errorObject.error;
+		errorDescription				= errorObject.message;
 	} else {
-		error = "ERROR";
-		errorDescription = errorObject;
+		error							= "ERROR";
+		errorDescription				= errorObject;
 	}
 
 	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");

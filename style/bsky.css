@@ -8,6 +8,9 @@
 @import url("bsky.notifications.css");	/* Las notificaciones */
 @import url("bsky.sidebar.css");		/* Para el OffCanvas */
 
+/* Bootstrap icons. */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css");
+
 
 /* ********************************************************
  * El :root pseudo-element, para las variables.

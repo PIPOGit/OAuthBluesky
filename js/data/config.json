@@ -9,6 +9,9 @@
 	"localhost": {
 		"root": "http://localhost/neocities/index.html"
 	},
+	"bluesky": {
+		"token_expiration_threshold": 600
+	},
 	"github": {
 		"repo": "https://github.com/PIPOGit/OAuthBluesky"
 	},
@@ -50,38 +53,49 @@
 				"public": "https://public.api.bsky.app/xrpc",
 				"url": "https://bsky.social/xrpc",
 				"api": {
-					"resolveHandle": "/com.atproto.identity.resolveHandle",
 					"describeRepo": "/com.atproto.repo.describeRepo",
 					"getAccountInfo": "/com.atproto.admin.getAccountInfo",
 					"getFollowers": "/app.bsky.graph.getFollowers",
 					"getPosts": "/app.bsky.feed.getPosts",
 					"getProfile": "/app.bsky.actor.getProfile",
+					"getUnreadCount": "/app.bsky.notification.getUnreadCount",
+					"listNotifications": "/app.bsky.notification.listNotifications",
 					"resolveHandle": "/com.atproto.identity.resolveHandle",
-					"listNotifications": "/app.bsky.notification.listNotifications"
+					"app.bsky.notification.getUnreadCount": "/app.bsky.notification.getUnreadCount"
+				}
+			},
+			"plc": {
+				"docs": "https://web.plc.directory/api/redoc",
+				"url": "https://plc.directory",
+				"api": {
+					"resolveDID": "/"
+				}
+			},
+			"pds": {
+				"api": {
+					"metadata": "/.well-known/oauth-protected-resource"
+				}
+			},
+			"authServer": {
+				"api": {
+					"discovery": "/.well-known/oauth-authorization-server"
+				},
+				"key": {
+					"auth": "authorization_endpoint",
+					"token": "token_endpoint",
+					"par": "pushed_authorization_request_endpoint",
+					"introspection": "introspection_endpoint"
 				}
 			}
 		},
-		"plc": {
-			"docs": "https://web.plc.directory/api/redoc",
-			"url": "https://plc.directory",
-			"api": {
-				"resolveDID": "/"
-			}
-		},
-		"pds": {
-			"api": {
-				"metadata": "/.well-known/oauth-protected-resource"
-			}
-		},
-		"authServer": {
-			"api": {
-				"discovery": "/.well-known/oauth-authorization-server"
+		"geo": {
+			"bdc": {
+				"rootUrl": "https://api-bdc.net",
+				"reverse-geocode-client": "/data/reverse-geocode-client"
 			},
-			"key": {
-				"auth": "authorization_endpoint",
-				"token": "token_endpoint",
-				"par": "pushed_authorization_request_endpoint",
-				"introspection": "introspection_endpoint"
+			"myIPio": {
+				"rootUrl": "https://api.my-ip.io",
+				"ip.json": "/v2/ip.json"
 			}
 		}
 	}

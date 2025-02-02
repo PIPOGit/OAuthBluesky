@@ -4,7 +4,7 @@
  * OAuth2 HELPER FUNCTIONS
  *
  **********************************************************/
-// Common modules
+// Global configuration
 import CONFIGURATION					from "../data/config.json" with { type: "json" };
 // Common functions
 import * as COMMON						from "./common.functions.js";
@@ -135,263 +135,86 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 
 	// Let's see the dates
 	if (DEBUG) console.debug( PREFIX + "Let's analize the dates..." );
-	const currentTime				= new Date();
-	const tokenIssuedAt				= new Date(payload.iat * 1000);
-	const tokenExpiresIn			= new Date(payload.exp * 1000);
-	const msCurrentTime				= currentTime.getTime();
-	const msTokenIssuedAt			= tokenIssuedAt.getTime();
-	const msTokenExpiresIn			= tokenExpiresIn.getTime();
-	if (DEBUG) console.debug( PREFIX + `+ [${msCurrentTime}] Current time....:`, currentTime );
-	if (DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] Token issued at.:`, tokenIssuedAt );
-	if (DEBUG) console.debug( PREFIX + `+ [${msTokenExpiresIn}] Token expires in:`, tokenExpiresIn );
+	const currentTime					= new Date();
+	const tokenIssuedAt					= new Date(payload.iat * 1000);
+	const tokenExpiresIn				= new Date(payload.exp * 1000);
+	const msCurrentTime					= currentTime.getTime();
+	const msTokenIssuedAt				= tokenIssuedAt.getTime();
+	const msTokenExpiresIn				= tokenExpiresIn.getTime();
+	// if (DEBUG) console.debug( PREFIX + `+ [${msCurrentTime}] Current time....:`, currentTime );
+	// if (DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] Token issued at.:`, tokenIssuedAt );
+	// if (DEBUG) console.debug( PREFIX + `+ [${msTokenExpiresIn}] Token expires in:`, tokenExpiresIn );
+	
+	// The differences
+	const diffFromIssued				= msCurrentTime - msTokenIssuedAt;
+	const diffToExpire					= msTokenExpiresIn - msCurrentTime;
+	if (DEBUG) console.debug( PREFIX + `Differences:` );
+	if (DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] --> [${diffFromIssued}] --> [${msCurrentTime}] --> [${diffToExpire}] --> [${msTokenExpiresIn}]` );
+	if (DEBUG) console.debug( PREFIX + `+ [${msToTime(msTokenIssuedAt, true)}] --> [${msToTime(diffFromIssued)}] --> [${msToTime(msCurrentTime, true)}] --> [${msToTime(diffToExpire)}] --> [${msToTime(msTokenExpiresIn, true)}]` );
 
-	console.warn( "TODO: Validate dates" );
+	const TOKEN_THRESHOLD				= CONFIGURATION.bluesky.token_expiration_threshold;
+	if ( diffToExpire < ( TOKEN_THRESHOLD * 1000 ) ) {
+		console.warn( `Token about to expire! [TOKEN_THRESHOLD==${TOKEN_THRESHOLD}]` );
+
+		// BS Toast Test
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `BS Toast Test` );
+		// El toast.
+		let toastDivID				= "toast-followers-change";
+		let $toast					= $( `#${toastDivID}` );
+		let $toastBody				= $( `#${toastDivID} > .toast-body` );
+		let $toastBodySpan			= $( `#${toastDivID} > .toast-body > span` );
+		let html					= `Token about to expire! Less than ${msToTime(TOKEN_THRESHOLD*1000)} minutes: <span>${msToTime(diffToExpire)}</span> seconds`;
+		let delay					= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
+
+		$toastBody.html( html );
+		$toast.show({"animation": true, "autohide": true, "delay": 1000});
+		// Update te time...
+		// TODO: A verlo... setTimeout(() => { $toastBodySpan.val( $toastBodySpan ); }, delay );
+		// setTimeout(() => { $toast.hide({"animation": true}); }, delay );
+		if (GROUP_DEBUG) console.groupEnd();
+	}
+
+
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 	return true;
 }
 
+function msToTime(duration, keepVoids=false) {
+    var milliseconds					= parseInt((duration%1000)/100)
+        , seconds						= parseInt((duration/1000)%60)
+        , minutes						= parseInt((duration/(1000*60))%60)
+        , hours							= parseInt((duration/(1000*60*60))%24);
+	
+	let response						= "";
+	if ( keepVoids ) {
+		hours							= (hours   < 10) ? "0" + hours   : hours;
+		minutes							= (minutes < 10) ? "0" + minutes : minutes;
+		seconds							= (seconds < 10) ? "0" + seconds : seconds;
+		response						= hours + ":" + minutes + ":" + seconds;
+	} else {
+		if ( ( hours < 1 ) ) {
+			hours						= "";
+			if ( minutes < 1 ) {
+				minutes					= "";
+				seconds					= (seconds < 10) ? "0" + seconds : seconds;
+				response				= seconds;
+			} else {
+				minutes					= (minutes < 10) ? "0" + minutes : minutes;
+				seconds					= (seconds < 10) ? "0" + seconds : seconds;
+				response				= minutes + ":" + seconds;
+			}
+		} else {
+			hours						= (hours   < 10) ? "0" + hours   : hours;
+			minutes						= (minutes < 10) ? "0" + minutes : minutes;
+			seconds						= (seconds < 10) ? "0" + seconds : seconds;
+			response					= hours + ":" + minutes + ":" + seconds;
+		}
+	}
 
 
-/*
-	 *
-	 * --------------------------------------------------------
-	 * Sample payload for an access token:
-	{
-		"aud": "did:web:velvetfoot.us-east.host.bsky.network",
-		"iat": 1738351395,
-		"exp": 1738354995,
-		"sub": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-		"jti": "tok-cdfbe0a3e5ea716ab01805dcb7f769d1",
-		"cnf": {
-			"jkt": "XnZxHb9S-e7FcwffAbB0MfwTxOuHEmBfy5J2INdG4hI"
-		},
-		"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
-		"scope": "atproto transition:generic",
-		"iss": "https://bsky.social"
-	}
-	 *
-	 * --------------------------------------------------------
-	 * Sample userAuthentication for an access token:
-	 * --------------------------------------------------------
-	{
-		"access_token": "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NksifQ.eyJhdWQiOiJkaWQ6d2ViOnZlbHZldGZvb3QudXMtZWFzdC5ob3N0LmJza3kubmV0d29yayIsImlhdCI6MTczODM1MTM5NSwiZXhwIjoxNzM4MzU0OTk1LCJzdWIiOiJkaWQ6cGxjOnRqYzI3YWplNHV3eHR3NWFiNnd3bTRrbSIsImp0aSI6InRvay1jZGZiZTBhM2U1ZWE3MTZhYjAxODA1ZGNiN2Y3NjlkMSIsImNuZiI6eyJqa3QiOiJYblp4SGI5Uy1lN0Zjd2ZmQWJCME1md1R4T3VIRW1CZnk1SjJJTmRHNGhJIn0sImNsaWVudF9pZCI6Imh0dHBzOi8vbWFkcmlsZW55ZXIubmVvY2l0aWVzLm9yZy9ic2t5L29hdXRoL2NsaWVudC1tZXRhZGF0YS5qc29uIiwic2NvcGUiOiJhdHByb3RvIHRyYW5zaXRpb246Z2VuZXJpYyIsImlzcyI6Imh0dHBzOi8vYnNreS5zb2NpYWwifQ.ihh5fo3tifPLtpaqUuSCHpdduGjoRUNSyKCzt-04fORc1c1ZyIQ4uTBVaK3Wb_vIAAeK-OBH0lcJSi3cfW7PSg",
-		"token_type": "DPoP",
-		"refresh_token": "ref-1308a47e1cf118824d4603a10d084c627e7890b8526177003a09f90c30310fc0",
-		"scope": "atproto transition:generic",
-		"expires_in": 3599,
-		"sub": "did:plc:tjc27aje4uwxtw5ab6wwm4km"
-	}
-	 *
-	 * --------------------------------------------------------
-	 * Sample DID Document for an user
-	 * --------------------------------------------------------
-	{
-		"@context": [
-			"https://www.w3.org/ns/did/v1",
-			"https://w3id.org/security/multikey/v1",
-			"https://w3id.org/security/suites/secp256k1-2019/v1"
-		],
-		"id": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-		"alsoKnownAs": [
-			"at://madrilenyer.bsky.social"
-		],
-		"verificationMethod": [
-			{
-				"id": "did:plc:tjc27aje4uwxtw5ab6wwm4km#atproto",
-				"type": "Multikey",
-				"controller": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-				"publicKeyMultibase": "zQ3shQzL5vznqAdHiD6wvKRfH5xEaDXWpP3JTGQYAfhQo6Dz5"
-			}
-		],
-		"service": [
-			{
-				"id": "#atproto_pds",
-				"type": "AtprotoPersonalDataServer",
-				"serviceEndpoint": "https://velvetfoot.us-east.host.bsky.network"
-			}
-		]
-	}
-	 *
-	 * --------------------------------------------------------
-	 * Sample PDS Metadata for an user
-	 * --------------------------------------------------------
-	{
-		"resource": "https://velvetfoot.us-east.host.bsky.network",
-		"authorization_servers": [
-			"https://bsky.social"
-		],
-		"scopes_supported": [],
-		"bearer_methods_supported": [
-			"header"
-		],
-		"resource_documentation": "https://atproto.com"
-	}
-	 *
-	 * --------------------------------------------------------
-	 * Sample BSKYDATA for an user
-	 * --------------------------------------------------------
-	{
-		"userHandle": "madrilenyer.bsky.social",
-		"userDid": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-		"userDidDocument": {
-			"@context": [
-				"https://www.w3.org/ns/did/v1",
-				"https://w3id.org/security/multikey/v1",
-				"https://w3id.org/security/suites/secp256k1-2019/v1"
-			],
-			"id": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-			"alsoKnownAs": [
-				"at://madrilenyer.bsky.social"
-			],
-			"verificationMethod": [
-				{
-					"id": "did:plc:tjc27aje4uwxtw5ab6wwm4km#atproto",
-					"type": "Multikey",
-					"controller": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
-					"publicKeyMultibase": "zQ3shQzL5vznqAdHiD6wvKRfH5xEaDXWpP3JTGQYAfhQo6Dz5"
-				}
-			],
-			"service": [
-				{
-					"id": "#atproto_pds",
-					"type": "AtprotoPersonalDataServer",
-					"serviceEndpoint": "https://velvetfoot.us-east.host.bsky.network"
-				}
-			]
-		},
-		"userPDSURL": "https://velvetfoot.us-east.host.bsky.network",
-		"userPDSMetadata": {
-			"resource": "https://velvetfoot.us-east.host.bsky.network",
-			"authorization_servers": [
-				"https://bsky.social"
-			],
-			"scopes_supported": [],
-			"bearer_methods_supported": [
-				"header"
-			],
-			"resource_documentation": "https://atproto.com"
-		},
-		"userAuthServerURL": "https://bsky.social",
-		"userAuthServerDiscovery": {
-			"issuer": "https://bsky.social",
-			"scopes_supported": [
-				"atproto",
-				"transition:generic",
-				"transition:chat.bsky"
-			],
-			"subject_types_supported": [
-				"public"
-			],
-			"response_types_supported": [
-				"code"
-			],
-			"response_modes_supported": [
-				"query",
-				"fragment",
-				"form_post"
-			],
-			"grant_types_supported": [
-				"authorization_code",
-				"refresh_token"
-			],
-			"code_challenge_methods_supported": [
-				"S256"
-			],
-			"ui_locales_supported": [
-				"en-US"
-			],
-			"display_values_supported": [
-				"page",
-				"popup",
-				"touch"
-			],
-			"authorization_response_iss_parameter_supported": true,
-			"request_object_signing_alg_values_supported": [
-				"RS256",
-				"RS384",
-				"RS512",
-				"PS256",
-				"PS384",
-				"PS512",
-				"ES256",
-				"ES256K",
-				"ES384",
-				"ES512",
-				"none"
-			],
-			"request_object_encryption_alg_values_supported": [],
-			"request_object_encryption_enc_values_supported": [],
-			"request_parameter_supported": true,
-			"request_uri_parameter_supported": true,
-			"require_request_uri_registration": true,
-			"jwks_uri": "https://bsky.social/oauth/jwks",
-			"authorization_endpoint": "https://bsky.social/oauth/authorize",
-			"token_endpoint": "https://bsky.social/oauth/token",
-			"token_endpoint_auth_methods_supported": [
-				"none",
-				"private_key_jwt"
-			],
-			"token_endpoint_auth_signing_alg_values_supported": [
-				"RS256",
-				"RS384",
-				"RS512",
-				"PS256",
-				"PS384",
-				"PS512",
-				"ES256",
-				"ES256K",
-				"ES384",
-				"ES512"
-			],
-			"revocation_endpoint": "https://bsky.social/oauth/revoke",
-			"introspection_endpoint": "https://bsky.social/oauth/introspect",
-			"pushed_authorization_request_endpoint": "https://bsky.social/oauth/par",
-			"require_pushed_authorization_requests": true,
-			"dpop_signing_alg_values_supported": [
-				"RS256",
-				"RS384",
-				"RS512",
-				"PS256",
-				"PS384",
-				"PS512",
-				"ES256",
-				"ES256K",
-				"ES384",
-				"ES512"
-			],
-			"client_id_metadata_document_supported": true
-		},
-		"userAuthorizationEndPoint": "https://bsky.social/oauth/authorize",
-		"userTokenEndPoint": "https://bsky.social/oauth/token",
-		"userPAREndPoint": "https://bsky.social/oauth/par",
-		"userRevocationEndPoint": "https://bsky.social/oauth/revoke",
-		"userAuthServerRequestURI": "urn:ietf:params:oauth:request_uri:req-bfdfb0a01d59015636a221733dbfecd4",
-		"dpopNonce": "X-87xikxWXEEJwJsdY9OeY1uPz_5QpyYiBSwDDUhMLY",
-		"dpopNonceUsed": "X-87xikxWXEEJwJsdY9OeY1uPz_5QpyYiBSwDDUhMLY",
-		"dpopNonceReceived": "X-87xikxWXEEJwJsdY9OeY1uPz_5QpyYiBSwDDUhMLY",
-		"wwwAuthenticate": null,
-		"state": "4ef3e89d-1322-448e-ba1e-1e7be0c139e9",
-		"codeVerifier": "7ef3c4fca4b7da2eaba6441005e3e6c6e7684de23d4a263f8e7ae687",
-		"codeChallenge": "DyqUfH2x8f9brV7TwtUpSVkFIP-ap7yA7RqU-jJGE-Y",
-		"callbackData": {
-			"iss": "https://bsky.social",
-			"state": "4ef3e89d-1322-448e-ba1e-1e7be0c139e9",
-			"code": "cod-ee23b1c5eec0cea3c376e2d13b139acc2af7928bd30daafd20f3f5b89a337985",
-			"dpopNonce": null
-		},
-		"userAuthentication": {
-			"access_token": "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NksifQ.eyJhdWQiOiJkaWQ6d2ViOnZlbHZldGZvb3QudXMtZWFzdC5ob3N0LmJza3kubmV0d29yayIsImlhdCI6MTczODM1MTM5NSwiZXhwIjoxNzM4MzU0OTk1LCJzdWIiOiJkaWQ6cGxjOnRqYzI3YWplNHV3eHR3NWFiNnd3bTRrbSIsImp0aSI6InRvay1jZGZiZTBhM2U1ZWE3MTZhYjAxODA1ZGNiN2Y3NjlkMSIsImNuZiI6eyJqa3QiOiJYblp4SGI5Uy1lN0Zjd2ZmQWJCME1md1R4T3VIRW1CZnk1SjJJTmRHNGhJIn0sImNsaWVudF9pZCI6Imh0dHBzOi8vbWFkcmlsZW55ZXIubmVvY2l0aWVzLm9yZy9ic2t5L29hdXRoL2NsaWVudC1tZXRhZGF0YS5qc29uIiwic2NvcGUiOiJhdHByb3RvIHRyYW5zaXRpb246Z2VuZXJpYyIsImlzcyI6Imh0dHBzOi8vYnNreS5zb2NpYWwifQ.ihh5fo3tifPLtpaqUuSCHpdduGjoRUNSyKCzt-04fORc1c1ZyIQ4uTBVaK3Wb_vIAAeK-OBH0lcJSi3cfW7PSg",
-			"token_type": "DPoP",
-			"refresh_token": "ref-1308a47e1cf118824d4603a10d084c627e7890b8526177003a09f90c30310fc0",
-			"scope": "atproto transition:generic",
-			"expires_in": 3599,
-			"sub": "did:plc:tjc27aje4uwxtw5ab6wwm4km"
-		},
-		"userAccessToken": "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NksifQ.eyJhdWQiOiJkaWQ6d2ViOnZlbHZldGZvb3QudXMtZWFzdC5ob3N0LmJza3kubmV0d29yayIsImlhdCI6MTczODM1MTM5NSwiZXhwIjoxNzM4MzU0OTk1LCJzdWIiOiJkaWQ6cGxjOnRqYzI3YWplNHV3eHR3NWFiNnd3bTRrbSIsImp0aSI6InRvay1jZGZiZTBhM2U1ZWE3MTZhYjAxODA1ZGNiN2Y3NjlkMSIsImNuZiI6eyJqa3QiOiJYblp4SGI5Uy1lN0Zjd2ZmQWJCME1md1R4T3VIRW1CZnk1SjJJTmRHNGhJIn0sImNsaWVudF9pZCI6Imh0dHBzOi8vbWFkcmlsZW55ZXIubmVvY2l0aWVzLm9yZy9ic2t5L29hdXRoL2NsaWVudC1tZXRhZGF0YS5qc29uIiwic2NvcGUiOiJhdHByb3RvIHRyYW5zaXRpb246Z2VuZXJpYyIsImlzcyI6Imh0dHBzOi8vYnNreS5zb2NpYWwifQ.ihh5fo3tifPLtpaqUuSCHpdduGjoRUNSyKCzt-04fORc1c1ZyIQ4uTBVaK3Wb_vIAAeK-OBH0lcJSi3cfW7PSg",
-		"userRefreshToken": "ref-1308a47e1cf118824d4603a10d084c627e7890b8526177003a09f90c30310fc0",
-		"accessTokenHash": "zGeIvSvAlc2xz0Y7b8-qCqfenrXePrfQU-ACys9Mc1w"
-	}
-	 *
- */
+
+    return response;
+    // return hours + ":" + minutes + ":" + seconds + "." + milliseconds;
+}
