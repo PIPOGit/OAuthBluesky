@@ -10,6 +10,8 @@ import CONFIGURATION					from "../data/config.json" with { type: "json" };
 import * as COMMON						from "./common.functions.js";
 // Common Classes and Exceptions ("Types")
 import * as TYPES						from "./common.types.js";
+// Common HTML functions
+import * as HTML						from "./HTML.js";
 // Common JWT functions
 import * as JWT							from "./OAuth2/JWT.js";
 
@@ -36,9 +38,11 @@ export const ERROR_CODE_06				= { "code":  6, "message": "No user PDS Metadata r
 export const ERROR_CODE_07				= { "code":  7, "message": "Invalid token" };
 export const ERROR_CODE_10				= { "code": 10, "message": "Auth Servers mismatch!" };
 export const ERROR_CODE_11				= { "code": 11, "message": "User did's mismatch!" };
+export const ERROR_CODE_12				= { "code": 12, "message": "Expired token!" };
 
 // Inner constants
 const LSKEYS							= CONFIGURATION.localStorageKeys;
+const DIV_TOKEN_TIMEOUT					= "currentTokenTimeout";
 
 
 /**********************************************************
@@ -66,6 +70,9 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	const STEP_NAME						= "validateAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	
+	let isValid							= false;
+	let needsToRefresh					= false;
 
 	// Basic Checks
 	// ------------------------------------------
@@ -145,16 +152,36 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	// if (DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] Token issued at.:`, tokenIssuedAt );
 	// if (DEBUG) console.debug( PREFIX + `+ [${msTokenExpiresIn}] Token expires in:`, tokenExpiresIn );
 	
+	// If the token expiration time is greater than current time, error.
+	if ( msTokenExpiresIn < msCurrentTime ) {
+		if (DEBUG) console.debug( PREFIX + "-- END" );
+		if (GROUP_DEBUG) console.groupEnd();
+		throw new TYPES.AccessTokenError( ERROR_CODE_12 );
+	}
+
+	// Now that the checks are OK, let's see the
+	// token expiration time.
+	// ------------------------------------------
+
+	isValid								= true;
+
 	// The differences
 	const diffFromIssued				= msCurrentTime - msTokenIssuedAt;
 	const diffToExpire					= msTokenExpiresIn - msCurrentTime;
+	const ellapsedTimeAsString			= msToTime(diffFromIssued);
+	const expiringTimeAsString			= msToTime(diffToExpire);
 	if (DEBUG) console.debug( PREFIX + `Differences:` );
 	if (DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] --> [${diffFromIssued}] --> [${msCurrentTime}] --> [${diffToExpire}] --> [${msTokenExpiresIn}]` );
-	if (DEBUG) console.debug( PREFIX + `+ [${msToTime(msTokenIssuedAt, true)}] --> [${msToTime(diffFromIssued)}] --> [${msToTime(msCurrentTime, true)}] --> [${msToTime(diffToExpire)}] --> [${msToTime(msTokenExpiresIn, true)}]` );
+	if (DEBUG) console.debug( PREFIX + `+ [${msToTime(msTokenIssuedAt, true)}] --> [${ellapsedTimeAsString}] --> [${msToTime(msCurrentTime, true)}] --> [${expiringTimeAsString}] --> [${msToTime(msTokenExpiresIn, true)}]` );
 
+	// Let's update the HTML field for the remaining time for the token to expire...
+	$( "#" + DIV_TOKEN_TIMEOUT ).val( expiringTimeAsString );
+
+	// If the expiration time is close to end ("threshold", in minutes, in the config file)
 	const TOKEN_THRESHOLD				= CONFIGURATION.bluesky.token_expiration_threshold;
-	if ( diffToExpire < ( TOKEN_THRESHOLD * 1000 ) ) {
+	if ( diffToExpire < ( TOKEN_THRESHOLD * 1000 *60 ) ) {
 		console.warn( `Token about to expire! [TOKEN_THRESHOLD==${TOKEN_THRESHOLD}]` );
+		needsToRefresh					= true;
 
 		// BS Toast Test
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `BS Toast Test` );
@@ -168,17 +195,15 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 
 		$toastBody.html( html );
 		$toast.show({"animation": true, "autohide": true, "delay": 1000});
-		// Update te time...
+		// Update the time...
 		// TODO: A verlo... setTimeout(() => { $toastBodySpan.val( $toastBodySpan ); }, delay );
 		// setTimeout(() => { $toast.hide({"animation": true}); }, delay );
 		if (GROUP_DEBUG) console.groupEnd();
 	}
 
-
-
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
-	return true;
+	return { isValid: isValid, needsToRefresh: needsToRefresh };
 }
 
 function msToTime(duration, keepVoids=false) {

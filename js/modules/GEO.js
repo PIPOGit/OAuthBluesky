@@ -47,6 +47,8 @@ let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 export async function getGeolocationInformation() {
 	const STEP_NAME						= "getGeolocationInformation";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_HEADERS				= `${PREFIX}[Headers] `;
+	const PREFIX_BODY					= `${PREFIX}[Body] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let root							= null;
@@ -54,26 +56,37 @@ export async function getGeolocationInformation() {
 	let url								= null;
 	let responseFromServer				= null;
 	let response						= {};
+	
+	try {
+		root							= API.geo.myIPio.rootUrl;
+		endpoint						= API.geo.myIPio['ip.json'];
+		url								= root + endpoint;
+		if (DEBUG) console.debug(PREFIX + "Fetching data from:", url);
+		responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
+		if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", responseFromServer );
+		response.myIPio					= responseFromServer.body;
+	} catch (error) {
+		if (DEBUG) console.debug(PREFIX + "ERROR fetching data from:", url);
+		// Show the error and update the HTML fields
+		// HTML.updateHTMLError(error);
+	}
 
-	root								= API.geo.myIPio.rootUrl;
-	endpoint							= API.geo.myIPio['ip.json'];
-	url									= root + endpoint;
-	if (DEBUG) console.debug(PREFIX + "Fetching data from:", url);
+	try {
+		root							= API.geo.bdc.rootUrl;
+		endpoint						= API.geo.bdc['reverse-geocode-client'];
+		url								= root + endpoint + "?localityLanguage=es";
+		if (DEBUG) console.debug(PREFIX + "Fetching data from:", url);
+		responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
+		if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", responseFromServer );
+		response.bdc					= responseFromServer.body;
+	} catch (error) {
+		if (DEBUG) console.debug(PREFIX + "ERROR fetching data from:", url);
+		// Show the error and update the HTML fields
+		// HTML.updateHTMLError(error);
+	}
 
- 	responseFromServer					= await APICall.makeAPICall( STEP_NAME, url );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	response.myIPio						= responseFromServer.body;
-
-	root								= API.geo.bdc.rootUrl;
-	endpoint							= API.geo.bdc['reverse-geocode-client'];
-	url									= root + endpoint + "?localityLanguage=es";
-	if (DEBUG) console.debug(PREFIX + "Fetching data from:", url);
-
- 	responseFromServer					= await APICall.makeAPICall( STEP_NAME, url );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	response.bdc						= responseFromServer.body;
-
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
 	
 	// return { state: state, codeVerifier: codeVerifier, codeChallenge: codeChallenge, body: body };
 	return response;

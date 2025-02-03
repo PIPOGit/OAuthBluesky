@@ -54,38 +54,6 @@ let responseError						= null;
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-// APICall response & error Helper functions
-// Sets the "responseHeaders" variable.
-async function processAPICallResponse(step, response) {
-	const STEP_NAME						= "processAPICallResponse";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Process the HTTP Response
-	if ( response.ok ) {
-		responseHeaders					= showResponseHeaders( response );
-		if (DEBUG) console.debug( PREFIX + "responseHeaders:", responseHeaders );
-		analizeResponseHeaders( responseHeaders );
-		if (GROUP_DEBUG) console.groupEnd();
-		return ( response.status == 204 ) ? response.text() : response.json();
-	} else {
-		let errorObject					= null;
-		if (GROUP_DEBUG) console.groupEnd();
-		return response.text().then( data => {
-			responseHeaders				= showResponseHeaders( response );
-			analizeResponseHeaders( responseHeaders );
-			const contentType			= responseHeaders.headers["content-type"];
-			let errorObject				= new TYPES.APICallError( step, responseHeaders, contentType );
-			errorObject.text			= data;
-			errorObject.headers			= responseHeaders;
-			if ( COMMON.areEquals( contentType, CONTENT_TYPE_JSON ) || COMMON.areEquals( contentType, CONTENT_TYPE_JSON_UTF8 ) ) {
-				errorObject.isJson		= true;
-				errorObject.json		= JSON.parse( data );
-			}
-			throw errorObject;
-		});
-	}
-}
 
 // HTML Helper functions
 function showResponseHeaders(data) {
@@ -159,6 +127,42 @@ function analizeResponseHeaders(response) {
 }
 
 
+// APICall response & error Helper functions
+// Sets the "responseHeaders" variable.
+async function processAPICallResponse(step, response) {
+	const STEP_NAME						= "processAPICallResponse";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Process the HTTP Response
+	if ( response.ok ) {
+		responseHeaders					= showResponseHeaders( response );
+		if (DEBUG) console.debug( PREFIX + "responseHeaders:", responseHeaders );
+		analizeResponseHeaders( responseHeaders );
+		if (DEBUG) console.debug( PREFIX + "-- END" );
+		if (GROUP_DEBUG) console.groupEnd();
+		return ( response.status == 204 ) ? response.text() : response.json();
+	} else {
+		let errorObject					= null;
+		if (DEBUG) console.debug( PREFIX + "-- END" );
+		if (GROUP_DEBUG) console.groupEnd();
+		return response.text().then( data => {
+			responseHeaders				= showResponseHeaders( response );
+			analizeResponseHeaders( responseHeaders );
+			const contentType			= responseHeaders.headers["content-type"];
+			let errorObject				= new TYPES.APICallError( step, responseHeaders, contentType );
+			errorObject.text			= data;
+			errorObject.headers			= responseHeaders;
+			if ( !COMMON.isNullOrEmpty(data) && !COMMON.isNullOrEmpty(contentType) && ( COMMON.areEquals( contentType, CONTENT_TYPE_JSON ) || COMMON.areEquals( contentType, CONTENT_TYPE_JSON_UTF8 ) ) ) {
+				errorObject.isJson		= true;
+				errorObject.json		= JSON.parse( data );
+			}
+			throw errorObject;
+		});
+	}
+}
+
+
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
@@ -166,8 +170,6 @@ function analizeResponseHeaders(response) {
 export async function makeAPICall( step, url, fetchOptions=null, renderHTMLErrors=true ) {
 	const STEP_NAME						= "makeAPICall";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_FETCH					= `${PREFIX}[Fetch] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[From=${step}] [URL=${url}] [renderHTMLErrors=${renderHTMLErrors}]` );
 
 	// Clear data.
 	responseHeaders						= null;
@@ -176,21 +178,24 @@ export async function makeAPICall( step, url, fetchOptions=null, renderHTMLError
 
  	let responseFromServer				= await fetch( url, fetchOptions ).then( response => {
         // Process the HTTP Response
-		return processAPICallResponse( step, response );
+		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[From=${step}] [URL=${url}] [renderHTMLErrors=${renderHTMLErrors}]` );
+		let processedResponse			= processAPICallResponse( step, response );
+		return processedResponse;
     }).then( data => {
         // Process the HTTP Response Body
-		// if (DEBUG) console.debug( PREFIX_FETCH + "Data:", COMMON.prettyJson( data ) );
-        // Return something
 		responseBody					= data;
+		if (DEBUG) console.debug( PREFIX + "-- END" );
+		if (GROUP_DEBUG) console.groupEnd();
+        // Return something
 		return data;
     }).catch( error => {
 		responseError					= error;
-		HTML.processAPICallErrorResponse( error, renderHTMLErrors );
-    }).finally( () => {
-		if (DEBUG) console.debug( PREFIX_FETCH + "-- FINALLY" );
+		if (DEBUG) console.debug( PREFIX + "-- END" );
 		if (GROUP_DEBUG) console.groupEnd();
+		HTML.processAPICallErrorResponse( error, renderHTMLErrors );
     });
 	
 	return { headers: responseHeaders, body: responseBody, error: responseError };
 }
+
 

@@ -38,7 +38,6 @@ const LSKEYS							= CONFIGURATION.localStorageKeys;
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
 const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true };
-const DIV_TOKEN_TIMEOUT					= "currentTokenTimeout";
 const DIV_DATE_TIME						= "currentDateTime";
 
 
@@ -53,16 +52,6 @@ let expiration							= 0;
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-function tokenExpiration() {
-	// TODO: Refresh token: https://developer.okta.com/docs/guides/dpop/nonoktaresourceserver/main/#refresh-an-access-token
-	// La fecha y hora actual
-	const now							= new Date();
-
-	// Los segundos de expiración del token
-	let secondsToExpire					= parseInt( expiration - ( now.getTime() - momentReceivedToken.getTime() ) / 1000 );
-	$( "#" + DIV_TOKEN_TIMEOUT ).val( secondsToExpire );
-}
-
 async function htmlRenderNotification( notification, userAccessToken, clientId, accessTokenHash ) {
 	const STEP_NAME						= "htmlRenderNotification";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -269,7 +258,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 				msg						+= ( error.json.error_description ) ? error.json.error_description : "";
 				$("#errorDescription").val(msg);
 			} else {
-				let msg					= `[${error.step}] Error invocando a: [${error.url}]`;
+				let msg					= `[${error.step}] Error [${error.statusText}] invocando a: [${error.url}]`;
 				$("#errorDescription").val(msg);
 			}
 		}
@@ -434,22 +423,6 @@ export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
 
 	// Finally, throw the error
 	throw( error );
-}
-
-export function htmlRenderUserAccessToken( userAuthentication ) {
-	const STEP_NAME						= "htmlRenderUserAccessToken";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	if (DEBUG) console.debug( PREFIX + "User Authentication:", userAuthentication );
-
-	// Planificamos la renovación del token en (dentro de) "expires_in" segundos
-	momentReceivedToken					= new Date();
-	expiration							= userAuthentication.expires_in;
-	setInterval(() => tokenExpiration(), BSKY.data.MILLISECONDS );
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
 }
 
 export function htmlRenderUserProfile( profile ) {

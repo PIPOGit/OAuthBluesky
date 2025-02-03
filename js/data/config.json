@@ -4,13 +4,13 @@
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.0.0",
-		"refresh_dashboard": 10
+		"refresh_dashboard": 15
 	},
 	"localhost": {
 		"root": "http://localhost/neocities/index.html"
 	},
 	"bluesky": {
-		"token_expiration_threshold": 600
+		"token_expiration_threshold": 10
 	},
 	"github": {
 		"repo": "https://github.com/PIPOGit/OAuthBluesky"

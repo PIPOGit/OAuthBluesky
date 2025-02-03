@@ -205,31 +205,35 @@
 					<!-- El formulario con los datos de acceso -->
 					<form id="userHandleForm" name="userHandleForm" class="row align-items-center theme-callback mb-2">
 
+						<div class="row d-grid justify-content-start">
+							<button id="button-refresh-token" name="button-refresh-token" class="btn btn-sm btn-success mx-3 my-1" type="button" onClick="BSKY.refreshAccessToken()">Refresh</button>
+						</div>
+
 						<div class="row">
 							<label for="iss" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">ISS:</label>
 							<div class="col-sm-10">
-								<input type="email" class="form-control-plaintext form-control-sm" id="iss" name="iss" placeholder="Received iss" readonly>
+								<input type="text" class="form-control-plaintext form-control-sm" id="iss" name="iss" placeholder="Received iss" readonly>
 							</div>
 						</div>
 
 						<div class="row">
 							<label for="state" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">State:</label>
 							<div class="col-sm-10">
-								<input type="email" class="form-control-plaintext form-control-sm" id="state" name="state" placeholder="Received state" readonly>
+								<input type="text" class="form-control-plaintext form-control-sm" id="state" name="state" placeholder="Received state" readonly>
 							</div>
 						</div>
 
 						<div class="row">
 							<label for="code" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">Code:</label>
 							<div class="col-sm-10">
-								<input type="email" class="form-control-plaintext form-control-sm" id="code" name="code" placeholder="Received code" readonly>
+								<input type="text" class="form-control-plaintext form-control-sm" id="code" name="code" placeholder="Received code" readonly>
 							</div>
 						</div>
 
 						<div class="row">
 							<label for="dpopNonce" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">DPoP Nonce:</label>
 							<div class="col-sm-10">
-								<input type="email" class="form-control-plaintext form-control-sm" id="dpopNonce" name="dpopNonce" placeholder="Received dpop-nonce" readonly>
+								<input type="text" class="form-control-plaintext form-control-sm" id="dpopNonce" name="dpopNonce" placeholder="Received dpop-nonce" readonly>
 							</div>
 						</div>
 					</form>
