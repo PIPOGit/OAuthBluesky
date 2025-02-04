@@ -55,7 +55,11 @@
 				"api": {
 					"describeRepo": "/com.atproto.repo.describeRepo",
 					"getAccountInfo": "/com.atproto.admin.getAccountInfo",
+					"getBlocks": "/app.bsky.graph.getBlocks",
 					"getFollowers": "/app.bsky.graph.getFollowers",
+					"getFollows": "/app.bsky.graph.getFollows",
+					"getLists": "/app.bsky.graph.getLists",
+					"getMutes": "/app.bsky.graph.getMutes",
 					"getPosts": "/app.bsky.feed.getPosts",
 					"getProfile": "/app.bsky.actor.getProfile",
 					"getUnreadCount": "/app.bsky.notification.getUnreadCount",

@@ -127,9 +127,6 @@ async function bootstrap() {
 	// ================================================================
 	// Module END
 	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (DEBUG) console.groupEnd();
-
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
@@ -150,7 +147,8 @@ async function bootstrap() {
 
 	// Geolocation Information
 	let geolocationInfo					= await GEO.getGeolocationInformation();
-	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
+	if (DEBUG) console.debug( PREFIX_INNER + "Received geolocationInfo:", geolocationInfo );
+	if (DEBUG) console.groupEnd();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (DEBUG) console.groupEnd();
@@ -403,7 +401,7 @@ function checkUserHandle() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Update the "user handle" field with the value in localStorage, if any.
-	let userHandle						= localStorage.getItem(LSKEYS.user.handle);
+	userHandle							= localStorage.getItem(LSKEYS.user.handle);
 	if ( userHandle ) {
 		let $input						= $( "#userHandle" );
 		if ( $input.length ) {

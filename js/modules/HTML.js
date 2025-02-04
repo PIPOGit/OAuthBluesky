@@ -38,8 +38,40 @@ const LSKEYS							= CONFIGURATION.localStorageKeys;
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
 const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true };
-const DIV_DATE_TIME						= "currentDateTime";
 
+// HTML normal DIVs/Placeholders constants
+const DIV_DATE_TIME						= "currentDateTime";
+const DIV_TAB_NOTIS_BADGE				= "pill-notifications-badge";
+const DIV_TOAST							= "toast-followers-change";
+const DIV_PANEL_ERROR					= "errorPanel";
+const DIV_PANEL_INFO					= "infoPanel";
+
+// HTML jQuery DIVs/Placeholders constants
+const DIV_JQ_ERROR						= "#error";
+const DIV_JQ_ERROR_DESCRIPTION			= "#errorDescription";
+const DIV_JQ_ISS						= "#iss";
+const DIV_JQ_STATE						= "#state";
+const DIV_JQ_CODE						= "#code";
+const DIV_JQ_DPOP_NONCE					= "#dpopNonce";
+const DIV_JQ_DATE_TIME					= `#${DIV_DATE_TIME}`;
+const DIV_JQ_NOTIFICATIONS				= "#notifications";
+const DIV_JQ_NOTIFICATIONS_JSON			= "#notifications_json";
+const DIV_JQ_NOTIFICATIONS_NUMBER		= "#notificationsNumber";
+const DIV_JQ_TAB_NOTIS_BADGE			= `#${DIV_TAB_NOTIS_BADGE}`;
+const DIV_JQ_ACCESS_TOKEN_JWT			= "#access_token_jwt";
+const DIV_JQ_ACCESS_TOKEN_JSON			= "#access_token_json";
+const DIV_JQ_PROFILE_AVATAR				= "#profile-avatar";
+const DIV_JQ_PROFILE_AVATAR_TOP			= "#profile-avatar-top";
+const DIV_JQ_PROFILE_NAME				= "#profile-name";
+const DIV_JQ_PROFILE_NAME_TOP			= "#profile-name-top";
+const DIV_JQ_PROFILE_HANDLE				= "#profile-handle";
+const DIV_JQ_PROFILE_HANDLE_TOP			= "#profile-handle-top";
+const DIV_JQ_PROFILE_HANDLE_LINK		= "#profile-handle-link";
+const DIV_JQ_PROFILE_FOLLOWERS			= "#profile-followers";
+const DIV_JQ_PROFILE_FOLLOWING			= "#profile-following";
+const DIV_JQ_PROFILE_POSTS				= "#profile-posts";
+const DIV_JQ_PROFILE_DESCRIPTION		= "#profile-description";
+const DIV_JQ_TOAST						= `#${DIV_TOAST}`;
 
 /**********************************************************
  * Module Variables
@@ -57,7 +89,7 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 
 	// Vamos preparando el HTML para la notificación.
-	let jqRoot							= $( "#notifications" );
+	let jqRoot							= $( DIV_JQ_NOTIFICATIONS );
 
 	let cid								= notification.cid;
 	let uri								= notification.uri;
@@ -198,12 +230,26 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
+
+/* --------------------------------------------------------
+ * General use.
+ * -------------------------------------------------------- */
 export function clock() {
 	// La fecha y hora actual
 	const now							= new Date();
-	$( "#" + DIV_DATE_TIME ).val( now.toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS ) );
+	$( DIV_JQ_DATE_TIME ).val( now.toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS ) );
 }
 
+export function htmlRenderHighlight() {
+	$( DIV_JQ_ACCESS_TOKEN_JSON ).removeAttr('data-highlighted');
+	$( DIV_JQ_ACCESS_TOKEN_JWT ).removeAttr('data-highlighted');
+	$( DIV_JQ_NOTIFICATIONS_JSON ).removeAttr('data-highlighted');
+	hljs.highlightAll();
+}
+
+/* --------------------------------------------------------
+ * Errors management.
+ * -------------------------------------------------------- */
 export function updateHTMLError(error, renderHTMLErrors=true) {
 	const STEP_NAME						= "makeAPICall";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -213,14 +259,11 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 	let isInstanceOfAPICallError		= error instanceof TYPES.APICallError;
 
 	if (DEBUG) console.warn( PREFIX + "ERROR:", error.toString() );
-	// if (DEBUG) console.warn( PREFIX + "ERROR type:", COMMON.getTypeOf( error ) );
-	// if (DEBUG) console.warn( PREFIX + "ERROR instance of TYPES.AccessTokenError:", isInstanceOfAccessTokenError );
-	// if (DEBUG) console.warn( PREFIX + "ERROR instance of TYPES.APICallError:", isInstanceOfAPICallError );
 
 	// HTML L&F
 	if ( renderHTMLErrors ) {
-		COMMON.hide( "infoPanel" );
-		COMMON.show( "errorPanel" );
+		COMMON.hide( DIV_PANEL_INFO );
+		COMMON.show( DIV_PANEL_ERROR );
 	}
 
 	if ( isInstanceOfAccessTokenError ) {
@@ -229,8 +272,8 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
-			$("#error").html(error.title);
-			$("#errorDescription").val(error.message);
+			$( DIV_JQ_ERROR ).html(error.title);
+			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
 		}
 	} else if ( isInstanceOfAPICallError ) {
 		if (DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
@@ -251,24 +294,22 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
-			$("#error").html(error.message);
+			$( DIV_JQ_ERROR ).html(error.message);
 			if ( error.isJson ) {
 				let msg					= ( error.json.error ) ? error.json.error + ": " : "";
 				msg						+= ( error.json.message ) ? error.json.message : "";
 				msg						+= ( error.json.error_description ) ? error.json.error_description : "";
-				$("#errorDescription").val(msg);
+				$( DIV_JQ_ERROR_DESCRIPTION ).val(msg);
 			} else {
 				let msg					= `[${error.step}] Error [${error.statusText}] invocando a: [${error.url}]`;
-				$("#errorDescription").val(msg);
+				$( DIV_JQ_ERROR_DESCRIPTION ).val(msg);
 			}
 		}
 	} else {
-		// Unknown error type
-
-		// Update the error fields
+		// Unknown error type. Update the error fields
 		if ( renderHTMLErrors ) {
-			$("#error").html("ERROR");
-			$("#errorDescription").val(error.message);
+			$( DIV_JQ_ERROR ).html("ERROR");
+			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
 		}
 	}
 	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
@@ -280,134 +321,9 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 export function clearHTMLError() {
 	// Clear and hide error fields and panel
-	$("#error").html("");
-	$("#errorDescription").val("");
-	COMMON.hide("errorPanel");
-}
-
-export function updateHTMLFields(parsedSearch) {
-	const STEP_NAME						= "updateHTMLFields";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Recibido.
-	let isInstanceOfCallbackData		= parsedSearch instanceof TYPES.CallbackData;
-	let isInstanceOfURLSearchParams		= parsedSearch instanceof URLSearchParams;
-	if (DEBUG) console.debug(PREFIX + "Tipo de parsedSearch:", COMMON.getTypeOf( parsedSearch ) );
-	if (DEBUG) console.debug(PREFIX + "Instancia de TYPES.CallbackData:", isInstanceOfCallbackData );
-	if (DEBUG) console.debug(PREFIX + "Instancia de URLSearchParams:", isInstanceOfURLSearchParams );
-
-	// Hide panels.
-	// COMMON.hide("accessTokenPanel");
-	// COMMON.hide("btnNotifications");
-
-	let iss								= null;
-	let state							= null;
-	let code							= null;
-	let dpopNonce						= null;
-
-	let response						= null;
-	if ( isInstanceOfURLSearchParams ) {
-		iss								= parsedSearch.get("iss");
-		state							= parsedSearch.get("state");
-		code							= parsedSearch.get("code");
-		dpopNonce						= parsedSearch.get("dpopNonce");
-		response						= new TYPES.CallbackData( iss, state, code, dpopNonce );
-	} else {
-		iss								= parsedSearch.iss;
-		state							= parsedSearch.state;
-		code							= parsedSearch.code;
-		dpopNonce						= parsedSearch.dpopNonce;
-		response						= parsedSearch;
-	}
-
-	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
-	if (DEBUG) console.debug(PREFIX + "+ iss:", iss);
-	if (DEBUG) console.debug(PREFIX + "+ state:", state);
-	if (DEBUG) console.debug(PREFIX + "+ code:", code);
-	if (DEBUG) console.debug(PREFIX + "+ dpopNonce:", dpopNonce);
-
-	// Update HTML page element values.
-	// CSS Classes.
-	$("#iss").val(iss);
-	$("#state").val(state);
-	$("#code").val(code);
-	$("#dpopNonce").val(dpopNonce);
-
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
-	return response;
-}
-
-export async function parseNotifications( notifications, userAccessToken, clientId, accessTokenHash ) {
-	const STEP_NAME						= "parseNotifications";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[Response data]" );
-	if (DEBUG) console.debug( PREFIX + "Current notifications:", notifications );
-	if (DEBUG) console.debug( PREFIX + "Current notifications:", COMMON.prettyJson( notifications ) );
-	if (GROUP_DEBUG) console.groupEnd();
-
-	// Parse the notifications
-	let notification					= null;
-	let unreadNotifications				= [];
-
-	// Detect ONLY the "unread" notifications...
-	for ( let key in notifications ) {
-		notification					= notifications[key];
-		if ( !notification.isRead ) {
-			unreadNotifications.push( notification );
-		}
-	}
-
-	// Show only info about the "unread"...
-	// Vaciamos el panel, previamente.
-	let jqRoot							= $( "#notifications" );
-	jqRoot.html( "" );
-	clearHTMLError();
-	let totalUnread						= unreadNotifications.length;
-	let currentUnread					= 0;
-	$( "#pill-notifications-badge" ).html(""+totalUnread);
-	if ( totalUnread == 0) {
-		if (DEBUG) console.debug( PREFIX + "Currently, no UNREAD notifications." );
-
-		// Ponemos el badge a 0 y lo ocultamos
-		COMMON.hide("pill-notifications-badge");
-	} else {
-		if (DEBUG) console.debug( PREFIX + "%cCurrently, " + totalUnread + " UNREAD notifications:", COMMON.CONSOLE_STYLE );
-		if (DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
-
-		// Actualizamos el badge y lo mostramos
-		COMMON.show("pill-notifications-badge");
-
-		// Ponemos el badge a 0 y lo ocultamos
-		for ( let key in unreadNotifications ) {
-			currentUnread++;
-			if (DEBUG) console.groupCollapsed( PREFIX + `[Noti ${currentUnread}/${totalUnread}]` );
-			await htmlRenderNotification( unreadNotifications[key], userAccessToken, clientId, accessTokenHash );
-			if (DEBUG) console.groupEnd(PREFIX);
-		}
-	}
-
-	// Clear and hide error fields and panel
-	clearHTMLError();
-
-	// Hide "notificationsPanel" panel
-	COMMON.show("notificationsPanel");
-	COMMON.show("btnAccessToken");
-
-	// Update the HTML fields
-	$("#notifications_json").removeAttr('data-highlighted');
-	$("#access_token_jwt").removeAttr('data-highlighted');
-	$("#access_token_json").removeAttr('data-highlighted');
-	$("#notifications_json").removeAttr('data-highlighted');
-	$("#notifications_json").removeAttr('data-highlighted');
-	$("#notificationsNumber").text( "Pendientes de leer: " + unreadNotifications.length );
-	$("#notifications_json").text( COMMON.prettyJson( notifications ) );
-
-	hljs.highlightAll();
-
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	$( DIV_JQ_ERROR ).html("");
+	$( DIV_JQ_ERROR_DESCRIPTION ).val("");
+	COMMON.hide( DIV_PANEL_ERROR );
 }
 
 export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
@@ -425,6 +341,137 @@ export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
 	throw( error );
 }
 
+/* --------------------------------------------------------
+ * Callback data and access token management.
+ * -------------------------------------------------------- */
+export function updateHTMLFields(parsedSearch) {
+	const STEP_NAME						= "updateHTMLFields";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Recibido.
+	let isInstanceOfCallbackData		= parsedSearch instanceof TYPES.CallbackData;
+	let isInstanceOfURLSearchParams		= parsedSearch instanceof URLSearchParams;
+	if (DEBUG) console.debug(PREFIX + "Tipo de parsedSearch:", COMMON.getTypeOf( parsedSearch ) );
+	if (DEBUG) console.debug(PREFIX + "Instancia de TYPES.CallbackData:", isInstanceOfCallbackData );
+	if (DEBUG) console.debug(PREFIX + "Instancia de URLSearchParams:", isInstanceOfURLSearchParams );
+
+	let iss								= null;
+	let state							= null;
+	let code							= null;
+	let dpopNonce						= null;
+
+	let response						= null;
+	if ( isInstanceOfURLSearchParams ) {
+		iss								= parsedSearch.get("iss");
+		state							= parsedSearch.get("state");
+		code							= parsedSearch.get("code");
+		response						= new TYPES.CallbackData( iss, state, code, dpopNonce );
+	} else {
+		iss								= parsedSearch.iss;
+		state							= parsedSearch.state;
+		code							= parsedSearch.code;
+		response						= parsedSearch;
+	}
+	dpopNonce							= BSKY.data.dpopNonce;
+
+	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
+	if (DEBUG) console.debug(PREFIX + "+ iss:", iss);
+	if (DEBUG) console.debug(PREFIX + "+ state:", state);
+	if (DEBUG) console.debug(PREFIX + "+ code:", code);
+	if (DEBUG) console.debug(PREFIX + "+ dpopNonce:", dpopNonce);
+
+	// Update HTML page element values.
+	// CSS Classes.
+	$( DIV_JQ_ISS ).val(iss);
+	$( DIV_JQ_STATE ).val(state);
+	$( DIV_JQ_CODE ).val(code);
+	$( DIV_JQ_DPOP_NONCE ).val(dpopNonce);
+
+	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	return response;
+}
+
+export function updateUserAccessToken(userAccessToken) {
+	$( DIV_JQ_ACCESS_TOKEN_JWT ).text( userAccessToken );
+	$( DIV_JQ_ACCESS_TOKEN_JSON ).text( JWT.jwtToPrettyJSON( userAccessToken ) );
+}
+
+/* --------------------------------------------------------
+ * Notifications management.
+ * -------------------------------------------------------- */
+export function htmlRenderNoNotifications() {
+	// Ponemos el badge a 0 y lo ocultamos
+	$( DIV_JQ_TAB_NOTIS_BADGE ).html(0);
+	COMMON.hide( DIV_TAB_NOTIS_BADGE );
+
+	// Limpiamos el "DIV" de las notis.
+	$( DIV_JQ_NOTIFICATIONS ).html( "" );
+	$( DIV_JQ_NOTIFICATIONS_JSON ).text( "{}" );
+}
+
+export async function htmlRenderNotifications( notifications, userAccessToken, clientId, accessTokenHash ) {
+	const STEP_NAME						= "htmlRenderNotifications";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[Response data]" );
+	if (DEBUG) console.debug( PREFIX + "Current notifications:", notifications );
+	if (DEBUG) console.debug( PREFIX + "Current notifications:", COMMON.prettyJson( notifications ) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	// Clear and hide error fields and panel
+	clearHTMLError();
+	htmlRenderNoNotifications();
+
+	// Parse the notifications
+	let notification					= null;
+	let unreadNotifications				= [];
+
+	// Detect ONLY the "unread" notifications...
+	for ( let key in notifications ) {
+		notification					= notifications[key];
+		if ( !notification.isRead ) {
+			unreadNotifications.push( notification );
+		}
+	}
+
+	// Show only info about the "unread"...
+	// Vaciamos el panel, previamente.
+	let jqRoot							= $( DIV_JQ_NOTIFICATIONS );
+	jqRoot.html( "" );
+
+	let totalUnread						= unreadNotifications.length;
+	let currentUnread					= 0;
+	if ( totalUnread == 0) {
+		if (DEBUG) console.debug( PREFIX + "Currently, no UNREAD notifications." );
+	} else {
+		if (DEBUG) console.debug( PREFIX + "%cCurrently, " + totalUnread + " UNREAD notifications:", COMMON.CONSOLE_STYLE );
+		if (DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
+
+		// Actualizamos el badge y lo mostramos
+		COMMON.show( DIV_TAB_NOTIS_BADGE );
+
+		// Ponemos el badge a 0 y lo ocultamos
+		for ( let key in unreadNotifications ) {
+			currentUnread++;
+			if (DEBUG) console.groupCollapsed( PREFIX + `[Noti ${currentUnread}/${totalUnread}]` );
+			await htmlRenderNotification( unreadNotifications[key], userAccessToken, clientId, accessTokenHash );
+			if (DEBUG) console.groupEnd(PREFIX);
+		}
+	}
+
+	// Update the HTML fields
+	$( DIV_JQ_NOTIFICATIONS_NUMBER ).text( "Pendientes de leer: " + unreadNotifications.length );
+	$( DIV_JQ_NOTIFICATIONS_JSON ).text( COMMON.prettyJson( notifications ) );
+	htmlRenderHighlight();
+
+	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+}
+
+/* --------------------------------------------------------
+ * Profile management.
+ * -------------------------------------------------------- */
 export function htmlRenderUserProfile( profile ) {
 	const STEP_NAME						= "htmlRenderUserProfile";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -433,22 +480,22 @@ export function htmlRenderUserProfile( profile ) {
 
 	if (DEBUG) console.debug( PREFIX + "User Profile:", profile );
 	
-	$( "#profile-avatar" ).attr( "src", profile.avatar );
-	$( "#profile-avatar-top" ).attr( "src", profile.avatar );
+	$( DIV_JQ_PROFILE_AVATAR ).attr( "src", profile.avatar );
+	$( DIV_JQ_PROFILE_AVATAR_TOP ).attr( "src", profile.avatar );
 
-	$( "#profile-name" ).html( profile.displayName );
-	$( "#profile-name-top" ).html( profile.displayName );
+	$( DIV_JQ_PROFILE_NAME ).html( profile.displayName );
+	$( DIV_JQ_PROFILE_NAME_TOP ).html( profile.displayName );
 
-	$( "#profile-handle" ).html( profile.handle );
-	$( "#profile-handle-top" ).html( profile.handle );
+	$( DIV_JQ_PROFILE_HANDLE ).html( profile.handle );
+	$( DIV_JQ_PROFILE_HANDLE_TOP ).html( profile.handle );
 
-	$( "#profile-followers" ).html( profile.followersCount );
-	$( "#profile-following" ).html( profile.followsCount );
-	$( "#profile-posts" ).html( profile.postsCount );
-	$( "#profile-description" ).html( profile.description );
+	$( DIV_JQ_PROFILE_FOLLOWERS ).html( profile.followersCount );
+	$( DIV_JQ_PROFILE_FOLLOWING ).html( profile.followsCount );
+	$( DIV_JQ_PROFILE_POSTS ).html( profile.postsCount );
+	$( DIV_JQ_PROFILE_DESCRIPTION ).html( profile.description );
 
 	// El enlace
-	let $link							= $( "#profile-handle-link" );
+	let $link							= $( DIV_JQ_PROFILE_HANDLE_LINK );
 	let href							= API.bluesky.profile.url + profile.handle;
 	$link.attr("href",  href);
 	$link.attr("alt",   `ALT: ${profile.description}`);
@@ -473,9 +520,9 @@ export function htmlRenderUserProfile( profile ) {
 			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 			// El toast.
 			let toastDivID				= "toast-followers-change";
-			let $toast					= $( `#${toastDivID}` );
-			let $toastImg				= $( `#${toastDivID} > .toast-header > img` );
-			let $toastBody				= $( `#${toastDivID} > .toast-body` );
+			let $toast					= $( DIV_JQ_TOAST );
+			let $toastImg				= $( DIV_JQ_TOAST + " > .toast-header > img" );
+			let $toastBody				= $( DIV_JQ_TOAST + " > .toast-body" );
 			let html					= `Diferencia de ${diffFollowers} followers y de ${diffFollowing} following`;
 			let delay					= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
 
@@ -488,6 +535,42 @@ export function htmlRenderUserProfile( profile ) {
 			if (DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 		}
 	}
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderUserFollows( data ) {
+	const STEP_NAME						= "htmlRenderUserFollows";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderUserFollowers( data ) {
+	const STEP_NAME						= "htmlRenderUserFollowers";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderUserBlocks( data ) {
+	const STEP_NAME						= "htmlRenderUserBlocks";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();

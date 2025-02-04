@@ -85,9 +85,6 @@ async function bootstrap() {
 	// ================================================================
 	// Module END
 	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (DEBUG) console.groupEnd();
-
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
@@ -100,15 +97,16 @@ async function bootstrap() {
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB();
 
-	// Geolocation Information
-	let geolocationInfo					= await GEO.getGeolocationInformation();
-	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
-
 	// Perform dashboard operations
 	// + Call first.
 	const refreshSeconds				= CONFIGURATION.global.refresh_dashboard;
 	const refreshTime					= refreshSeconds * 1000;
-	if (DEBUG) console.debug( PREFIX + `Refreshing data every ${refreshSeconds} second(s)` );
+	if (DEBUG) console.debug( PREFIX_INNER + `Refreshing data every ${refreshSeconds} second(s)` );
+
+	// Geolocation Information
+	let geolocationInfo					= await GEO.getGeolocationInformation();
+	if (DEBUG) console.debug( PREFIX_INNER + "Received geolocationInfo:", geolocationInfo );
+	if (DEBUG) console.groupEnd();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (DEBUG) console.groupEnd();

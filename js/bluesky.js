@@ -193,8 +193,6 @@ async function bootstrap() {
 	// ================================================================
 	// Module END
 	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (DEBUG) console.groupEnd();
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
@@ -209,6 +207,9 @@ async function bootstrap() {
 	hljs.configure({
 		ignoreUnescapedHTML: true
 	});
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (DEBUG) console.groupEnd();
 }
 
 async function geoLocationInformation() {
@@ -346,6 +347,122 @@ function restoreDataFromLocalStorage() {
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Internal Business function": Retrieve something.
+ * Due to the behaviour of Bluesky API, sometimes, the server
+ * requests to re-authenticate, sending a new "dpop-nonce"
+ * value.
+ * This module performs a "try-and-catch" call for a given
+ * function.
+ * -------------------------------------------------------- */
+async function tryAndCatch( currentStep, callbackFunction, callbackOptions ) {
+	const STEP_NAME						= "tryAndCatch";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `Step: ${currentStep}` );
+
+	// Clear and hide error fields and panel
+	HTML.clearHTMLError();
+
+	let apiCallResponse					= null;
+	try {
+		// Let's retrieve first if there are unread user's notifications.
+		// ------------------------------------------
+		apiCallResponse					= await callbackFunction(callbackOptions);
+		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+
+		// Clear and hide error fields and panel
+		HTML.clearHTMLError();
+	} catch (error) {
+		if (GROUP_DEBUG) console.groupEnd();
+
+		// Check if the error is due to a different dpop-nonce in step 12...
+		let sameSteps					= COMMON.areEquals(error.step, currentStep);
+		let distinctDPoPNonce			= !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived);
+		if ( sameSteps && distinctDPoPNonce) {
+			// Show the error and update the HTML fields
+			HTML.updateHTMLError(error, false);
+
+			if (DEBUG) console.debug( PREFIX + "Let's retry..." );
+			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
+			try {
+				apiCallResponse			= await callbackFunction(callbackOptions);
+				if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
+
+				// Clear and hide error fields and panel
+				HTML.clearHTMLError();
+			} catch (error) {
+				if (GROUP_DEBUG) console.groupEnd();
+				
+				// TODO: Si el error es de expiración del token [401]
+				// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
+				if (   ( error.status==401 )									// authentication error
+					&& ( error.isJson )											// json format
+					&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
+					// Redirigir a "logout".
+					if (DEBUG) console.debug( PREFIX + "-- END" );
+					if (GROUP_DEBUG) console.groupEnd();
+					await fnLogout();
+				} else {
+					// Show the error and update the HTML fields
+					if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
+					HTML.updateHTMLError(error);
+					throw( error );
+				}
+			}
+			if (GROUP_DEBUG) console.groupEnd();
+		} else {
+			if (DEBUG) console.debug( PREFIX_RETRY + `[sameSteps=${sameSteps}]` );
+			if (DEBUG) console.debug( PREFIX_RETRY + `+ [error.step]`, error.step );
+			if (DEBUG) console.debug( PREFIX_RETRY + `+ [currentStep]`, currentStep );
+			if (DEBUG) console.debug( PREFIX_RETRY + `[distinctDPoPNonce=${distinctDPoPNonce}]` );
+			if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceUsed]`, BSKY.data.dpopNonceUsed );
+			if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceReceived]`, BSKY.data.dpopNonceReceived );
+
+			// Show the error and update the HTML fields
+			HTML.updateHTMLError(error);
+		}
+	}
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	
+	return apiCallResponse;
+}
+
+// Internal atomic function to logout the user
+async function performUserLogout() {
+	const STEP_NAME						= "performUserLogout";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Now, the user's profile.
+	if (DEBUG) console.debug( PREFIX + `Performing the user's logout...` );
+    let body							= `token=${userAccessToken}`;
+    let fetchOptions					= {
+        method: HTML_POST,
+        headers: {
+			'Authorization': `DPoP ${userAccessToken}`,
+            'Content-Type': CONTENT_TYPE_FORM_ENCODED
+        },
+        body: body
+    }
+    let url								= userRevocationEndPoint;
+ 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	if (DEBUG) console.debug( PREFIX + "+ with this options:", COMMON.prettyJson( fetchOptions ) );
+
+ 	let responseFromServer				= await APICall.makeAPICall( "fnLogout", url, fetchOptions );
+	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return responseFromServer;
+}
+
+// Internal atomic function to retrieve the user access token
 async function retrieveUserAccessToken(code) {
 	const STEP_NAME						= "retrieveUserAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -409,6 +526,7 @@ async function retrieveUserAccessToken(code) {
 	return { userAuthentication: userAuthentication, userAccessToken: userAccessToken };
 }
 
+// Internal atomic function to refresh the user access token
 async function refreshAccessToken() {
 	const STEP_NAME						= "refreshAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -480,6 +598,7 @@ async function refreshAccessToken() {
 	// Let's create also the access token HASH...
 	accessTokenHash					= await Crypto.createHash(userAccessToken, true);
 	if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", accessTokenHash);
+	if (DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
 	if (GROUP_DEBUG) console.groupEnd();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
@@ -487,6 +606,7 @@ async function refreshAccessToken() {
 	return { userAuthentication: userAuthentication, userAccessToken: userAccessToken };
 }
 
+// Internal atomic function to retrieve the user's unread notifications value
 async function retrieveUnreadNotifications(renderHTMLErrors=true) {
 	const STEP_NAME						= "retrieveUnreadNotifications";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -494,11 +614,12 @@ async function retrieveUnreadNotifications(renderHTMLErrors=true) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}]` );
 
 	let endpoint						= API.bluesky.XRPC.api['app.bsky.notification.getUnreadCount'];
- 	if (DEBUG) console.debug( PREFIX + "Preguntamos si hay notificaciones pendientes de leer... Invoking endpoint:", endpoint );
+ 	if (DEBUG) console.debug( PREFIX + "Requesting if there are unread notifications... Invoking endpoint:", endpoint );
 
+	// The URL is protected, so... PDS Server
 	let root							= userPDSURL + "/xrpc";
 	let url								= root + endpoint;
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the (Authenticated) URL:", url);
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
 	// Let's group the following messages
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
@@ -539,28 +660,20 @@ async function retrieveUnreadNotifications(renderHTMLErrors=true) {
 	return responseFromServer.body.count;
 }
 
+// Internal atomic function to retrieve the user's notifications
 async function retrieveNotifications(renderHTMLErrors=true) {
 	const STEP_NAME						= "retrieveNotifications";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}] [MAX ${MAX_NOTIS_TO_RETRIEVE} notifications to retrieve]` );
 
-	let endpoint						= null;
+	let endpoint						= API.bluesky.XRPC.api.listNotifications;
+ 	if (DEBUG) console.debug( PREFIX + "Requesting the unread notifications... Invoking endpoint:", endpoint );
 
-	// TODO: Primero hay que preguntar si hay...
-	//   See: https://docs.bsky.app/docs/api/app-bsky-notification-get-unread-count
-
-	// Prepare the URL..
-	endpoint							= API.bluesky.XRPC.api['app.bsky.notification.getUnreadCount'];
- 	if (DEBUG) console.debug( PREFIX + "Preguntamos si hay notificaciones pendientes de leer... Invoking endpoint:", endpoint );
-
-
-	// Prepare the URL..
-	endpoint							= API.bluesky.XRPC.api.listNotifications;
-	// let root = API.bluesky.XRPC.public;
+	// The URL is protected, so... PDS Server
 	let root							= userPDSURL + "/xrpc";
 	let url								= root + endpoint + "?limit=" + MAX_NOTIS_TO_RETRIEVE;		// Not much; it's a test!
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the (Authenticated) URL:", url);
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
 	// Let's group the following messages
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
@@ -601,6 +714,7 @@ async function retrieveNotifications(renderHTMLErrors=true) {
 	return responseFromServer.body.notifications;
 }
 
+// Internal atomic function to retrieve the user's profile
 async function retrieveUserProfile() {
 	const STEP_NAME						= "retrieveUserProfile";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -608,10 +722,12 @@ async function retrieveUserProfile() {
 
 	// Prepare the URL..
 	let endpoint						= API.bluesky.XRPC.api.getProfile;
+ 	if (DEBUG) console.debug( PREFIX + "Requesting the user's profile... Invoking endpoint:", endpoint );
+
+	// The URL is OPEN, so... Public Server
 	let root							= API.bluesky.XRPC.public;
-	// let root = userPDSURL + "/xrpc";
 	let url								= root + endpoint + "?actor=" + userHandle;
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the (Authenticated) URL:", url);
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
     // ------------------------------------------
@@ -647,6 +763,220 @@ async function retrieveUserProfile() {
 	return userProfile;
 }
 
+// Internal atomic function to retrieve who the user follows
+async function retrieveUserFollows(cursor) {
+	const STEP_NAME						= "retrieveUserFollows";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.getFollows;
+ 	if (DEBUG) console.debug( PREFIX + "Requesting who the user is following... Invoking endpoint:", endpoint );
+
+	// The URL is OPEN, so... Public Server
+	let root							= API.bluesky.XRPC.public;
+	let url								= root + endpoint;
+	url									+= "?actor=" + userHandle;
+	url									+= "&limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let userData						= responseFromServer.body;
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return userData;
+}
+
+// Internal atomic function to retrieve who are the user followers
+async function retrieveUserFollowers(cursor) {
+	const STEP_NAME						= "retrieveUserFollowers";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.getFollowers;
+ 	if (DEBUG) console.debug( PREFIX + "Requesting who are the user's followers... Invoking endpoint:", endpoint );
+
+	// The URL is OPEN, so... Public Server
+	let root							= API.bluesky.XRPC.public;
+	let url								= root + endpoint;
+	url									+= "?actor=" + userHandle;
+	url									+= "&limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let userData						= responseFromServer.body;
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return userData;
+}
+
+// Internal atomic function to retrieve who are the user blocking
+async function retrieveUserBlocks(cursor) {
+	const STEP_NAME						= "retrieveUserBlocks";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.getBlocks;
+ 	if (DEBUG) console.debug( PREFIX + "Requesting who the user is blocking... Invoking endpoint:", endpoint );
+
+	// The URL is protected, so... PDS Server
+	let root							= userPDSURL + "/xrpc";
+	let url								= root + endpoint;
+	url									+= "?limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let userData						= responseFromServer.body;
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return userData;
+}
+
+// Internal atomic function to retrieve who are the user muting
+async function retrieveUserMutes(cursor) {
+	const STEP_NAME						= "retrieveUserMutes";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.getMutes;
+ 	if (DEBUG) console.debug( PREFIX + "Requesting who the user is muting... Invoking endpoint:", endpoint );
+
+	// The URL is protected, so... PDS Server
+	let root							= userPDSURL + "/xrpc";
+	let url								= root + endpoint;
+	url									+= "?limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let userData						= responseFromServer.body;
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return userData;
+}
+
 
 /**********************************************************
  * LOGGED-IN PRIVATE Functions
@@ -666,122 +996,22 @@ async function getTheUserNotifications() {
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();
 
-	let apiCallResponse					= null;
-	let unreadNotifications				= 0;
-
 	// The unread user's notifications.
-	try {
-		// Let's retrieve first if there are unread user's notifications.
-		// ------------------------------------------
-		unreadNotifications				= await retrieveUnreadNotifications(false);
-		if (DEBUG) console.debug( PREFIX + "Current unreadNotifications:", unreadNotifications );
-
-		// Clear and hide error fields and panel
-		HTML.clearHTMLError();
-	} catch (error) {
-		if (GROUP_DEBUG) console.groupEnd();
-
-		// Check if the error is due to a different dpop-nonce in step 12...
-		if ( COMMON.areEquals(error.step, "retrieveUnreadNotifications") && !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived) ) {
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error, false);
-
-			if (DEBUG) console.debug( PREFIX + "Let's retry..." );
-			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
-			try {
-				unreadNotifications		= await retrieveUnreadNotifications( true );
-				if (DEBUG) console.debug( PREFIX_RETRY + "Current unreadNotifications:", unreadNotifications );
-
-				// Clear and hide error fields and panel
-				HTML.clearHTMLError();
-			} catch (error) {
-				if (GROUP_DEBUG) console.groupEnd();
-				
-				// TODO: Si el error es de expiración del token [401]
-				// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
-				/*
-				 */
-				if (   ( error.status==401 )									// authentication error
-					&& ( error.isJson )											// json format
-					&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
-					// Redirigir a "logout".
-					if (DEBUG) console.debug( PREFIX + "-- END" );
-					if (GROUP_DEBUG) console.groupEnd();
-					await fnLogout();
-				} else {
-					// Show the error and update the HTML fields
-					if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
-					HTML.updateHTMLError(error);
-					throw( error );
-				}
-			}
-			if (GROUP_DEBUG) console.groupEnd();
-		} else {
-
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error);
-		}
-	}
+	if (DEBUG) console.debug( PREFIX + "Let's retrieve the number of unread notifications...");
+	let unreadNotifications				= await tryAndCatch( "retrieveUnreadNotifications", retrieveUnreadNotifications, false );
+	if (DEBUG) console.debug( PREFIX + "Current unreadNotifications:", unreadNotifications );
 
 	if ( unreadNotifications > 0 ) {
 		// The user's notifications.
-		try {
-			// Let's gather the user's notifications.
-			// ------------------------------------------
-			apiCallResponse				= await retrieveNotifications(false);
-			if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+		if (DEBUG) console.debug( PREFIX + `Let's retrieve the ${unreadNotifications} unread notifications...`);
+		let notifications				= await tryAndCatch( "retrieveNotifications", retrieveNotifications, false );
+		if (DEBUG) console.debug( PREFIX + "Current notifications:", notifications );
 
-			// Parse the response
-			await HTML.parseNotifications( apiCallResponse, userAccessToken, APP_CLIENT_ID, accessTokenHash );
-		} catch (error) {
-			if (GROUP_DEBUG) console.groupEnd();
-
-			// Check if the error is due to a different dpop-nonce in step 12...
-			if ( COMMON.areEquals(error.step, "retrieveNotifications") && !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived) ) {
-				// Show the error and update the HTML fields
-				HTML.updateHTMLError(error, false);
-
-				if (DEBUG) console.debug( PREFIX + "Let's retry..." );
-				if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
-				try {
-					apiCallResponse		= await retrieveNotifications( true );
-					if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
-
-					// Clear and hide error fields and panel
-					HTML.clearHTMLError();
-
-					// Parse the response
-					await HTML.parseNotifications( apiCallResponse, userAccessToken, APP_CLIENT_ID, accessTokenHash );
-				} catch (error) {
-					if (GROUP_DEBUG) console.groupEnd();
-					
-					// TODO: Si el error es de expiración del token [401]
-					// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
-					/*
-					 */
-					if (   ( error.status==401 )									// authentication error
-						&& ( error.isJson )											// json format
-						&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
-						// Redirigir a "logout".
-						if (DEBUG) console.debug( PREFIX + "-- END" );
-						if (GROUP_DEBUG) console.groupEnd();
-						await fnLogout();
-					} else {
-						// Show the error and update the HTML fields
-						if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
-						HTML.updateHTMLError(error);
-						throw( error );
-					}
-				}
-				if (GROUP_DEBUG) console.groupEnd();
-			} else {
-
-				// Show the error and update the HTML fields
-				HTML.updateHTMLError(error);
-			}
-		}
+		// Parse the response
+		await HTML.htmlRenderNotifications( notifications, userAccessToken, APP_CLIENT_ID, accessTokenHash );
 	} else {
 		if (DEBUG) console.debug( PREFIX + "No notifications to retrieve." );
+		HTML.htmlRenderNoNotifications();
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
@@ -802,24 +1032,247 @@ async function getTheUserProfile() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Now, the user's profile.
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
+	let userProfile						= await tryAndCatch( "retrieveUserProfile", retrieveUserProfile, null );
+	if (DEBUG) console.debug( PREFIX + "Current userProfile:", userProfile );
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserProfile( userProfile );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve who the user follows.
+ * -------------------------------------------------------- */
+async function getWhoTheUserFollows() {
+	const STEP_NAME						= "getWhoTheUserFollows";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Now, the user's follows.
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user follows...` );
 	let apiCallResponse					= null;
-	try {
-		if (DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
-
-		// Retrieve user's profile to show
+	let cursor							= null;
+	let hayCursor						= false;
+	let follows							= null;
+	let allFollowing					= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's follows to show
 		// ------------------------------------------
-		apiCallResponse					= await retrieveUserProfile();
+		apiCallResponse					= await tryAndCatch( "retrieveUserFollows", retrieveUserFollows, cursor );
+		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= apiCallResponse.cursor;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
-		// Lo pintamos en su sitio.
-		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
-		HTML.htmlRenderUserProfile( apiCallResponse );
-	} catch (error) {
-		if (GROUP_DEBUG) console.groupEnd();
+		follows							= apiCallResponse.follows;
+		subTotal						= follows.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} following`, follows );
+		allFollowing.push(...follows);
+		acumulado						= allFollowing.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allFollowing );
+		
+	} while ( hayCursor && (n<20) );
+	if (GROUP_DEBUG) console.groupEnd();
 
-		// Show the error and update the HTML fields
-		HTML.updateHTMLError(error);
-		throw( error );
-	}
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} following`, allFollowing );
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserFollows( allFollowing );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve who the user is following.
+ * -------------------------------------------------------- */
+async function getTheUserFollowers() {
+	const STEP_NAME						= "getTheUserFollowers";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Now, the user's followers.
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve who follows the user...` );
+	let apiCallResponse					= null;
+	let cursor							= null;
+	let hayCursor						= false;
+	let followers						= null;
+	let allFollowers					= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's followers to show
+		// ------------------------------------------
+		apiCallResponse					= await tryAndCatch( "retrieveUserFollowers", retrieveUserFollowers, cursor );
+		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= apiCallResponse.cursor;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		followers						= apiCallResponse.followers;
+		subTotal						= followers.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} followers`, followers );
+		allFollowers.push(...followers);
+		acumulado						= allFollowers.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} followers`, allFollowers );
+		
+	} while ( hayCursor && (n<20) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} followers`, allFollowers );
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserFollowers( allFollowers );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve who the user is blocking.
+ * -------------------------------------------------------- */
+async function getWhoTheUserIsBlocking() {
+	const STEP_NAME						= "getWhoTheUserIsBlocking";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Now, the user's blocks.
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is blocking...` );
+	let apiCallResponse					= null;
+	let cursor							= null;
+	let hayCursor						= false;
+	let blocks							= null;
+	let allBlocks						= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's blocks
+		// ------------------------------------------
+		apiCallResponse					= await tryAndCatch( "retrieveUserBlocks", retrieveUserBlocks, cursor );
+		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= apiCallResponse.cursor;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		blocks							= apiCallResponse.blocks;
+		subTotal						= blocks.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} blocks`, blocks );
+		allBlocks.push(...blocks);
+		acumulado						= allBlocks.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} blocks`, allBlocks );
+		
+	} while ( hayCursor && (n<20) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} blocks`, allBlocks );
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserBlocks( allBlocks );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve who the user is muting.
+ * -------------------------------------------------------- */
+async function getWhoTheUserIsMuting() {
+	const STEP_NAME						= "getWhoTheUserIsMuting";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Now, the user's mutes.
+	let apiCallResponse					= null;
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
+	let cursor							= null;
+	let hayCursor						= false;
+	let mutes							= null;
+	let allMutes						= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's mutes
+		// ------------------------------------------
+		apiCallResponse					= await tryAndCatch( "retrieveUserMutes", retrieveUserMutes, cursor );
+		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= apiCallResponse.cursor;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		mutes							= apiCallResponse.mutes;
+		subTotal						= mutes.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} mutes`, mutes );
+		allMutes.push(...mutes);
+		acumulado						= allMutes.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} mutes`, allMutes );
+		
+	} while ( hayCursor && (n<20) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} mutes`, allMutes );
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserBlocks( allMutes );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve which are the user's lists.
+ * -------------------------------------------------------- */
+async function getTheUserLists() {
+	const STEP_NAME						= "getTheUserLists";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
+	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -831,7 +1284,7 @@ async function getTheUserProfile() {
  *
  * "Business function": postProcessAccessToken.
  * -------------------------------------------------------- */
-async function postProcessAccessToken() {
+function postProcessAccessToken() {
 	const STEP_NAME						= "postProcessAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_RAWDATA				= `${PREFIX}[RawData] `;
@@ -847,6 +1300,7 @@ async function postProcessAccessToken() {
 	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAuthentication:", COMMON.prettyJson( userAuthentication ) );
 	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", userAccessToken );
 	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", JWT.jwtToPrettyJSON( userAccessToken ) );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
 	if (GROUP_DEBUG) console.groupEnd();
 
 	// Let's backup the current data.
@@ -857,12 +1311,8 @@ async function postProcessAccessToken() {
 	if (DEBUG) console.debug( PREFIX + "Rendering the access token fields and panel..." );
 
 	// Update HTML fields
-	$("#notifications_json").removeAttr('data-highlighted');
-	$("#access_token_jwt").removeAttr('data-highlighted');
-	$("#access_token_json").removeAttr('data-highlighted');
-	$("#access_token_jwt").text( userAccessToken );
-	$("#access_token_json").text( JWT.jwtToPrettyJSON( userAccessToken ) );
-	hljs.highlightAll();
+	HTML.updateUserAccessToken(userAccessToken);
+	HTML.htmlRenderHighlight();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -901,7 +1351,7 @@ async function validateAccessToken() {
 	if (COMMON.isNullOrEmpty(userAccessToken)) {
 		// NO. Let's see if this is the first time after login.
 
-		if (DEBUG) console.debug( PREFIX + "MISS userAccessToken." );
+		if (DEBUG) console.debug( PREFIX + "No userAccessToken." );
 
 		// Retrieve the "code"...
 		if (DEBUG) console.debug( PREFIX + "Let's see if we have a code to retrieve the userAccessToken." );
@@ -915,7 +1365,7 @@ async function validateAccessToken() {
 			// YES. Let's retrieve the token
 
 			// With the "code", let's retrieve the user access_token from the server.
-			apiCallResponse					= await retrieveUserAccessToken(callbackData.code);
+			apiCallResponse					= await tryAndCatch( "retrieveUserAccessToken", retrieveUserAccessToken, callbackData.code );
 			if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
 
 			// Let's group log messages
@@ -953,6 +1403,9 @@ async function validateAccessToken() {
 			fnRefreshAccessToken();
 		}
 	}
+
+	// Do something with the token information: Post Process the access token
+	postProcessAccessToken();
 
 	// Update some HTML fields
 	// Prepare an object to pass
@@ -1055,60 +1508,6 @@ function fnAnalizeCallbackURL() {
 
 
 /* --------------------------------------------------------
- * LOGGING PROCESS.
- *
- * "Business function": Welcome page.
- * "Landing function" after successfull login.
- * -------------------------------------------------------- */
-async function fnDashboard() {
-	const STEP_NAME						= "fnDashboard";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_AFTER					= `${PREFIX}[After] `;
-	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Show panels
-	COMMON.show( "rootContainer" );
-	// COMMON.show( "panel-botonera" );
-	COMMON.hide( "errorPanel" );
-
-	// Restore data from localStorage.
-	restoreDataFromLocalStorage();
-
-	// ------------------------------------------
-	// Retrieve the access_token
-	let apiCallResponse					= null;
-	try {
-		// First, let's validate the access token.
-		// ------------------------------------------
-		apiCallResponse					= await validateAccessToken();
-
-		// Do something with the token information.
-		// ------------------------------------------
-		apiCallResponse					= await postProcessAccessToken();
-
-		// Later, retrieve the rest of things.
-		// ------------------------------------------
-
-		// Retrieve the user's notifications.
-		apiCallResponse					= await getTheUserNotifications();
-
-		// Retrieve the user's profile to show
-		apiCallResponse					= await getTheUserProfile();
-	} catch (error) {
-		if (GROUP_DEBUG) console.groupEnd();
-
-		// Show the error and update the HTML fields
-		HTML.updateHTMLError(error);
-		throw( error );
-	}
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-}
-
-
-/* --------------------------------------------------------
  * LOGGED-IN PROCESS.
  *
  * "Business function": Refresh Access Token.
@@ -1139,77 +1538,18 @@ async function fnRefreshAccessToken() {
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();
 
-	let apiCallResponse					= null;
+	// Let's refresh the user's access token.
+	// ------------------------------------------
+	let refreshedAccessToken			= await tryAndCatch( "refreshAccessToken", refreshAccessToken, callbackData.code );
+	if (DEBUG) console.debug( PREFIX + "Current refreshedAccessToken:", refreshedAccessToken );
 
-	// The unread user's notifications.
-	try {
-		// Let's retrieve first if there are unread user's notifications.
-		// ------------------------------------------
-		apiCallResponse					= await refreshAccessToken();
-		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+	// Clear and hide error fields and panel
+	HTML.clearHTMLError();
 
-		// Clear and hide error fields and panel
-		HTML.clearHTMLError();
-
-		// First, let's validate the access token.
-		// ------------------------------------------
-		apiCallResponse					= await validateAccessToken();
-
-		// Do something with the token information.
-		// ------------------------------------------
-		apiCallResponse					= await postProcessAccessToken();
-	} catch (error) {
-		if (GROUP_DEBUG) console.groupEnd();
-
-		// Check if the error is due to a different dpop-nonce in step 12...
-		if ( COMMON.areEquals(error.step, "refreshAccessToken") && !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived) ) {
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error, false);
-
-			if (DEBUG) console.debug( PREFIX + "Let's retry..." );
-			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
-			try {
-				apiCallResponse			= await refreshAccessToken( true );
-				if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
-
-				// Clear and hide error fields and panel
-				HTML.clearHTMLError();
-
-				// First, let's validate the access token.
-				// ------------------------------------------
-				apiCallResponse					= await validateAccessToken();
-
-				// Do something with the token information.
-				// ------------------------------------------
-				apiCallResponse					= await postProcessAccessToken();
-			} catch (error) {
-				if (GROUP_DEBUG) console.groupEnd();
-				
-				// TODO: Si el error es de expiración del token [401]
-				// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
-				/*
-				 */
-				if (   ( error.status==401 )									// authentication error
-					&& ( error.isJson )											// json format
-					&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
-					// Redirigir a "logout".
-					if (DEBUG) console.debug( PREFIX + "-- END" );
-					if (GROUP_DEBUG) console.groupEnd();
-					// await fnLogout();
-				} else {
-					// Show the error and update the HTML fields
-					if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
-					HTML.updateHTMLError(error);
-					throw( error );
-				}
-			}
-			if (GROUP_DEBUG) console.groupEnd();
-		} else {
-
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error);
-		}
-	}
+	// First, let's validate the access token.
+	// ------------------------------------------
+	if (DEBUG) console.debug( PREFIX + "Validating the refreshed token..." );
+	await validateAccessToken();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1226,24 +1566,11 @@ async function fnLogout() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+userHandle+"]" );
 
-    let body							= `token=${userAccessToken}`;
-    let fetchOptions					= {
-        method: HTML_POST,
-        headers: {
-			'Authorization': `DPoP ${userAccessToken}`,
-            'Content-Type': CONTENT_TYPE_FORM_ENCODED
-        },
-        body: body
-    }
-    let url								= userRevocationEndPoint;
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	if (DEBUG) console.debug( PREFIX + "+ with this options:", COMMON.prettyJson( fetchOptions ) );
-
- 	let responseFromServer				= await APICall.makeAPICall( "fnLogout", url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	let loggedOutInfo					= await tryAndCatch( "performUserLogout", performUserLogout, null );
+	if (DEBUG) console.debug( PREFIX + "Current loggedOutInfo:", loggedOutInfo );
 
 	// Check if "logout" has been successfull
-	let header							= responseFromServer.headers;
+	let header							= loggedOutInfo.headers;
 	if ( header.ok && header.status == 204 ) {
 		// Remove things from localStorage
 		localStorage.removeItem(LSKEYS.BSKYDATA);
@@ -1266,6 +1593,72 @@ async function fnLogout() {
 }
 
 
+/* --------------------------------------------------------
+ * LOGGING PROCESS.
+ *
+ * "Business function": Welcome page.
+ * "Landing function" after successfull login.
+ *
+ * Performs all the needed steps to create/update the page.
+ * -------------------------------------------------------- */
+async function fnDashboard() {
+	const STEP_NAME						= "fnDashboard";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_AFTER					= `${PREFIX}[After] `;
+	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Show panels
+	COMMON.show( "rootContainer" );
+	// COMMON.show( "panel-botonera" );
+	COMMON.hide( "errorPanel" );
+
+	// Restore data from localStorage.
+	restoreDataFromLocalStorage();
+
+	// ------------------------------------------
+	// Steps.
+	let apiCallResponse					= null;
+	try {
+		// First, let's validate the access token.
+		// ------------------------------------------
+		apiCallResponse					= await validateAccessToken();
+
+		// Later, retrieve the rest of things.
+		// ------------------------------------------
+		// Retrieve the user's notifications.
+		apiCallResponse					= await getTheUserNotifications();
+
+		// Retrieve the user's profile to show
+		apiCallResponse					= await getTheUserProfile();
+
+		// Retrieve who the user is following
+		apiCallResponse					= await getWhoTheUserFollows();
+
+		// Retrieve the user's followers
+		apiCallResponse					= await getTheUserFollowers();
+
+		// Retrieve who the user is blocking
+		apiCallResponse					= await getWhoTheUserIsBlocking();
+
+		// Retrieve who the user is muting
+		apiCallResponse					= await getWhoTheUserIsMuting();
+
+		// Retrieve the user's lists
+		apiCallResponse					= await getTheUserLists();
+	} catch (error) {
+		if (GROUP_DEBUG) console.groupEnd();
+
+		// Show the error and update the HTML fields
+		HTML.updateHTMLError(error);
+		throw( error );
+	}
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
 
 
 /*
@@ -1274,6 +1667,6 @@ https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.admin.getAccountIn
 https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.sync.getRepoStatus?did=did%3Dplc%3Dtjc27aje4uwxtw5ab6wwm4km%23atproto
 https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.sync.listRepos
 
-
-
 */
+
+
