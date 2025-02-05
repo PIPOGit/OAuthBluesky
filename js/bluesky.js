@@ -16,26 +16,20 @@ import CONFIGURATION					from "./data/config.json" with { type: "json" };
 import * as COMMON						from "./modules/common.functions.js";
 // Common Classes and Exceptions ("Types")
 import * as TYPES						from "./modules/common.types.js";
-// To perform API calls
-import * as APICall						from "./modules/APICall.js";
+// Common APIBluesky functions
+import * as APIBluesky					from "./modules/APIBluesky.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/BrowserDB.js";
+// Common GEO functions
+import * as GEO							from "./modules/GEO.js";
 // Common HTML functions
 import * as HTML						from "./modules/HTML.js";
-// Common PKCE functions
-import * as PKCE						from "./modules/PKCE.js";
 // Common OAuth2 functions
 import * as OAuth2						from "./modules/OAuth2.js";
-// Common Base64 functions
-import * as Base64						from "./modules/OAuth2/Base64Url.js";
 // Common Crypto functions
 import * as Crypto						from "./modules/OAuth2/Crypto.js";
-// Common DPOP functions
-import * as DPOP						from "./modules/OAuth2/dpopProof.js";
 // Common JWT functions
 import * as JWT							from "./modules/OAuth2/JWT.js";
-// Common UUID functions
-import * as UUID						from "./modules/OAuth2/UUID.js";
 
 
 /**********************************************************
@@ -51,29 +45,12 @@ const DEBUG								= CONFIGURATION.global.debug;
 const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
-const API								= CONFIGURATION.api;
+// const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const NEOCITIES							= CONFIGURATION.neocities;
 
-// HTML methods
-const HTML_GET							= "GET";
-const HTML_POST							= "POST";
-
-// HTML Content Type constants
-const CONTENT_TYPE_JSON					= "application/json";
-const CONTENT_TYPE_JSON_UTF8			= "application/json; charset=utf-8";
-const CONTENT_TYPE_FORM_ENCODED			= "application/x-www-form-urlencoded";
-
-// Crypto constants
-const SIGNING_ALGORITM					= "ECDSA";
-const KEY_ALGORITM						= "ES256";
-const CURVE_ALGORITM					= "P-256";
-const HASHING_ALGORITM					= "SHA-256";
-
 // Bluesky constants
 const APP_CLIENT_ID						= NEOCITIES.client_id;
-const APP_CALLBACK_URL					= NEOCITIES.redirect_uri;
-const MAX_NOTIS_TO_RETRIEVE				= 50;
 
 
 /**********************************************************
@@ -82,32 +59,8 @@ const MAX_NOTIS_TO_RETRIEVE				= 50;
 let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 window.BSKY								= window.BSKY || {};
 window.BSKY.data						= {};
-
-// Bluesky Variables
-let userHandle							= null;
-let userDid								= null;
-let userDidDocument						= null;
-let userPDSURL							= null;
-let userPDSMetadata						= null;
-let userAuthServerURL					= null;
-let userAuthServerDiscovery				= null;
-let userAuthorizationEndPoint			= null;
-let userTokenEndPoint					= null;
-let userPAREndPoint						= null;
-let userRevocationEndPoint				= null;
-let userAuthServerRequestURI			= null;
-
-// Auth variables
-let state								= null;
-let codeVerifier						= null;
-let codeChallenge						= null;
-let callbackData						= null;
-
-// Response from the access token request
-let userAuthentication					= null;
-let userAccessToken						= null;
-let userRefreshToken					= null;
-let accessTokenHash						= null;
+window.BSKY.user						= {};
+window.BSKY.auth						= {};
 
 
 /**********************************************************
@@ -126,17 +79,17 @@ let accessTokenHash						= null;
 }).call(
 	this			// The reference object (as per protocol).
 	, window		// The first argument for the constructor; the top-most object in the DOM hierarchy.
-	, bootstrap		// The loading function to be executed, once the page is loaded.
+	, startUp		// The loading function to be executed, once the page is loaded.
 );
 
 
 /**********************************************************
  * Module BootStrap Loader Function
  **********************************************************/
-async function bootstrap() {
+async function startUp() {
 	'use strict'
 
-	const STEP_NAME						= "bootstrap";
+	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (DEBUG) console.groupCollapsed( PREFIX );
 
@@ -147,7 +100,6 @@ async function bootstrap() {
 	if (DEBUG) console.debug( PREFIX + "Configuration:", CONFIGURATION );
 	if (DEBUG) console.debug( PREFIX + "DEBUG:", DEBUG, "DEBUG_FOLDED:", DEBUG_FOLDED, "GROUP_DEBUG:", GROUP_DEBUG );
 
-	if (DEBUG) console.debug( PREFIX + "API:", API );
 	if (DEBUG) console.debug( PREFIX + "NEOCITIES:", NEOCITIES );
 
 	if (DEBUG) console.debug( PREFIX + "PERMISSION: Notification.permission:", Notification.permission );
@@ -200,8 +152,12 @@ async function bootstrap() {
 	// El reloj
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
 
-	// Geolocation
-	await geoLocationInformation();
+	// Geolocation Information
+	let geolocationInfo					= await GEO.getGeolocationInformation();
+	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
+
+	// Save the info
+	BSKY.user.geolocation				= geolocationInfo;
 
 	// La configuración de HighlightJS
 	hljs.configure({
@@ -212,50 +168,6 @@ async function bootstrap() {
 	if (DEBUG) console.groupEnd();
 }
 
-async function geoLocationInformation() {
-	const STEP_NAME = "geoLocationInformation";
-	const PREFIX = `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_SUCCESS				= `${PREFIX}[SUCCESS] `;
-	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
-
-	function geoLocationSuccess(position) {
-		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_SUCCESS );
-		if (DEBUG) console.debug( PREFIX_SUCCESS + `Geolocated:`, position );
-		if (DEBUG) console.debug( PREFIX_SUCCESS + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
-	}
-
-	function geoLocationError(error) {
-		if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ERROR );
-		if (DEBUG) console.debug( PREFIX_ERROR + `Geolocation NOT ALLOWED:`, error );
-		switch(error.code) {
-			case error.PERMISSION_DENIED:
-				if (DEBUG) console.debug( PREFIX_ERROR + "User denied the request for Geolocation." );
-				break;
-			case error.POSITION_UNAVAILABLE:
-				if (DEBUG) console.debug( PREFIX_ERROR + "Location information is unavailable." );
-				break;
-			case error.TIMEOUT:
-				if (DEBUG) console.debug( PREFIX_ERROR + "The request to get user location timed out." );
-				break;
-			case error.UNKNOWN_ERROR:
-				if (DEBUG) console.debug( PREFIX_ERROR + "An unknown error occurred." );
-				break;
-			default:
-				if (DEBUG) console.debug( PREFIX_ERROR + "Default unknown error occurred." );
-		}
-		if (DEBUG) console.debug( PREFIX_ERROR + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
-	}
-
-	// Process the geolocation steps
-	if ( navigator.geolocation ) {
-		await navigator.geolocation.getCurrentPosition(geoLocationSuccess, geoLocationError);
-	} else {
-		if (DEBUG) console.debug( PREFIX + `Geolocation NOT ALLOWED by the browser.` );
-	}
-}
-
 
 /**********************************************************
  * HELPER Functions
@@ -264,37 +176,37 @@ async function geoLocationInformation() {
 function saveRuntimeDataInLocalStorage() {
 	const STEP_NAME						= "saveRuntimeDataInLocalStorage";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+userHandle+"]" );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+BSKY.user.userHandle+"]" );
 
-	localStorage.setItem(LSKEYS.user.handle, userHandle);
+	localStorage.setItem(LSKEYS.user.handle, BSKY.user.userHandle);
 	let savedInformation				= {
 		// Bluesky Variables
-		userHandle: userHandle,
-		userDid: userDid,
-		userDidDocument: userDidDocument,
-		userPDSURL: userPDSURL,
-		userPDSMetadata: userPDSMetadata,
-		userAuthServerURL: userAuthServerURL,
-		userAuthServerDiscovery: userAuthServerDiscovery,
-		userAuthorizationEndPoint: userAuthorizationEndPoint,
-		userTokenEndPoint: userTokenEndPoint,
-		userPAREndPoint: userPAREndPoint,
-		userRevocationEndPoint: userRevocationEndPoint,
-		userAuthServerRequestURI: userAuthServerRequestURI,
+		userHandle: BSKY.user.userHandle,
+		userDid: BSKY.user.userDid,
+		userDidDocument: BSKY.auth.userDidDocument,
+		userPDSURL: BSKY.auth.userPDSURL,
+		userPDSMetadata: BSKY.auth.userPDSMetadata,
+		userAuthServerURL: BSKY.auth.userAuthServerURL,
+		userAuthServerDiscovery: BSKY.auth.userAuthServerDiscovery,
+		userAuthorizationEndPoint: BSKY.auth.userAuthorizationEndPoint,
+		userTokenEndPoint: BSKY.auth.userTokenEndPoint,
+		userPAREndPoint: BSKY.auth.userPAREndPoint,
+		userRevocationEndPoint: BSKY.auth.userRevocationEndPoint,
+		userAuthServerRequestURI: BSKY.auth.userAuthServerRequestURI,
 		dpopNonce: BSKY.data.dpopNonce,
 		dpopNonceUsed: BSKY.data.dpopNonceUsed,
 		dpopNonceReceived: BSKY.data.dpopNonceReceived,
 		wwwAuthenticate: BSKY.data.wwwAuthenticate,
 		// Auth variables
-		state: state,
-		codeVerifier: codeVerifier,
-		codeChallenge: codeChallenge,
-		callbackData: callbackData,
+		state: BSKY.auth.state,
+		codeVerifier: BSKY.auth.codeVerifier,
+		codeChallenge: BSKY.auth.codeChallenge,
+		callbackData: BSKY.auth.callbackData,
 		// Response from the access token request
-		userAuthentication: userAuthentication,
-		userAccessToken: userAccessToken,
-		userRefreshToken: userRefreshToken,
-		accessTokenHash: accessTokenHash
+		userAuthentication: BSKY.data.userAuthentication,
+		userAccessToken: BSKY.data.userAccessToken,
+		userRefreshToken: BSKY.data.userRefreshToken,
+		accessTokenHash: BSKY.data.accessTokenHash
 	};
 	localStorage.setItem(LSKEYS.BSKYDATA, JSON.stringify( savedInformation ));
  	if (DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
@@ -313,32 +225,33 @@ function restoreDataFromLocalStorage() {
 	let saved = JSON.parse( dataInLocalStorage ) 
 	if (DEBUG) console.debug(PREFIX + "Gathered data from localStorage, from test:", saved);
 	// Bluesky Variables
-	userHandle							= saved.userHandle;
-	userDid								= saved.userDid;
-	userDidDocument						= saved.userDidDocument;
-	userPDSURL							= saved.userPDSURL;
-	userPDSMetadata						= saved.userPDSMetadata;
-	userAuthServerURL					= saved.userAuthServerURL;
-	userAuthServerDiscovery				= saved.userAuthServerDiscovery;
-	userAuthorizationEndPoint			= saved.userAuthorizationEndPoint;
-	userTokenEndPoint					= saved.userTokenEndPoint;
-	userPAREndPoint						= saved.userPAREndPoint;
-	userRevocationEndPoint				= saved.userRevocationEndPoint;
-	userAuthServerRequestURI			= saved.userAuthServerRequestURI;
+	BSKY.user.userHandle				= saved.userHandle;
+	BSKY.user.userDid					= saved.userDid;
+	// Auth Login variables
+	BSKY.auth.userDidDocument			= saved.userDidDocument;
+	BSKY.auth.userPDSURL				= saved.userPDSURL;
+	BSKY.auth.userPDSMetadata			= saved.userPDSMetadata;
+	BSKY.auth.userAuthServerURL			= saved.userAuthServerURL;
+	BSKY.auth.userAuthServerDiscovery	= saved.userAuthServerDiscovery;
+	BSKY.auth.userAuthorizationEndPoint	= saved.userAuthorizationEndPoint;
+	BSKY.auth.userTokenEndPoint			= saved.userTokenEndPoint;
+	BSKY.auth.userPAREndPoint			= saved.userPAREndPoint;
+	BSKY.auth.userRevocationEndPoint	= saved.userRevocationEndPoint;
+	BSKY.auth.userAuthServerRequestURI	= saved.userAuthServerRequestURI;
 	BSKY.data.dpopNonce					= saved.dpopNonce;
 	BSKY.data.dpopNonceUsed				= saved.dpopNonceUsed || saved.dpopNonce;
 	BSKY.data.dpopNonceReceived			= saved.dpopNonceReceived;
 	BSKY.data.wwwAuthenticate			= saved.wwwAuthenticate;
 	// Auth variables
-	state								= saved.state;
-	codeVerifier						= saved.codeVerifier;
-	codeChallenge						= saved.codeChallenge;
-	callbackData						= saved.callbackData;
+	BSKY.auth.state						= saved.state;
+	BSKY.auth.codeVerifier				= saved.codeVerifier;
+	BSKY.auth.codeChallenge				= saved.codeChallenge;
+	BSKY.auth.callbackData				= saved.callbackData;
 	// Response from the access token request
-	userAuthentication					= saved.userAuthentication;
-	userAccessToken						= saved.userAccessToken;
-	userRefreshToken					= saved.userRefreshToken;
-	accessTokenHash						= saved.accessTokenHash;
+	BSKY.data.userAuthentication		= saved.userAuthentication;
+	BSKY.data.userAccessToken			= saved.userAccessToken;
+	BSKY.data.userRefreshToken			= saved.userRefreshToken;
+	BSKY.data.accessTokenHash			= saved.accessTokenHash;
 
 	if (GROUP_DEBUG) console.groupEnd();
 }
@@ -347,635 +260,6 @@ function restoreDataFromLocalStorage() {
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-
-/* --------------------------------------------------------
- * LOGGED-IN PROCESS.
- *
- * "Internal Business function": Retrieve something.
- * Due to the behaviour of Bluesky API, sometimes, the server
- * requests to re-authenticate, sending a new "dpop-nonce"
- * value.
- * This module performs a "try-and-catch" call for a given
- * function.
- * -------------------------------------------------------- */
-async function tryAndCatch( currentStep, callbackFunction, callbackOptions ) {
-	const STEP_NAME						= "tryAndCatch";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `Step: ${currentStep}` );
-
-	// Clear and hide error fields and panel
-	HTML.clearHTMLError();
-
-	let apiCallResponse					= null;
-	try {
-		// Let's retrieve first if there are unread user's notifications.
-		// ------------------------------------------
-		apiCallResponse					= await callbackFunction(callbackOptions);
-		if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
-
-		// Clear and hide error fields and panel
-		HTML.clearHTMLError();
-	} catch (error) {
-		if (GROUP_DEBUG) console.groupEnd();
-
-		// Check if the error is due to a different dpop-nonce in step 12...
-		let sameSteps					= COMMON.areEquals(error.step, currentStep);
-		let distinctDPoPNonce			= !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived);
-		if ( sameSteps && distinctDPoPNonce) {
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error, false);
-
-			if (DEBUG) console.debug( PREFIX + "Let's retry..." );
-			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
-			try {
-				apiCallResponse			= await callbackFunction(callbackOptions);
-				if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
-
-				// Clear and hide error fields and panel
-				HTML.clearHTMLError();
-			} catch (error) {
-				if (GROUP_DEBUG) console.groupEnd();
-				
-				// TODO: Si el error es de expiración del token [401]
-				// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
-				if (   ( error.status==401 )									// authentication error
-					&& ( error.isJson )											// json format
-					&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
-					// Redirigir a "logout".
-					if (DEBUG) console.debug( PREFIX + "-- END" );
-					if (GROUP_DEBUG) console.groupEnd();
-					await fnLogout();
-				} else {
-					// Show the error and update the HTML fields
-					if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
-					HTML.updateHTMLError(error);
-					throw( error );
-				}
-			}
-			if (GROUP_DEBUG) console.groupEnd();
-		} else {
-			if (DEBUG) console.debug( PREFIX_RETRY + `[sameSteps=${sameSteps}]` );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [error.step]`, error.step );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [currentStep]`, currentStep );
-			if (DEBUG) console.debug( PREFIX_RETRY + `[distinctDPoPNonce=${distinctDPoPNonce}]` );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceUsed]`, BSKY.data.dpopNonceUsed );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceReceived]`, BSKY.data.dpopNonceReceived );
-
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error);
-		}
-	}
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	
-	return apiCallResponse;
-}
-
-// Internal atomic function to logout the user
-async function performUserLogout() {
-	const STEP_NAME						= "performUserLogout";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Now, the user's profile.
-	if (DEBUG) console.debug( PREFIX + `Performing the user's logout...` );
-    let body							= `token=${userAccessToken}`;
-    let fetchOptions					= {
-        method: HTML_POST,
-        headers: {
-			'Authorization': `DPoP ${userAccessToken}`,
-            'Content-Type': CONTENT_TYPE_FORM_ENCODED
-        },
-        body: body
-    }
-    let url								= userRevocationEndPoint;
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	if (DEBUG) console.debug( PREFIX + "+ with this options:", COMMON.prettyJson( fetchOptions ) );
-
- 	let responseFromServer				= await APICall.makeAPICall( "fnLogout", url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return responseFromServer;
-}
-
-// Internal atomic function to retrieve the user access token
-async function retrieveUserAccessToken(code) {
-	const STEP_NAME						= "retrieveUserAccessToken";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [code=="+code+"]" );
-
-	// Prepare the URL..
-    let url								= userTokenEndPoint;
- 	if (DEBUG) console.debug( PREFIX + "Access Token URL:", url );
-
-    // Retrieve the crypto key.
-    // ------------------------------------------
-	if (DEBUG) console.debug( PREFIX + "cryptoKey:", COMMON.prettyJson( BSKY.data.cryptoKey ) );
-	if (DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( BSKY.data.jwk ) );
-
-    // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, null, null, url, BSKY.data.dpopNonce, HTML_POST);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-	// Preparamos los datos a enviar
-	let body							= new URLSearchParams({
-		// Fixed values
-		'grant_type': 'authorization_code',
-		// Variable values
-		'code': code,
-		'code_verifier': codeVerifier,
-		// Neocities values
-		'client_id': APP_CLIENT_ID,
-		'redirect_uri': APP_CALLBACK_URL
-	});
-	if (DEBUG) console.debug(PREFIX + "Generated [body]:", COMMON.prettyJson( Object.fromEntries( body ) ));
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-        'DPOP': dpopProof,
-        'Content-Type': CONTENT_TYPE_FORM_ENCODED,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_POST,
-        headers: headers,
-        body: body.toString()
-    }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-	userAuthentication					= responseFromServer.body;
-	userAccessToken						= userAuthentication.access_token;
-	userRefreshToken					= userAuthentication.refresh_token;
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return { userAuthentication: userAuthentication, userAccessToken: userAccessToken };
-}
-
-// Internal atomic function to refresh the user access token
-async function refreshAccessToken() {
-	const STEP_NAME						= "refreshAccessToken";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_AFTER					= `${PREFIX}[After] `;
-	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+userHandle+"]" );
-
- 	if (DEBUG) console.debug( PREFIX + `Refreshing the access token...` );
-
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
-	if (DEBUG) console.debug( PREFIX + "Current userRefreshToken:", userRefreshToken );
-	if (DEBUG) console.debug( PREFIX + "Current userAuthentication:", userAuthentication );
-	if (DEBUG) console.debug( PREFIX + "Current userAccessToken:", JWT.jwtToPrettyJSON( userAccessToken ) );
-
-	// Prepare the URL..
-    let url								= userTokenEndPoint;
- 	if (DEBUG) console.debug( PREFIX + "Access Token URL:", url );
-
-    // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, null, url, BSKY.data.dpopNonce, HTML_POST);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest);
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-	// Preparamos los datos a enviar
-	let body							= new URLSearchParams({
-		// Fixed values
-		'grant_type': 'refresh_token',
-		// Neocities values
-		'client_id': APP_CLIENT_ID,
-		'redirect_uri': APP_CALLBACK_URL,
-		// Variable values
-		'refresh_token': userRefreshToken
-	});
-	if (DEBUG) console.debug(PREFIX + "Generated [body]:", COMMON.prettyJson( Object.fromEntries( body ) ));
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-        'DPOP': dpopProof,
-        'Content-Type': CONTENT_TYPE_FORM_ENCODED,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_POST,
-        headers: headers,
-        body: body.toString()
-    }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-	if (GROUP_DEBUG) console.groupEnd();
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-
-	// Let's group log messages
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER );
-
-	userAuthentication					= responseFromServer.body;
-	userAccessToken						= userAuthentication.access_token;
-	userRefreshToken					= userAuthentication.refresh_token;
-	if (DEBUG) console.debug(PREFIX_AFTER + "userAuthentication:", userAuthentication);
-	if (DEBUG) console.debug(PREFIX_AFTER + "userAccessToken:", userAccessToken);
-	if (DEBUG) console.debug(PREFIX_AFTER + "userRefreshToken:", userRefreshToken);
-
-	// Let's create also the access token HASH...
-	accessTokenHash					= await Crypto.createHash(userAccessToken, true);
-	if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", accessTokenHash);
-	if (DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
-	if (GROUP_DEBUG) console.groupEnd();
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return { userAuthentication: userAuthentication, userAccessToken: userAccessToken };
-}
-
-// Internal atomic function to retrieve the user's unread notifications value
-async function retrieveUnreadNotifications(renderHTMLErrors=true) {
-	const STEP_NAME						= "retrieveUnreadNotifications";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}]` );
-
-	let endpoint						= API.bluesky.XRPC.api['app.bsky.notification.getUnreadCount'];
- 	if (DEBUG) console.debug( PREFIX + "Requesting if there are unread notifications... Invoking endpoint:", endpoint );
-
-	// The URL is protected, so... PDS Server
-	let root							= userPDSURL + "/xrpc";
-	let url								= root + endpoint;
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-	// Let's group the following messages
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
-
-    // Create the DPoP-Proof 'body' for this request.
-	// We already have the cryptoKey somewhere, from previous calls...
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX_PREFETCH + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-		'Authorization': `DPoP ${userAccessToken}`,
-		'DPoP': dpopProof,
-		'Accept': CONTENT_TYPE_JSON,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_GET,
-        headers: headers
-    }
-	if (DEBUG) console.debug( PREFIX_PREFETCH + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX_PREFETCH + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-	if (GROUP_DEBUG) console.groupEnd();
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions, renderHTMLErrors );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return responseFromServer.body.count;
-}
-
-// Internal atomic function to retrieve the user's notifications
-async function retrieveNotifications(renderHTMLErrors=true) {
-	const STEP_NAME						= "retrieveNotifications";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}] [MAX ${MAX_NOTIS_TO_RETRIEVE} notifications to retrieve]` );
-
-	let endpoint						= API.bluesky.XRPC.api.listNotifications;
- 	if (DEBUG) console.debug( PREFIX + "Requesting the unread notifications... Invoking endpoint:", endpoint );
-
-	// The URL is protected, so... PDS Server
-	let root							= userPDSURL + "/xrpc";
-	let url								= root + endpoint + "?limit=" + MAX_NOTIS_TO_RETRIEVE;		// Not much; it's a test!
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-	// Let's group the following messages
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
-
-    // Create the DPoP-Proof 'body' for this request.
-	// We already have the cryptoKey somewhere, from previous calls...
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX_PREFETCH + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-		'Authorization': `DPoP ${userAccessToken}`,
-		'DPoP': dpopProof,
-		'Accept': CONTENT_TYPE_JSON,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_GET,
-        headers: headers
-    }
-	if (DEBUG) console.debug( PREFIX_PREFETCH + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX_PREFETCH + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-	if (GROUP_DEBUG) console.groupEnd();
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions, renderHTMLErrors );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return responseFromServer.body.notifications;
-}
-
-// Internal atomic function to retrieve the user's profile
-async function retrieveUserProfile() {
-	const STEP_NAME						= "retrieveUserProfile";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
-
-	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getProfile;
- 	if (DEBUG) console.debug( PREFIX + "Requesting the user's profile... Invoking endpoint:", endpoint );
-
-	// The URL is OPEN, so... Public Server
-	let root							= API.bluesky.XRPC.public;
-	let url								= root + endpoint + "?actor=" + userHandle;
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-    // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-		'Authorization': `DPoP ${userAccessToken}`,
-		'DPoP': dpopProof,
-		'Accept': CONTENT_TYPE_JSON,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_GET,
-        headers: headers
-    }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-	let userProfile						= responseFromServer.body;
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return userProfile;
-}
-
-// Internal atomic function to retrieve who the user follows
-async function retrieveUserFollows(cursor) {
-	const STEP_NAME						= "retrieveUserFollows";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
-
-	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getFollows;
- 	if (DEBUG) console.debug( PREFIX + "Requesting who the user is following... Invoking endpoint:", endpoint );
-
-	// The URL is OPEN, so... Public Server
-	let root							= API.bluesky.XRPC.public;
-	let url								= root + endpoint;
-	url									+= "?actor=" + userHandle;
-	url									+= "&limit=100";
-	if ( !COMMON.isNullOrEmpty(cursor) ) {
-		url								+= "&cursor=" + cursor;
-	}
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-    // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-		'Authorization': `DPoP ${userAccessToken}`,
-		'DPoP': dpopProof,
-		'Accept': CONTENT_TYPE_JSON,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_GET,
-        headers: headers
-    }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-	let userData						= responseFromServer.body;
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return userData;
-}
-
-// Internal atomic function to retrieve who are the user followers
-async function retrieveUserFollowers(cursor) {
-	const STEP_NAME						= "retrieveUserFollowers";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
-
-	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getFollowers;
- 	if (DEBUG) console.debug( PREFIX + "Requesting who are the user's followers... Invoking endpoint:", endpoint );
-
-	// The URL is OPEN, so... Public Server
-	let root							= API.bluesky.XRPC.public;
-	let url								= root + endpoint;
-	url									+= "?actor=" + userHandle;
-	url									+= "&limit=100";
-	if ( !COMMON.isNullOrEmpty(cursor) ) {
-		url								+= "&cursor=" + cursor;
-	}
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-    // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-		'Authorization': `DPoP ${userAccessToken}`,
-		'DPoP': dpopProof,
-		'Accept': CONTENT_TYPE_JSON,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_GET,
-        headers: headers
-    }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-	let userData						= responseFromServer.body;
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return userData;
-}
-
-// Internal atomic function to retrieve who are the user blocking
-async function retrieveUserBlocks(cursor) {
-	const STEP_NAME						= "retrieveUserBlocks";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
-
-	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getBlocks;
- 	if (DEBUG) console.debug( PREFIX + "Requesting who the user is blocking... Invoking endpoint:", endpoint );
-
-	// The URL is protected, so... PDS Server
-	let root							= userPDSURL + "/xrpc";
-	let url								= root + endpoint;
-	url									+= "?limit=100";
-	if ( !COMMON.isNullOrEmpty(cursor) ) {
-		url								+= "&cursor=" + cursor;
-	}
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-    // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-		'Authorization': `DPoP ${userAccessToken}`,
-		'DPoP': dpopProof,
-		'Accept': CONTENT_TYPE_JSON,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_GET,
-        headers: headers
-    }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-	let userData						= responseFromServer.body;
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return userData;
-}
-
-// Internal atomic function to retrieve who are the user muting
-async function retrieveUserMutes(cursor) {
-	const STEP_NAME						= "retrieveUserMutes";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
-
-	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getMutes;
- 	if (DEBUG) console.debug( PREFIX + "Requesting who the user is muting... Invoking endpoint:", endpoint );
-
-	// The URL is protected, so... PDS Server
-	let root							= userPDSURL + "/xrpc";
-	let url								= root + endpoint;
-	url									+= "?limit=100";
-	if ( !COMMON.isNullOrEmpty(cursor) ) {
-		url								+= "&cursor=" + cursor;
-	}
-	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-    // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, userAccessToken, accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
-	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-    // TuneUp the call
-    // ------------------------------------------
-    let headers							= {
-		'Authorization': `DPoP ${userAccessToken}`,
-		'DPoP': dpopProof,
-		'Accept': CONTENT_TYPE_JSON,
-        'DPoP-Nonce': BSKY.data.dpopNonce
-    }
-    let fetchOptions					= {
-        method: HTML_GET,
-        headers: headers
-    }
-	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
-	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-    // Finally, perform the call
-    // ------------------------------------------
- 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "access_token" item in the received json.
-	let userData						= responseFromServer.body;
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
-	return userData;
-}
 
 
 /**********************************************************
@@ -998,17 +282,17 @@ async function getTheUserNotifications() {
 
 	// The unread user's notifications.
 	if (DEBUG) console.debug( PREFIX + "Let's retrieve the number of unread notifications...");
-	let unreadNotifications				= await tryAndCatch( "retrieveUnreadNotifications", retrieveUnreadNotifications, false );
+	let unreadNotifications				= await APIBluesky.tryAndCatch( "retrieveUnreadNotifications", APIBluesky.retrieveUnreadNotifications, false );
 	if (DEBUG) console.debug( PREFIX + "Current unreadNotifications:", unreadNotifications );
 
 	if ( unreadNotifications > 0 ) {
 		// The user's notifications.
 		if (DEBUG) console.debug( PREFIX + `Let's retrieve the ${unreadNotifications} unread notifications...`);
-		let notifications				= await tryAndCatch( "retrieveNotifications", retrieveNotifications, false );
+		let notifications				= await APIBluesky.tryAndCatch( "retrieveNotifications", APIBluesky.retrieveNotifications, false );
 		if (DEBUG) console.debug( PREFIX + "Current notifications:", notifications );
 
 		// Parse the response
-		await HTML.htmlRenderNotifications( notifications, userAccessToken, APP_CLIENT_ID, accessTokenHash );
+		await HTML.htmlRenderNotifications( notifications, BSKY.data.userAccessToken, APP_CLIENT_ID, BSKY.data.accessTokenHash );
 	} else {
 		if (DEBUG) console.debug( PREFIX + "No notifications to retrieve." );
 		HTML.htmlRenderNoNotifications();
@@ -1033,8 +317,11 @@ async function getTheUserProfile() {
 
 	// Now, the user's profile.
 	if (DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
-	let userProfile						= await tryAndCatch( "retrieveUserProfile", retrieveUserProfile, null );
+	let userProfile						= await APIBluesky.tryAndCatch( "retrieveUserProfile", APIBluesky.retrieveUserProfile, null );
 	if (DEBUG) console.debug( PREFIX + "Current userProfile:", userProfile );
+
+	// Save it.
+	BSKY.user.profile					= userProfile;
 
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserProfile( userProfile );
@@ -1060,8 +347,8 @@ async function getWhoTheUserFollows() {
 	let apiCallResponse					= null;
 	let cursor							= null;
 	let hayCursor						= false;
-	let follows							= null;
-	let allFollowing					= [];
+	let data							= null;
+	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
@@ -1070,7 +357,7 @@ async function getWhoTheUserFollows() {
 		n++;
 		// Retrieve user's follows to show
 		// ------------------------------------------
-		apiCallResponse					= await tryAndCatch( "retrieveUserFollows", retrieveUserFollows, cursor );
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserFollows", APIBluesky.retrieveUserFollows, cursor );
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
@@ -1078,20 +365,22 @@ async function getWhoTheUserFollows() {
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
-		follows							= apiCallResponse.follows;
-		subTotal						= follows.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} following`, follows );
-		allFollowing.push(...follows);
-		acumulado						= allFollowing.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allFollowing );
-		
+		data							= apiCallResponse.follows;
+		subTotal						= data.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} following`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allData );
 	} while ( hayCursor && (n<20) );
 	if (GROUP_DEBUG) console.groupEnd();
 
-	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} following`, allFollowing );
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} following`, allData );
+
+	// Save it.
+	BSKY.user.following					= allData;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserFollows( allFollowing );
+	HTML.htmlRenderUserFollows( allData );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1114,8 +403,8 @@ async function getTheUserFollowers() {
 	let apiCallResponse					= null;
 	let cursor							= null;
 	let hayCursor						= false;
-	let followers						= null;
-	let allFollowers					= [];
+	let data							= null;
+	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
@@ -1124,7 +413,7 @@ async function getTheUserFollowers() {
 		n++;
 		// Retrieve user's followers to show
 		// ------------------------------------------
-		apiCallResponse					= await tryAndCatch( "retrieveUserFollowers", retrieveUserFollowers, cursor );
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserFollowers", APIBluesky.retrieveUserFollowers, cursor );
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
@@ -1132,20 +421,23 @@ async function getTheUserFollowers() {
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
-		followers						= apiCallResponse.followers;
-		subTotal						= followers.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} followers`, followers );
-		allFollowers.push(...followers);
-		acumulado						= allFollowers.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} followers`, allFollowers );
+		data							= apiCallResponse.followers;
+		subTotal						= data.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} followers`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} followers`, allData );
 		
 	} while ( hayCursor && (n<20) );
 	if (GROUP_DEBUG) console.groupEnd();
 
-	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} followers`, allFollowers );
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} followers`, allData );
+
+	// Save it.
+	BSKY.user.followers					= allData;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserFollowers( allFollowers );
+	HTML.htmlRenderUserFollowers( allData );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1168,8 +460,8 @@ async function getWhoTheUserIsBlocking() {
 	let apiCallResponse					= null;
 	let cursor							= null;
 	let hayCursor						= false;
-	let blocks							= null;
-	let allBlocks						= [];
+	let data							= null;
+	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
@@ -1178,7 +470,7 @@ async function getWhoTheUserIsBlocking() {
 		n++;
 		// Retrieve user's blocks
 		// ------------------------------------------
-		apiCallResponse					= await tryAndCatch( "retrieveUserBlocks", retrieveUserBlocks, cursor );
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserBlocks", APIBluesky.retrieveUserBlocks, cursor );
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
@@ -1186,20 +478,23 @@ async function getWhoTheUserIsBlocking() {
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
-		blocks							= apiCallResponse.blocks;
-		subTotal						= blocks.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} blocks`, blocks );
-		allBlocks.push(...blocks);
-		acumulado						= allBlocks.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} blocks`, allBlocks );
+		data							= apiCallResponse.blocks;
+		subTotal						= data.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} blocks`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} blocks`, allData );
 		
 	} while ( hayCursor && (n<20) );
 	if (GROUP_DEBUG) console.groupEnd();
 
-	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} blocks`, allBlocks );
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} blocks`, allData );
+
+	// Save it.
+	BSKY.user.blocks					= allData;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserBlocks( allBlocks );
+	HTML.htmlRenderUserBlocks( allData );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1222,8 +517,8 @@ async function getWhoTheUserIsMuting() {
 	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
 	let cursor							= null;
 	let hayCursor						= false;
-	let mutes							= null;
-	let allMutes						= [];
+	let data							= null;
+	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
@@ -1232,7 +527,7 @@ async function getWhoTheUserIsMuting() {
 		n++;
 		// Retrieve user's mutes
 		// ------------------------------------------
-		apiCallResponse					= await tryAndCatch( "retrieveUserMutes", retrieveUserMutes, cursor );
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserMutes", APIBluesky.retrieveUserMutes, cursor );
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
@@ -1240,20 +535,23 @@ async function getWhoTheUserIsMuting() {
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
-		mutes							= apiCallResponse.mutes;
-		subTotal						= mutes.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} mutes`, mutes );
-		allMutes.push(...mutes);
-		acumulado						= allMutes.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} mutes`, allMutes );
+		data							= apiCallResponse.mutes;
+		subTotal						= data.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} mutes`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} mutes`, allData );
 		
 	} while ( hayCursor && (n<20) );
 	if (GROUP_DEBUG) console.groupEnd();
 
-	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} mutes`, allMutes );
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} mutes`, allData );
+
+	// Save it.
+	BSKY.user.mutes						= allData;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserBlocks( allMutes );
+	HTML.htmlRenderUserMutes( allData );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1268,11 +566,122 @@ async function getWhoTheUserIsMuting() {
 async function getTheUserLists() {
 	const STEP_NAME						= "getTheUserLists";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
-	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+	// Now, the user's mutes.
+	let apiCallResponse					= null;
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
+	let cursor							= null;
+	let hayCursor						= false;
+	let data							= null;
+	let allData							= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's lists
+		// ------------------------------------------
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserLists", APIBluesky.retrieveUserLists, cursor );
+		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= apiCallResponse.cursor;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		data							= apiCallResponse.lists;
+		subTotal						= data.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} lists`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} lists`, allData );
+		
+	} while ( hayCursor && (n<20) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
+
+	// Save it.
+	BSKY.user.lists						= allData;
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserLists( allData );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve the Trending Topics.
+ *
+ * EndPoint: app.bsky.unspecced.getTrendingTopics
+ * SRC: https://github.com/bluesky-social/atproto/blob/main/packages/api/src/client/types/app/bsky/unspecced/getTrendingTopics.ts
+ * -------------------------------------------------------- */
+async function getTheTrendingTopics() {
+	const STEP_NAME						= "getTheTrendingTopics";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Now, the user's mutes.
+	let apiCallResponse					= null;
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
+	let cursor							= null;
+	let hayCursor						= false;
+	let data							= {};
+	data.topics							= {};
+	data.suggested						= {};
+	let allData							= {};
+	allData.topics						= [];
+	allData.suggested					= [];
+	let acumulado						= 0;
+	let subTotal						= 0;
+	let n								= 0;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve the Trending Topics
+		// ------------------------------------------
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveTrendingTopics", APIBluesky.retrieveTrendingTopics, cursor );
+		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= apiCallResponse.cursor;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		// Topics
+		data.topics						= apiCallResponse.topics;
+		subTotal						= data.topics.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Topics`, data.topics );
+		allData.topics.push(...data.topics);
+		acumulado						= allData.topics.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} Trending Topics - Topics`, allData.topics );
+
+		// Suggested
+		data.suggested					= apiCallResponse.suggested;
+		subTotal						= data.suggested.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Suggested`, data.suggested );
+		allData.suggested.push(...data.suggested);
+		acumulado						= allData.suggested.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} Trending Topics - Suggested`, allData.suggested );
+
+	} while ( hayCursor && (n<20) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	if (DEBUG) console.debug( PREFIX + `Detected Trending Topics`, allData );
+
+	// Save it.
+	BSKY.user.trendingTopics			= allData;
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderTrendingTopics( allData );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1296,10 +705,10 @@ function postProcessAccessToken() {
 	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current cryptoKey:", COMMON.prettyJson( BSKY.data.cryptoKey ) );
 	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current jwk:", BSKY.data.jwk );
 	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current jwk:", COMMON.prettyJson( BSKY.data.jwk ) );
-	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAuthentication:", userAuthentication );
-	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAuthentication:", COMMON.prettyJson( userAuthentication ) );
-	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", userAccessToken );
-	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", JWT.jwtToPrettyJSON( userAccessToken ) );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAuthentication:", BSKY.data.userAuthentication );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAuthentication:", COMMON.prettyJson( BSKY.data.userAuthentication ) );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", BSKY.data.userAccessToken );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", JWT.jwtToPrettyJSON( BSKY.data.userAccessToken ) );
 	if (DEBUG) console.debug( PREFIX_RAWDATA + "Current BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
 	if (GROUP_DEBUG) console.groupEnd();
 
@@ -1307,11 +716,11 @@ function postProcessAccessToken() {
 	saveRuntimeDataInLocalStorage();
 
 	// Let's render the user's access token.
-	// if (DEBUG) console.debug( PREFIX + "userAuthentication:", userAuthentication );
+	// if (DEBUG) console.debug( PREFIX + "userAuthentication:", BSKY.data.userAuthentication );
 	if (DEBUG) console.debug( PREFIX + "Rendering the access token fields and panel..." );
 
 	// Update HTML fields
-	HTML.updateUserAccessToken(userAccessToken);
+	HTML.updateUserAccessToken(BSKY.data.userAccessToken);
 	HTML.htmlRenderHighlight();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
@@ -1342,22 +751,22 @@ async function validateAccessToken() {
 
 	if (DEBUG) console.debug( PREFIX + `Let's see whether we have a "valid" user access token...` );
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RAWDATA );
-	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAccessToken:", userAccessToken );
-	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAuthServerDiscovery:", userAuthServerDiscovery );
-	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAuthentication:", userAuthentication );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAccessToken:", BSKY.data.userAccessToken );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAuthServerDiscovery:", BSKY.auth.userAuthServerDiscovery );
+	if (DEBUG) console.debug( PREFIX_RAWDATA + "+ Current userAuthentication:", BSKY.data.userAuthentication );
 	if (GROUP_DEBUG) console.groupEnd();
 
 	// Do we have access token?
-	if (COMMON.isNullOrEmpty(userAccessToken)) {
+	if (COMMON.isNullOrEmpty(BSKY.data.userAccessToken)) {
 		// NO. Let's see if this is the first time after login.
 
 		if (DEBUG) console.debug( PREFIX + "No userAccessToken." );
 
 		// Retrieve the "code"...
 		if (DEBUG) console.debug( PREFIX + "Let's see if we have a code to retrieve the userAccessToken." );
-		if (DEBUG) console.debug( PREFIX + "Current code:", callbackData.code );
+		if (DEBUG) console.debug( PREFIX + "Current code:", BSKY.auth.callbackData.code );
 
-		if (COMMON.isNullOrEmpty(callbackData.code)) {
+		if (COMMON.isNullOrEmpty(BSKY.auth.callbackData.code)) {
 			// NO. No token and no code. Throw an error.
 			if (GROUP_DEBUG) console.groupEnd();
 			throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_02 );
@@ -1365,7 +774,7 @@ async function validateAccessToken() {
 			// YES. Let's retrieve the token
 
 			// With the "code", let's retrieve the user access_token from the server.
-			apiCallResponse					= await tryAndCatch( "retrieveUserAccessToken", retrieveUserAccessToken, callbackData.code );
+			apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserAccessToken", APIBluesky.retrieveUserAccessToken, BSKY.auth.callbackData.code );
 			if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
 
 			// Let's group log messages
@@ -1373,14 +782,14 @@ async function validateAccessToken() {
 			if (DEBUG) console.debug( PREFIX_AFTER + "Current apiCallResponse:", COMMON.prettyJson( apiCallResponse ) );
 
 			// Parse the response
-			userAuthentication				= apiCallResponse.userAuthentication;
-			userAccessToken					= apiCallResponse.userAccessToken;
-			if (DEBUG) console.debug(PREFIX_AFTER + "userAuthentication:", userAuthentication);
-			if (DEBUG) console.debug(PREFIX_AFTER + "userAccessToken:", userAccessToken);
+			BSKY.data.userAuthentication	= apiCallResponse.userAuthentication;
+			BSKY.data.userAccessToken		= apiCallResponse.userAccessToken;
+			if (DEBUG) console.debug(PREFIX_AFTER + "userAuthentication:", BSKY.data.userAuthentication);
+			if (DEBUG) console.debug(PREFIX_AFTER + "userAccessToken:", BSKY.data.userAccessToken);
 
 			// Let's create also the access token HASH...
-			accessTokenHash					= await Crypto.createHash(userAccessToken, true);
-			if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", accessTokenHash);
+			BSKY.data.accessTokenHash	= await Crypto.createHash(BSKY.data.userAccessToken, true);
+			if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", BSKY.data.accessTokenHash);
 			if (GROUP_DEBUG) console.groupEnd();
 		}
 	} else {
@@ -1388,7 +797,7 @@ async function validateAccessToken() {
 
 		if (DEBUG) console.debug( PREFIX + "GET userAccessToken" );
 
-		tokenValidationInfo				= OAuth2.validateAccessToken( userAccessToken, userAuthServerDiscovery, userAuthentication, userDidDocument, userPDSMetadata );
+		tokenValidationInfo				= OAuth2.validateAccessToken( BSKY.data.userAccessToken, BSKY.auth.userAuthServerDiscovery, BSKY.data.userAuthentication, BSKY.auth.userDidDocument, BSKY.auth.userPDSMetadata );
 		isAccessTokenValid				= tokenValidationInfo.isValid;
 		isTokenCloseToExpire			= tokenValidationInfo.needsToRefresh;
 
@@ -1409,7 +818,7 @@ async function validateAccessToken() {
 
 	// Update some HTML fields
 	// Prepare an object to pass
-	HTML.updateHTMLFields(callbackData);
+	HTML.updateHTMLFields(BSKY.auth.callbackData);
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1445,8 +854,8 @@ function fnAnalizeCallbackURL() {
 	let parsedSearch					= new URLSearchParams(thisURL.search);
 
 	// Update data from the url
-	callbackData						= HTML.updateHTMLFields( parsedSearch );
-	if (DEBUG) console.debug( PREFIX + "callbackData:", callbackData );
+	BSKY.auth.callbackData				= HTML.updateHTMLFields( parsedSearch );
+	if (DEBUG) console.debug( PREFIX + "callbackData:", BSKY.auth.callbackData );
 
 	if (!COMMON.areEquals(thisURL.hostname, "localhost")) {
 		// Estamos en Neocities.
@@ -1540,7 +949,7 @@ async function fnRefreshAccessToken() {
 
 	// Let's refresh the user's access token.
 	// ------------------------------------------
-	let refreshedAccessToken			= await tryAndCatch( "refreshAccessToken", refreshAccessToken, callbackData.code );
+	let refreshedAccessToken			= await APIBluesky.tryAndCatch( "refreshAccessToken", APIBluesky.refreshAccessToken, BSKY.auth.callbackData.code );
 	if (DEBUG) console.debug( PREFIX + "Current refreshedAccessToken:", refreshedAccessToken );
 
 	// Clear and hide error fields and panel
@@ -1564,9 +973,9 @@ async function fnRefreshAccessToken() {
 async function fnLogout() {
 	const STEP_NAME						= "fnLogout";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+userHandle+"]" );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+BSKY.user.userHandle+"]" );
 
-	let loggedOutInfo					= await tryAndCatch( "performUserLogout", performUserLogout, null );
+	let loggedOutInfo					= await APIBluesky.tryAndCatch( "performUserLogout", APIBluesky.performUserLogout, null );
 	if (DEBUG) console.debug( PREFIX + "Current loggedOutInfo:", loggedOutInfo );
 
 	// Check if "logout" has been successfull
@@ -1626,11 +1035,11 @@ async function fnDashboard() {
 
 		// Later, retrieve the rest of things.
 		// ------------------------------------------
-		// Retrieve the user's notifications.
-		apiCallResponse					= await getTheUserNotifications();
-
 		// Retrieve the user's profile to show
 		apiCallResponse					= await getTheUserProfile();
+
+		// Retrieve the user's notifications.
+		apiCallResponse					= await getTheUserNotifications();
 
 		// Retrieve who the user is following
 		apiCallResponse					= await getWhoTheUserFollows();
@@ -1646,6 +1055,9 @@ async function fnDashboard() {
 
 		// Retrieve the user's lists
 		apiCallResponse					= await getTheUserLists();
+
+		// Retrieve the Trending Topics
+		apiCallResponse					= await getTheTrendingTopics();
 	} catch (error) {
 		if (GROUP_DEBUG) console.groupEnd();
 
@@ -1657,16 +1069,5 @@ async function fnDashboard() {
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
-
-
-
-
-/*
-https://public.api.bsky.app/xrpc/com.atproto.admin.getAccountInfo?did=did%3Dplc%3Dtjc27aje4uwxtw5ab6wwm4km
-https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.admin.getAccountInfo?did=did%3Dplc%3Dtjc27aje4uwxtw5ab6wwm4km
-https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.sync.getRepoStatus?did=did%3Dplc%3Dtjc27aje4uwxtw5ab6wwm4km%23atproto
-https://velvetfoot.us-east.host.bsky.network/xrpc/com.atproto.sync.listRepos
-
-*/
 
 

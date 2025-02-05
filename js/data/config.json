@@ -62,10 +62,10 @@
 					"getMutes": "/app.bsky.graph.getMutes",
 					"getPosts": "/app.bsky.feed.getPosts",
 					"getProfile": "/app.bsky.actor.getProfile",
+					"getTrendingTopics": "/app.bsky.unspecced.getTrendingTopics",
 					"getUnreadCount": "/app.bsky.notification.getUnreadCount",
 					"listNotifications": "/app.bsky.notification.listNotifications",
-					"resolveHandle": "/com.atproto.identity.resolveHandle",
-					"app.bsky.notification.getUnreadCount": "/app.bsky.notification.getUnreadCount"
+					"resolveHandle": "/com.atproto.identity.resolveHandle"
 				}
 			},
 			"plc": {

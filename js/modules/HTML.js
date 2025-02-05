@@ -450,6 +450,7 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 		if (DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
 
 		// Actualizamos el badge y lo mostramos
+		$( DIV_JQ_TAB_NOTIS_BADGE ).html(totalUnread);
 		COMMON.show( DIV_TAB_NOTIS_BADGE );
 
 		// Ponemos el badge a 0 y lo ocultamos
@@ -566,6 +567,42 @@ export function htmlRenderUserFollowers( data ) {
 
 export function htmlRenderUserBlocks( data ) {
 	const STEP_NAME						= "htmlRenderUserBlocks";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderUserMutes( data ) {
+	const STEP_NAME						= "htmlRenderUserMutes";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderUserLists( data ) {
+	const STEP_NAME						= "htmlRenderUserLists";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderTrendingTopics( data ) {
+	const STEP_NAME						= "htmlRenderTrendingTopics";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
