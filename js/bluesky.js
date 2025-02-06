@@ -691,6 +691,31 @@ async function getTheTrendingTopics() {
 /* --------------------------------------------------------
  * LOGGED-IN PROCESS.
  *
+ * "Business function": Retrieve the Trending Topics.
+ *
+ * EndPoint: app.bsky.unspecced.getTrendingTopics
+ * SRC: https://github.com/bluesky-social/atproto/blob/main/packages/api/src/client/types/app/bsky/unspecced/getTrendingTopics.ts
+ * -------------------------------------------------------- */
+async function getTheRelations() {
+	const STEP_NAME						= "getTheRelations";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.warn( PREFIX + "Under Development!" );
+	// TODO: Cross-check following, followers, blocks and mutes with
+	// + [getKnownFollowers]	https://docs.bsky.app/docs/api/app-bsky-graph-get-known-followers
+	// + [getRelationships]		https://docs.bsky.app/docs/api/app-bsky-graph-get-relationships
+	// + [getProfiles]			https://docs.bsky.app/docs/api/app-bsky-actor-get-profiles
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
  * "Business function": postProcessAccessToken.
  * -------------------------------------------------------- */
 function postProcessAccessToken() {
@@ -1058,6 +1083,9 @@ async function fnDashboard() {
 
 		// Retrieve the Trending Topics
 		apiCallResponse					= await getTheTrendingTopics();
+
+		// Now, check relationships...
+		apiCallResponse					= await getTheRelations();
 	} catch (error) {
 		if (GROUP_DEBUG) console.groupEnd();
 

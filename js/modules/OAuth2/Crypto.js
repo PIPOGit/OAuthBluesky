@@ -47,14 +47,56 @@ let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
+export async function generateCryptoKey() {
+	const STEP_NAME						= "generateCryptoKey";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+
+	// Create the crypto key.
+    // Must save it, 'cause we'll reuse it later.
+    // ------------------------------------------
+
+	// Let's generate a cryptographic key to sign/verify.
+    let cryptoKey						= await generateKey();
+
+	// Export the public key in JWK format.
+    // Must save it, 'cause we'll reuse it later.
+    // ------------------------------------------
+    let jwk								= await crypto.subtle.exportKey(JWK_EXPORT_FORMAT, cryptoKey.publicKey)
+		.then( keydata => {
+        return keydata;
+    });
+
+	// Remove private data from the JWK.
+    // ------------------------------------------
+    delete jwk.ext;
+    delete jwk.key_ops;
+	if (DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( jwk ) );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return { cryptoKey: cryptoKey, jwk: jwk };
+}
+
 export async function generateKey() {
+	const STEP_NAME						= "generateKey";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+
     let cryptoKeyOptions = { name: SIGNING_ALGORITM, namedCurve: CURVE_ALGORITM };
     let cryptoKeyPurposes = ["sign", "verify"];
+	if (DEBUG) console.debug(PREFIX + "Generating a new key with:");
+	if (DEBUG) console.debug(PREFIX + "+ cryptoKeyOptions:", cryptoKeyOptions);
+	if (DEBUG) console.debug(PREFIX + "+ cryptoKeyPurposes:", cryptoKeyPurposes);
+
     var key = await crypto.subtle.generateKey(cryptoKeyOptions, false, cryptoKeyPurposes).then(function(eckey) {
 		return eckey;
 	}).catch(function(err) {
 		console.error(err);
 	});
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
     return key;
 }
 
@@ -112,37 +154,5 @@ export async function createHash(accessToken, noPadding = false){
         throw err;
     });
     return atHash;
-}
-
-export async function generateCryptoKey() {
-	const PREFIX = `[${MODULE_NAME}:generateCryptoKey] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
-
-	// Create the crypto key.
-    // Must save it, 'cause we'll reuse it later.
-    // ------------------------------------------
-    let cryptoKeyOptions = { name: SIGNING_ALGORITM, namedCurve: CURVE_ALGORITM };
-    let cryptoKeyPurposes = ["sign", "verify"];
-	if (DEBUG) console.debug(PREFIX + "Generating a new key with:");
-	if (DEBUG) console.debug(PREFIX + "+ cryptoKeyOptions:", cryptoKeyOptions);
-	if (DEBUG) console.debug(PREFIX + "+ cryptoKeyPurposes:", cryptoKeyPurposes);
-    let cryptoKey = await generateKey();
-
-	// Export the public key in JWK format.
-    // Must save it, 'cause we'll reuse it later.
-    // ------------------------------------------
-    let jwk = await crypto.subtle.exportKey(JWK_EXPORT_FORMAT, cryptoKey.publicKey)
-		.then( keydata => {
-        return keydata;
-    });
-
-	// Remove private data from the JWK.
-    // ------------------------------------------
-    delete jwk.ext;
-    delete jwk.key_ops;
-	if (DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( jwk ) );
-
-	if (GROUP_DEBUG) console.groupEnd();
-	return { cryptoKey: cryptoKey, jwk: jwk };
 }
 

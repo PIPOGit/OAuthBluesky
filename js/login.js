@@ -443,9 +443,10 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 	if (DEBUG) console.debug( PREFIX + "Current userAuthServerRequestURI:", BSKY.auth.userAuthServerRequestURI );
 
 	if (DEBUG) console.debug( PREFIX + "Redirecting user to the Bluesky Authorization Server page..." );
+	step06RedirectUserToBlueskyAuthPage();
+
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
-	step06RedirectUserToBlueskyAuthPage();
 }
 
 

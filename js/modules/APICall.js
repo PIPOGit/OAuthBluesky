@@ -83,6 +83,7 @@ function showResponseHeaders(data) {
 		response.headers[pair[0]]		= pair[1];
 		if (DEBUG) console.debug(PREFIX + "  + Header["+pair[0]+"]:", pair[1]);
 	}
+	if (DEBUG) console.debug(PREFIX + "Returning response:", COMMON.prettyJson(response));
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
