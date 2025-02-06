@@ -18,6 +18,8 @@ import * as COMMON						from "./modules/common.functions.js";
 import * as APICall						from "./modules/APICall.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/BrowserDB.js";
+// Common HTML functions
+import * as HTML						from "./modules/HTML.js";
 // Common PKCE functions
 import * as PKCE						from "./modules/PKCE.js";
 
@@ -102,10 +104,6 @@ async function startUp() {
 	// Ejecutamos las acciones propias de esta página.
 	if (DEBUG) console.groupCollapsed( PREFIX_INNER );
 
-	// HTML L&F
-	COMMON.hide( "errorPanel" );
-	COMMON.hide( "infoPanel" );
-
 	// Check whether we come from LOGOUT.
 	let comeFromLogout					= checkIfComesFromLogout();
 
@@ -139,7 +137,7 @@ async function step01RetrieveUserDID() {
 	if (DEBUG) console.debug( PREFIX + "Using handle:", BSKY.user.userHandle );
 
 	// Info step
-	$( "#infoStep" ).html( `Retrieving did for ${BSKY.user.userHandle}...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving did for ${BSKY.user.userHandle}...` );
 
     let url								= API.bluesky.XRPC.url + API.bluesky.XRPC.api.resolveHandle + "?handle=" + BSKY.user.userHandle;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
@@ -159,7 +157,7 @@ async function stop02RetrieveUserDIDDocument() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userDid=="+BSKY.user.userDid+"]" );
 
 	// Info step
-	$( "#infoStep" ).html( `Retrieving didDocument for ${BSKY.user.userHandle}...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving didDocument for ${BSKY.user.userHandle}...` );
 
     let url								= API.bluesky.plc.url + "/" + BSKY.user.userDid;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
@@ -182,7 +180,7 @@ async function step03RetrievePDSServerMetadata() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userPDSURL=="+BSKY.auth.userPDSURL+"]" );
 
 	// Info step
-	$( "#infoStep" ).html( `Retrieving PDS Server Metadata for ${BSKY.user.userHandle}...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving PDS Server Metadata for ${BSKY.user.userHandle}...` );
 
     let url								= BSKY.auth.userPDSURL + API.bluesky.pds.api.metadata;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
@@ -205,7 +203,7 @@ async function step04RetrieveAuthServerDiscoveryMetadata() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userAuthServerURL=="+BSKY.auth.userAuthServerURL+"]" );
 
 	// Info step
-	$( "#infoStep" ).html( `Retrieving Authentication Server URL...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving Authentication Server URL...` );
 
     let url								= BSKY.auth.userAuthServerURL + API.bluesky.authServer.api.discovery;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
@@ -240,7 +238,7 @@ async function step05PARRequest() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	$( "#infoStep" ).html( `Requesting PAR authorization...` );
+	HTML.showStepInfo( STEP_NAME, `Requesting PAR authorization...` );
 
     // Prepare the data to perform the call
     // ------------------------------------------
@@ -281,7 +279,7 @@ function step06RedirectUserToBlueskyAuthPage() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	$( "#infoStep" ).html( `Redirecting user to Bluesky authorization page...` );
+	HTML.showStepInfo( STEP_NAME, `Redirecting user to Bluesky authorization page...` );
 
     // ------------------------------------------
     // SAVE ALL RECEIVED DATA
@@ -407,9 +405,9 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 	// Disable login button. // button-login
 	$( "#button-login" ).attr( "disabled", "" );
 
-	// Hide error panel.
-	COMMON.hide( "errorPanel" );
-	COMMON.show( "infoPanel" );
+	// Hide error panel and show the info one.
+	COMMON.hide( "panel-error" );
+	COMMON.show( "panel-info" );
 
 	let variable						= null;
 

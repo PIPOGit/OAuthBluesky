@@ -3,7 +3,7 @@
  * ********************************************************/
 .theme-docs {
   border: var(--panel-border-size) solid var(--panel-offcanvas-border-color);
-  background-color: aliceblue;
+  background-color: azure;
 }
 .theme-docs-title {
   font-size: larger;
@@ -15,7 +15,7 @@
 }
 .theme-docs-content {
   font-size: small;
-  background-color: aliceblue;
+  background-color: azure;
   margin: 0px;
 }
 .theme-docs ul {

@@ -277,6 +277,9 @@ async function getTheUserNotifications() {
 	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving the user notifications...` );
+
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();
 
@@ -315,6 +318,9 @@ async function getTheUserProfile() {
 	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving the user's profile...` );
+
 	// Now, the user's profile.
 	if (DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
 	let userProfile						= await APIBluesky.tryAndCatch( "retrieveUserProfile", APIBluesky.retrieveUserProfile, null );
@@ -341,6 +347,9 @@ async function getWhoTheUserFollows() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows...` );
 
 	// Now, the user's follows.
 	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user follows...` );
@@ -397,6 +406,9 @@ async function getTheUserFollowers() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user(${BSKY.user.userHandle})...` );
 
 	// Now, the user's followers.
 	if (DEBUG) console.debug( PREFIX + `Let's retrieve who follows the user...` );
@@ -455,6 +467,9 @@ async function getWhoTheUserIsBlocking() {
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) is blocking...` );
+
 	// Now, the user's blocks.
 	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is blocking...` );
 	let apiCallResponse					= null;
@@ -511,6 +526,9 @@ async function getWhoTheUserIsMuting() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) is muting...` );
 
 	// Now, the user's mutes.
 	let apiCallResponse					= null;
@@ -569,9 +587,12 @@ async function getTheUserLists() {
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving the lists of the user(${BSKY.user.userHandle})...` );
+
 	// Now, the user's mutes.
 	let apiCallResponse					= null;
-	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve the lists of the user...` );
 	let cursor							= null;
 	let hayCursor						= false;
 	let data							= null;
@@ -629,9 +650,12 @@ async function getTheTrendingTopics() {
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving the Trending Topics...` );
+
 	// Now, the user's mutes.
 	let apiCallResponse					= null;
-	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve the Trending Topics...` );
 	let cursor							= null;
 	let hayCursor						= false;
 	let data							= {};
@@ -652,7 +676,7 @@ async function getTheTrendingTopics() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
-		cursor							= apiCallResponse.cursor;
+		cursor							= ( apiCallResponse.cursor ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -691,16 +715,16 @@ async function getTheTrendingTopics() {
 /* --------------------------------------------------------
  * LOGGED-IN PROCESS.
  *
- * "Business function": Retrieve the Trending Topics.
- *
- * EndPoint: app.bsky.unspecced.getTrendingTopics
- * SRC: https://github.com/bluesky-social/atproto/blob/main/packages/api/src/client/types/app/bsky/unspecced/getTrendingTopics.ts
+ * "Business function": Cross-check relationships.
  * -------------------------------------------------------- */
 async function getTheRelations() {
 	const STEP_NAME						= "getTheRelations";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Cross-checking relationships with the user [${BSKY.user.userHandle}]...` );
 
 	if (DEBUG) console.warn( PREFIX + "Under Development!" );
 	// TODO: Cross-check following, followers, blocks and mutes with
@@ -766,6 +790,9 @@ async function validateAccessToken() {
 	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
 	const PREFIX_RETRY					= `${PREFIX}[Retry] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `The access token for the user(${BSKY.user.userHandle})...` );
 
 	// ------------------------------------------
 	// Retrieve the access_token
@@ -869,6 +896,9 @@ function fnAnalizeCallbackURL() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
+	// Show and hide panels
+	COMMON.hide( "panel-error" );
+
 	// Restore data from localStorage.
 	restoreDataFromLocalStorage();
 
@@ -915,11 +945,6 @@ function fnAnalizeCallbackURL() {
 		}
 	} else {
 		// Estamos en "localhost".
-
-		// Show and hide panels
-		// COMMON.show( "rootContainer" );
-		// COMMON.hide( "panel-botonera" );
-		COMMON.hide( "errorPanel" );
 
 		// Redirigimos a "localhost", que es donde tenemos los datos en el "localStorage".
 		if (DEBUG) console.debug(PREFIX + "Redirecting to", NEOCITIES.dashboard);
@@ -1042,11 +1067,6 @@ async function fnDashboard() {
 	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	// Show panels
-	COMMON.show( "rootContainer" );
-	// COMMON.show( "panel-botonera" );
-	COMMON.hide( "errorPanel" );
-
 	// Restore data from localStorage.
 	restoreDataFromLocalStorage();
 
@@ -1093,6 +1113,9 @@ async function fnDashboard() {
 		HTML.updateHTMLError(error);
 		throw( error );
 	}
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, null );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();

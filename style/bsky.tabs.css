@@ -35,7 +35,7 @@ a.nav-link {
  * ********************************************************/
 .theme-access-token {
   border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: aliceblue;
+  background-color: azure;
 }
 
 
@@ -44,7 +44,7 @@ a.nav-link {
  * ********************************************************/
 .theme-notifications {
   border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: aliceblue;
+  background-color: azure;
 }
 .theme-notifications pre {
   max-height: 340px;

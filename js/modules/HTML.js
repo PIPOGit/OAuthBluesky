@@ -43,8 +43,9 @@ const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", 
 const DIV_DATE_TIME						= "currentDateTime";
 const DIV_TAB_NOTIS_BADGE				= "pill-notifications-badge";
 const DIV_TOAST							= "toast-followers-change";
-const DIV_PANEL_ERROR					= "errorPanel";
-const DIV_PANEL_INFO					= "infoPanel";
+const DIV_PANEL_ERROR					= "panel-error";
+const DIV_PANEL_INFO					= "panel-info";
+const DIV_PANEL_INFO_STEP				= `${DIV_PANEL_INFO}-step`;
 
 // HTML jQuery DIVs/Placeholders constants
 const DIV_JQ_ERROR						= "#error";
@@ -72,6 +73,8 @@ const DIV_JQ_PROFILE_FOLLOWING			= "#profile-following";
 const DIV_JQ_PROFILE_POSTS				= "#profile-posts";
 const DIV_JQ_PROFILE_DESCRIPTION		= "#profile-description";
 const DIV_JQ_TOAST						= `#${DIV_TOAST}`;
+const DIV_JQ_PANEL_INFO					= `#${DIV_PANEL_INFO}`;
+const DIV_JQ_PANEL_INFO_STEP			= `#${DIV_PANEL_INFO_STEP}`;
 
 /**********************************************************
  * Module Variables
@@ -262,7 +265,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 	// HTML L&F
 	if ( renderHTMLErrors ) {
-		COMMON.hide( DIV_PANEL_INFO );
+		// COMMON.hide( DIV_PANEL_INFO );
 		COMMON.show( DIV_PANEL_ERROR );
 	}
 
@@ -608,6 +611,22 @@ export function htmlRenderTrendingTopics( data ) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function showStepInfo( step, message ) {
+	const STEP_NAME						= "showStepInfo";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[step=${step}] [message=${message}]` );
+
+	if ( !COMMON.isNullOrEmpty( message ) ) {
+		$( DIV_JQ_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
+	} else {
+		$( DIV_JQ_PANEL_INFO_STEP ).html( "&nbsp;" );
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();

@@ -87,10 +87,6 @@ async function startUp() {
 	// Ejecutamos las acciones propias de esta página.
 	if (DEBUG) console.groupCollapsed( PREFIX_INNER );
 
-	// HTML L&F
-	COMMON.hide( "errorPanel" );
-	COMMON.hide( "infoPanel" );
-
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB();
 

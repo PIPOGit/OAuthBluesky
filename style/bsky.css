@@ -50,7 +50,7 @@ html {
  * ********************************************************/
 .theme-root {
   border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: aliceblue;
+  background-color: azure;
 }
 
 
@@ -58,8 +58,10 @@ html {
  * El panel de la info.
  * ********************************************************/
 .theme-info {
+  font-size: smaller;
   border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: palegreen;
+  color: navy;
+  background-color: azure;
 }
 
 
