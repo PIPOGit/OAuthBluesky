@@ -47,10 +47,10 @@ const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 // Inner constants
 // const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
-const NEOCITIES							= CONFIGURATION.neocities;
+const CLIENT_APP						= CONFIGURATION.clientApp;
 
 // Bluesky constants
-const APP_CLIENT_ID						= NEOCITIES.client_id;
+const APP_CLIENT_ID						= CLIENT_APP.client_id;
 
 
 /**********************************************************
@@ -971,22 +971,22 @@ function fnAnalizeCallbackURL() {
 	BSKY.auth.callbackData				= HTML.updateHTMLFields( parsedSearch );
 	if (DEBUG) console.debug( PREFIX + "callbackData:", BSKY.auth.callbackData );
 
+	/*
 	if (!COMMON.areEquals(thisURL.hostname, "localhost")) {
-		// Estamos en Neocities.
 		// Redirigimos a "localhost", que es donde tenemos los datos en el "localStorage".
-		if (DEBUG) console.debug(PREFIX + "Processing the request in Neocities. Redirecting to localhost]...");
+		if (DEBUG) console.debug(PREFIX + "Processing the request. Redirecting to localhost]...");
 
 		// Read timeout from configuration
-		let seconds						= NEOCITIES.redirect_delay;
+		let seconds						= CLIENT_APP.redirect_delay;
 		let $seconds					= $( "#redirectSeconds" )[0];
 		$( "#redirectSeconds" ).html( seconds );
 		if (DEBUG) console.debug(PREFIX + `The timeout is about ${seconds} second(s)...`);
 
 		// Modify the URL...
 		if (DEBUG) console.debug(PREFIX + "Processing the URL:", thisURL.toString());
-		thisURL.protocol				= NEOCITIES.protocol;
-		thisURL.hostname				= NEOCITIES.hostname;
-		thisURL.pathname				= NEOCITIES.pathname;
+		thisURL.protocol				= CLIENT_APP.protocol;
+		thisURL.hostname				= CLIENT_APP.hostname;
+		thisURL.pathname				= CLIENT_APP.pathname;
 		if (DEBUG) console.debug(PREFIX + "+ REDIRECT:", thisURL.toString());
 
 		// Let's change the "action" of the link...
@@ -1003,10 +1003,10 @@ function fnAnalizeCallbackURL() {
 			if (GROUP_DEBUG) console.groupEnd();
 		}
 	} else {
-		// Estamos en "localhost".
+	*/
 
 		// Redirigimos a "localhost", que es donde tenemos los datos en el "localStorage".
-		if (DEBUG) console.debug(PREFIX + "Redirecting to", NEOCITIES.dashboard);
+		if (DEBUG) console.debug(PREFIX + "Redirecting to", CLIENT_APP.dashboard);
 
 		// Cogemos los datos de la URL y nos los guardamos para redirigir a una página limpia y procesarlos ahí.
 		// Guardamos toda la info y redirigimos a una "página (URL) limpia"
@@ -1015,13 +1015,15 @@ function fnAnalizeCallbackURL() {
 
 		// Modify the URL...
 		if (DEBUG) console.debug(PREFIX + "Processing the URL:", thisURL.toString());
-		thisURL.pathname				= NEOCITIES.dashboard;
+		thisURL.pathname				= CLIENT_APP.dashboard;
 		thisURL.search					= '';
 		if (DEBUG) console.debug(PREFIX + "+ REDIRECT:", thisURL.toString());
 
 		if (GROUP_DEBUG) console.groupEnd();
 		window.location					= thisURL.toString();
+	/*
 	}
+	*/
 }
 
 

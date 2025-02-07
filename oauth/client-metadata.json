@@ -1,5 +1,5 @@
 {
-	"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
+	"client_id": "https://oauthbluesky.onrender.com/oauth/client-metadata.json",
 	"application_type": "web",
 	"grant_types": [
 		"authorization_code",
@@ -11,10 +11,10 @@
 		"code"
 	],
 	"redirect_uris": [
-		"https://madrilenyer.neocities.org/bsky/oauth/callback/"
+		"https://oauthbluesky.onrender.com/oauth/callback.html"
 	],
 	"dpop_bound_access_tokens": true,
 	"token_endpoint_auth_method": "none",
 	"client_name": "Madrilenyer Example Browser App",
-	"client_uri": "https://madrilenyer.neocities.org/bsky/"
+	"client_uri": "https://oauthbluesky.onrender.com"
 }

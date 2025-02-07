@@ -18,14 +18,10 @@
 	"dev_to": {
 		"post": "https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h"
 	},
-	"neocities": {
-		"client_id": "https://madrilenyer.neocities.org/bsky/oauth/client-metadata.json",
-		"redirect_uri": "https://madrilenyer.neocities.org/bsky/oauth/callback/",
-		"redirect_delay": 3,
-		"protocol": "http",
-		"hostname": "localhost",
-		"dashboard": "/neocities/dashboard.html",
-		"pathname": "/neocities/oauth/callback.html"
+	"clientApp": {
+		"client_id": "https://oauthbluesky.onrender.com/oauth/client-metadata.json",
+		"redirect_uri": "https://oauthbluesky.onrender.com/oauth/callback.html",
+		"redirect_delay": 3
 	},
 	"localStorageKeys": {
 		"BSKYDATA": "BSKYDATA",

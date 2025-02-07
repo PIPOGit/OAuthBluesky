@@ -39,14 +39,14 @@ const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 // Inner constants
 const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
-const NEOCITIES							= CONFIGURATION.neocities;
+const CLIENT_APP						= CONFIGURATION.clientApp;
 
 // HTML Content Type constants
 const CONTENT_TYPE_FORM_ENCODED			= "application/x-www-form-urlencoded";
 
 // Bluesky constants
-const APP_CLIENT_ID						= NEOCITIES.client_id;
-const APP_CALLBACK_URL					= NEOCITIES.redirect_uri;
+const APP_CLIENT_ID						= CLIENT_APP.client_id;
+const APP_CALLBACK_URL					= CLIENT_APP.redirect_uri;
 
 
 /**********************************************************
