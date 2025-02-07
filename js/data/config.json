@@ -1,7 +1,7 @@
 {
 	"global": {
 		"debug": true,
-		"debug_folded": true,
+		"debug_folded": false,
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.0.0",
 		"refresh_dashboard": 15

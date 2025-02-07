@@ -152,12 +152,14 @@ async function startUp() {
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
 	if (DEBUG) console.debug( PREFIX + "Clock started" );
 
+	/*
 	// Geolocation Information
 	let geolocationInfo					= await GEO.getGeolocationInformation();
 	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
 
 	// Save the info
 	BSKY.user.geolocation				= geolocationInfo;
+	*/
 
 	// La configuración de HighlightJS
 	hljs.configure({
