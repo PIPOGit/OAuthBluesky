@@ -47,12 +47,16 @@ const CONTENT_TYPE_FORM_ENCODED			= "application/x-www-form-urlencoded";
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
 const APP_CALLBACK_URL					= CLIENT_APP.redirect_uri;
+const APP_LOCALHOST_CALLBACK_URL		= CLIENT_APP.redirect_to_localhost;
 
 
 /**********************************************************
  * Module Variables
  **********************************************************/
 let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
+let redirectURI							= APP_CALLBACK_URL;
+let isLocalhost							= false;
+
 
 
 /**********************************************************
@@ -106,6 +110,15 @@ async function startUp() {
 
 	// Check whether we come from LOGOUT.
 	let comeFromLogout					= checkIfComesFromLogout();
+	if (DEBUG) console.debug( PREFIX + "comeFromLogout:", comeFromLogout );
+
+	// Check whether we are in localhost.
+	isLocalhost							= checkIfWeAreInLocalhost();
+	if (DEBUG) console.debug( PREFIX + "isLocalhost:", isLocalhost );
+	if (isLocalhost) {
+		redirectURI						= APP_LOCALHOST_CALLBACK_URL;
+	}
+	if (DEBUG) console.debug( PREFIX + "redirectURI:", redirectURI );
 
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB(comeFromLogout);
@@ -242,7 +255,7 @@ async function step05PARRequest() {
 
     // Prepare the data to perform the call
     // ------------------------------------------
-	let preparedData					= await PKCE.prepareDataForPARRequest( BSKY.user.userHandle, APP_CLIENT_ID, APP_CALLBACK_URL );
+	let preparedData					= await PKCE.prepareDataForPARRequest( BSKY.user.userHandle, APP_CLIENT_ID, redirectURI );
 	if (DEBUG) console.debug( PREFIX + "Received prepared data:", preparedData );
 	BSKY.auth.state						= preparedData.state;
 	BSKY.auth.codeVerifier				= preparedData.codeVerifier;
@@ -318,6 +331,21 @@ function checkIfComesFromLogout() {
 	return comeFromLogout;
 }
 
+function checkIfWeAreInLocalhost() {
+	const STEP_NAME						= "checkIfWeAreInLocalhost";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Set, in localStorage, we come from "LOGOUT"
+	let thisURL							= new URL(window.location);
+	let isLocalhost						= COMMON.areEquals(thisURL.host, "localhost");
+	if (DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return isLocalhost;
+}
+
 function saveRuntimeLoginDataInLocalStorage() {
 	const STEP_NAME						= "saveRuntimeLoginDataInLocalStorage";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -326,32 +354,32 @@ function saveRuntimeLoginDataInLocalStorage() {
 	localStorage.setItem(LSKEYS.user.handle, BSKY.user.userHandle);
 	let savedInformation				= {
 		// Bluesky Variables
-		userHandle: BSKY.user.userHandle,
-		userDid: BSKY.user.userDid,
-		userDidDocument: BSKY.auth.userDidDocument,
-		userPDSURL: BSKY.auth.userPDSURL,
-		userPDSMetadata: BSKY.auth.userPDSMetadata,
-		userAuthServerURL: BSKY.auth.userAuthServerURL,
-		userAuthServerDiscovery: BSKY.auth.userAuthServerDiscovery,
-		userAuthorizationEndPoint: BSKY.auth.userAuthorizationEndPoint,
-		userTokenEndPoint: BSKY.auth.userTokenEndPoint,
-		userPAREndPoint: BSKY.auth.userPAREndPoint,
-		userRevocationEndPoint: BSKY.auth.userRevocationEndPoint,
-		userAuthServerRequestURI: BSKY.auth.userAuthServerRequestURI,
-		dpopNonce: BSKY.data.dpopNonce,
-		dpopNonceUsed: BSKY.data.dpopNonceUsed,
-		dpopNonceReceived: BSKY.data.dpopNonceReceived,
-		wwwAuthenticate: BSKY.data.wwwAuthenticate,
+		userHandle:						BSKY.user.userHandle,
+		userDid:						BSKY.user.userDid,
+		userDidDocument:				BSKY.auth.userDidDocument,
+		userPDSURL:						BSKY.auth.userPDSURL,
+		userPDSMetadata:				BSKY.auth.userPDSMetadata,
+		userAuthServerURL:				BSKY.auth.userAuthServerURL,
+		userAuthServerDiscovery:		BSKY.auth.userAuthServerDiscovery,
+		userAuthorizationEndPoint:		BSKY.auth.userAuthorizationEndPoint,
+		userTokenEndPoint:				BSKY.auth.userTokenEndPoint,
+		userPAREndPoint:				BSKY.auth.userPAREndPoint,
+		userRevocationEndPoint:			BSKY.auth.userRevocationEndPoint,
+		userAuthServerRequestURI:		BSKY.auth.userAuthServerRequestURI,
+		dpopNonce:						BSKY.data.dpopNonce,
+		dpopNonceUsed:					BSKY.data.dpopNonceUsed,
+		dpopNonceReceived:				BSKY.data.dpopNonceReceived,
+		wwwAuthenticate:				BSKY.data.wwwAuthenticate,
 		// Auth variables
-		state: BSKY.auth.state,
-		codeVerifier: BSKY.auth.codeVerifier,
-		codeChallenge: BSKY.auth.codeChallenge,
-		callbackData: BSKY.auth.callbackData,
+		state:							BSKY.auth.state,
+		codeVerifier:					BSKY.auth.codeVerifier,
+		codeChallenge:					BSKY.auth.codeChallenge,
+		callbackData:					BSKY.auth.callbackData,
 		// Response from the access token request
-		userAuthentication: null,
-		userAccessToken: null,
-		userRefreshToken: null,
-		accessTokenHash: null
+		userAuthentication:				null,
+		userAccessToken:				null,
+		userRefreshToken:				null,
+		accessTokenHash:				null
 	};
 	localStorage.setItem(LSKEYS.BSKYDATA, JSON.stringify( savedInformation ));
  	if (DEBUG) console.debug( PREFIX + "Saved data in localStorage." );

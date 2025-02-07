@@ -69,11 +69,12 @@ export class APICallError extends Error {
 		return ( this.isJson ) ? `${this.message}: ${this.json.message}` : `${this.message}: ${this.text}`;
 	}
 }
+/*
 	let response						= {
 		valid: true,
 		message: "",
 	};
-
+*/
 export class AccessTokenError extends Error {
 	title								= "Access Token Error";
 	message								= null;

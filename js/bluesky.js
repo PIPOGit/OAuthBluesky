@@ -117,7 +117,6 @@ async function startUp() {
 	window.BSKY.data.dpopNonceReceived	= null;
 	window.BSKY.data.wwwAuthenticate	= null;
 	// + Functions
-	window.BSKY.analizeCallbackURL		= fnAnalizeCallbackURL;
 	window.BSKY.dashboard				= fnDashboard;
 	window.BSKY.logout					= fnLogout;
 	window.BSKY.refreshAccessToken		= fnRefreshAccessToken;
@@ -182,32 +181,32 @@ function saveRuntimeDataInLocalStorage() {
 	localStorage.setItem(LSKEYS.user.handle, BSKY.user.userHandle);
 	let savedInformation				= {
 		// Bluesky Variables
-		userHandle: BSKY.user.userHandle,
-		userDid: BSKY.user.userDid,
-		userDidDocument: BSKY.auth.userDidDocument,
-		userPDSURL: BSKY.auth.userPDSURL,
-		userPDSMetadata: BSKY.auth.userPDSMetadata,
-		userAuthServerURL: BSKY.auth.userAuthServerURL,
-		userAuthServerDiscovery: BSKY.auth.userAuthServerDiscovery,
-		userAuthorizationEndPoint: BSKY.auth.userAuthorizationEndPoint,
-		userTokenEndPoint: BSKY.auth.userTokenEndPoint,
-		userPAREndPoint: BSKY.auth.userPAREndPoint,
-		userRevocationEndPoint: BSKY.auth.userRevocationEndPoint,
-		userAuthServerRequestURI: BSKY.auth.userAuthServerRequestURI,
-		dpopNonce: BSKY.data.dpopNonce,
-		dpopNonceUsed: BSKY.data.dpopNonceUsed,
-		dpopNonceReceived: BSKY.data.dpopNonceReceived,
-		wwwAuthenticate: BSKY.data.wwwAuthenticate,
+		userHandle:						BSKY.user.userHandle,
+		userDid:						BSKY.user.userDid,
+		userDidDocument:				BSKY.auth.userDidDocument,
+		userPDSURL:						BSKY.auth.userPDSURL,
+		userPDSMetadata:				BSKY.auth.userPDSMetadata,
+		userAuthServerURL:				BSKY.auth.userAuthServerURL,
+		userAuthServerDiscovery:		BSKY.auth.userAuthServerDiscovery,
+		userAuthorizationEndPoint:		BSKY.auth.userAuthorizationEndPoint,
+		userTokenEndPoint:				BSKY.auth.userTokenEndPoint,
+		userPAREndPoint:				BSKY.auth.userPAREndPoint,
+		userRevocationEndPoint:			BSKY.auth.userRevocationEndPoint,
+		userAuthServerRequestURI:		BSKY.auth.userAuthServerRequestURI,
+		dpopNonce:						BSKY.data.dpopNonce,
+		dpopNonceUsed:					BSKY.data.dpopNonceUsed,
+		dpopNonceReceived:				BSKY.data.dpopNonceReceived,
+		wwwAuthenticate:				BSKY.data.wwwAuthenticate,
 		// Auth variables
-		state: BSKY.auth.state,
-		codeVerifier: BSKY.auth.codeVerifier,
-		codeChallenge: BSKY.auth.codeChallenge,
-		callbackData: BSKY.auth.callbackData,
+		state:							BSKY.auth.state,
+		codeVerifier:					BSKY.auth.codeVerifier,
+		codeChallenge:					BSKY.auth.codeChallenge,
+		callbackData:					BSKY.auth.callbackData,
 		// Response from the access token request
-		userAuthentication: BSKY.data.userAuthentication,
-		userAccessToken: BSKY.data.userAccessToken,
-		userRefreshToken: BSKY.data.userRefreshToken,
-		accessTokenHash: BSKY.data.accessTokenHash
+		userAuthentication:				BSKY.data.userAuthentication,
+		userAccessToken:				BSKY.data.userAccessToken,
+		userRefreshToken:				BSKY.data.userRefreshToken,
+		accessTokenHash:				BSKY.data.accessTokenHash
 	};
 	localStorage.setItem(LSKEYS.BSKYDATA, JSON.stringify( savedInformation ));
  	if (DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
@@ -223,7 +222,7 @@ function restoreDataFromLocalStorage() {
 	// Restore data from localStorage.
 	let dataInLocalStorage				= localStorage.getItem(LSKEYS.BSKYDATA);
 
-	let saved = JSON.parse( dataInLocalStorage ) 
+	let saved = JSON.parse( dataInLocalStorage ) || {};
 	if (DEBUG) console.debug(PREFIX + "Gathered data from localStorage, from test:", saved);
 	// Bluesky Variables
 	BSKY.user.userHandle				= saved.userHandle;
@@ -829,7 +828,7 @@ function postProcessAccessToken() {
 	if (DEBUG) console.debug( PREFIX + "Rendering the access token fields and panel..." );
 
 	// Update HTML fields
-	HTML.updateUserAccessToken(BSKY.data.userAccessToken);
+	HTML.updateUserAccessToken(APP_CLIENT_ID, BSKY.data.userAccessToken);
 	HTML.htmlRenderHighlight();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
@@ -946,88 +945,6 @@ async function validateAccessToken() {
  * No need to declare them as "exported".
  * All of them are available thru the "window.BSKY" object.
  **********************************************************/
-/* --------------------------------------------------------
- * LOGIN PROCESS.
- *
- * Function to finish "login page".
- * -------------------------------------------------------- */
-function fnAnalizeCallbackURL() {
-	const STEP_NAME						= "fnAnalizeCallbackURL";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Show and hide panels
-	COMMON.hide( "panel-error" );
-
-	// Restore data from localStorage.
-	restoreDataFromLocalStorage();
-
-	// Retrieve URL information
-	let thisURL							= new URL(window.location);
-
-	// Retrieve data from the url
-	let parsedSearch					= new URLSearchParams(thisURL.search);
-
-	// Update data from the url
-	BSKY.auth.callbackData				= HTML.updateHTMLFields( parsedSearch );
-	if (DEBUG) console.debug( PREFIX + "callbackData:", BSKY.auth.callbackData );
-
-	/*
-	if (!COMMON.areEquals(thisURL.hostname, "localhost")) {
-		// Redirigimos a "localhost", que es donde tenemos los datos en el "localStorage".
-		if (DEBUG) console.debug(PREFIX + "Processing the request. Redirecting to localhost]...");
-
-		// Read timeout from configuration
-		let seconds						= CLIENT_APP.redirect_delay;
-		let $seconds					= $( "#redirectSeconds" )[0];
-		$( "#redirectSeconds" ).html( seconds );
-		if (DEBUG) console.debug(PREFIX + `The timeout is about ${seconds} second(s)...`);
-
-		// Modify the URL...
-		if (DEBUG) console.debug(PREFIX + "Processing the URL:", thisURL.toString());
-		thisURL.protocol				= CLIENT_APP.protocol;
-		thisURL.hostname				= CLIENT_APP.hostname;
-		thisURL.pathname				= CLIENT_APP.pathname;
-		if (DEBUG) console.debug(PREFIX + "+ REDIRECT:", thisURL.toString());
-
-		// Let's change the "action" of the link...
-		let $link						= $( "div#redirectPanel a" );
-		$link.attr("href", thisURL.href)
-
-		// Hack: If the URL has been "typed"...
-		let stop						= parsedSearch.get("stop");
-		if ( COMMON.isNullOrEmpty(stop) ) {
-			if (GROUP_DEBUG) console.groupEnd();
-			setTimeout(() => { window.location = thisURL.href; }, seconds * 1000 );
-		} else {
-			if (DEBUG) console.warn(PREFIX + "Received a 'STOP' signal. Avoiding redirection.");
-			if (GROUP_DEBUG) console.groupEnd();
-		}
-	} else {
-	*/
-
-		// Redirigimos a "localhost", que es donde tenemos los datos en el "localStorage".
-		if (DEBUG) console.debug(PREFIX + "Redirecting to", CLIENT_APP.dashboard);
-
-		// Cogemos los datos de la URL y nos los guardamos para redirigir a una página limpia y procesarlos ahí.
-		// Guardamos toda la info y redirigimos a una "página (URL) limpia"
-		if (DEBUG) console.debug( PREFIX + "Saving data in localStorage..." );
-		saveRuntimeDataInLocalStorage();
-
-		// Modify the URL...
-		if (DEBUG) console.debug(PREFIX + "Processing the URL:", thisURL.toString());
-		thisURL.pathname				= CLIENT_APP.dashboard;
-		thisURL.search					= '';
-		if (DEBUG) console.debug(PREFIX + "+ REDIRECT:", thisURL.toString());
-
-		if (GROUP_DEBUG) console.groupEnd();
-		window.location					= thisURL.toString();
-	/*
-	}
-	*/
-}
-
-
 /* --------------------------------------------------------
  * LOGGED-IN PROCESS.
  *

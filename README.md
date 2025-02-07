@@ -26,7 +26,7 @@ Once downloaded, you need an Apache Server instance to run it, and configure it 
 Here, We will use a "**`Location`**" directive, but can be configure using a "*Virtual Host*" either. No differences.
 
 ```apacheconf
-Alias /neocities "[path_to_your_local_folder]"
+Alias /bluesky "[path_to_your_local_folder]"
 <Directory "[path_to_your_local_folder]">
 	AllowOverride None
 	Require all granted

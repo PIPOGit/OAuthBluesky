@@ -11,7 +11,8 @@
 		"code"
 	],
 	"redirect_uris": [
-		"https://oauthbluesky.onrender.com/oauth/callback.html"
+		"https://oauthbluesky.onrender.com/oauth/callback.html",
+		"https://oauthbluesky.onrender.com/oauth/callback.localhost.html"
 	],
 	"dpop_bound_access_tokens": true,
 	"token_endpoint_auth_method": "none",

@@ -212,7 +212,7 @@ export async function retrieveUserAccessToken(code) {
 		// Variable values
 		'code': code,
 		'code_verifier': BSKY.auth.codeVerifier,
-		// Neocities values
+		// ClientAPP values
 		'client_id': APP_CLIENT_ID,
 		'redirect_uri': APP_CALLBACK_URL
 	});
@@ -277,7 +277,7 @@ export async function refreshAccessToken() {
 	let body							= new URLSearchParams({
 		// Fixed values
 		'grant_type': 'refresh_token',
-		// Neocities values
+		// ClientAPP values
 		'client_id': APP_CLIENT_ID,
 		'redirect_uri': APP_CALLBACK_URL,
 		// Variable values

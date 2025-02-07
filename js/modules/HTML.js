@@ -50,6 +50,7 @@ const DIV_PANEL_INFO_STEP				= `${DIV_PANEL_INFO}-step`;
 // HTML jQuery DIVs/Placeholders constants
 const DIV_JQ_ERROR						= "#error";
 const DIV_JQ_ERROR_DESCRIPTION			= "#errorDescription";
+const DIV_JQ_CLIENTID					= "#clientId";
 const DIV_JQ_ISS						= "#iss";
 const DIV_JQ_STATE						= "#state";
 const DIV_JQ_CODE						= "#code";
@@ -395,7 +396,8 @@ export function updateHTMLFields(parsedSearch) {
 	return response;
 }
 
-export function updateUserAccessToken(userAccessToken) {
+export function updateUserAccessToken(clientId, userAccessToken) {
+	$( DIV_JQ_CLIENTID ).text( clientId );
 	$( DIV_JQ_ACCESS_TOKEN_JWT ).text( userAccessToken );
 	$( DIV_JQ_ACCESS_TOKEN_JSON ).text( JWT.jwtToPrettyJSON( userAccessToken ) );
 }
