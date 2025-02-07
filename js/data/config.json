@@ -7,7 +7,7 @@
 		"refresh_dashboard": 15
 	},
 	"localhost": {
-		"root": "http://localhost/neocities/index.html"
+		"root": "http://localhost/bluesky/index.html"
 	},
 	"bluesky": {
 		"token_expiration_threshold": 10
@@ -21,7 +21,9 @@
 	"clientApp": {
 		"client_id": "https://oauthbluesky.onrender.com/oauth/client-metadata.json",
 		"redirect_uri": "https://oauthbluesky.onrender.com/oauth/callback.html",
+		"localhost_redirect_uri": "http://localhost/bluesky/oauth/callback.html",
 		"dashboard": "https://oauthbluesky.onrender.com/dashboard.html",
+		"localhost_dashboard": "http://localhost/bluesky/dashboard.html",
 		"redirect_delay": 3
 	},
 	"localStorageKeys": {

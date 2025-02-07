@@ -829,7 +829,7 @@ function postProcessAccessToken() {
 	if (DEBUG) console.debug( PREFIX + "Rendering the access token fields and panel..." );
 
 	// Update HTML fields
-	HTML.updateUserAccessToken(BSKY.data.userAccessToken);
+	HTML.updateUserAccessToken(APP_CLIENT_ID, BSKY.data.userAccessToken);
 	HTML.htmlRenderHighlight();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
@@ -951,7 +951,7 @@ async function validateAccessToken() {
  *
  * Function to finish "login page".
  * -------------------------------------------------------- */
-function fnAnalizeCallbackURL() {
+function fnAnalizeCallbackURL(toLocalhost=false) {
 	const STEP_NAME						= "fnAnalizeCallbackURL";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
@@ -972,59 +972,20 @@ function fnAnalizeCallbackURL() {
 	BSKY.auth.callbackData				= HTML.updateHTMLFields( parsedSearch );
 	if (DEBUG) console.debug( PREFIX + "callbackData:", BSKY.auth.callbackData );
 
-	/*
-	if (!COMMON.areEquals(thisURL.hostname, "localhost")) {
-		// Redirigimos a "localhost", que es donde tenemos los datos en el "localStorage".
-		if (DEBUG) console.debug(PREFIX + "Processing the request. Redirecting to localhost]...");
+	// Guardamos toda la info y redirigimos a una "página (URL) limpia"
+	if (DEBUG) console.debug( PREFIX + "Saving data in localStorage..." );
+	saveRuntimeDataInLocalStorage();
 
-		// Read timeout from configuration
-		let seconds						= CLIENT_APP.redirect_delay;
-		let $seconds					= $( "#redirectSeconds" )[0];
-		$( "#redirectSeconds" ).html( seconds );
-		if (DEBUG) console.debug(PREFIX + `The timeout is about ${seconds} second(s)...`);
-
-		// Modify the URL...
-		if (DEBUG) console.debug(PREFIX + "Processing the URL:", thisURL.toString());
-		thisURL.protocol				= CLIENT_APP.protocol;
-		thisURL.hostname				= CLIENT_APP.hostname;
-		thisURL.pathname				= CLIENT_APP.pathname;
-		if (DEBUG) console.debug(PREFIX + "+ REDIRECT:", thisURL.toString());
-
-		// Let's change the "action" of the link...
-		let $link						= $( "div#redirectPanel a" );
-		$link.attr("href", thisURL.href)
-
-		// Hack: If the URL has been "typed"...
-		let stop						= parsedSearch.get("stop");
-		if ( COMMON.isNullOrEmpty(stop) ) {
-			if (GROUP_DEBUG) console.groupEnd();
-			setTimeout(() => { window.location = thisURL.href; }, seconds * 1000 );
-		} else {
-			if (DEBUG) console.warn(PREFIX + "Received a 'STOP' signal. Avoiding redirection.");
-			if (GROUP_DEBUG) console.groupEnd();
-		}
-	} else {
-	*/
-
-		// Redirigimos a "localhost", que es donde tenemos los datos en el "localStorage".
-		if (DEBUG) console.debug(PREFIX + "Redirecting to", CLIENT_APP.dashboard);
-
-		// Cogemos los datos de la URL y nos los guardamos para redirigir a una página limpia y procesarlos ahí.
-		// Guardamos toda la info y redirigimos a una "página (URL) limpia"
-		if (DEBUG) console.debug( PREFIX + "Saving data in localStorage..." );
-		saveRuntimeDataInLocalStorage();
-
-		// Modify the URL...
-		if (DEBUG) console.debug(PREFIX + "Processing the URL:", thisURL.toString());
-		thisURL.pathname				= CLIENT_APP.dashboard;
-		thisURL.search					= '';
-		if (DEBUG) console.debug(PREFIX + "+ REDIRECT:", thisURL.toString());
-
-		if (GROUP_DEBUG) console.groupEnd();
-		window.location					= thisURL.toString();
-	/*
+	// Redirigimos al "dashboard", que es donde tenemos los datos en el "localStorage".
+	// Miramos primero si a la página oficial o a la de desarrollo...
+	let redirectTo						= CLIENT_APP.dashboard;
+	if (toLocalhost) {
+		redirectTo						= CLIENT_APP.localhost_dashboard;
 	}
-	*/
+	if (DEBUG) console.debug(PREFIX + "Redirecting to", redirectTo);
+
+	if (GROUP_DEBUG) console.groupEnd();
+	window.location						= redirectTo;
 }
 
 

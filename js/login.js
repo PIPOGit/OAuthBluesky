@@ -47,12 +47,14 @@ const CONTENT_TYPE_FORM_ENCODED			= "application/x-www-form-urlencoded";
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
 const APP_CALLBACK_URL					= CLIENT_APP.redirect_uri;
+const APP_LOCALHOST_CALLBACK_URL		= CLIENT_APP.localhost_redirect_uri;
 
 
 /**********************************************************
  * Module Variables
  **********************************************************/
 let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
+let redirectURI							= APP_CALLBACK_URL;
 
 
 /**********************************************************
@@ -106,6 +108,15 @@ async function startUp() {
 
 	// Check whether we come from LOGOUT.
 	let comeFromLogout					= checkIfComesFromLogout();
+	if (DEBUG) console.debug( PREFIX + "comeFromLogout:", comeFromLogout );
+
+	// Check whether we come from LOGOUT.
+	let isLocalhost						= checkIfWeAreInLocalhost();
+	if (DEBUG) console.debug( PREFIX + "isLocalhost:", isLocalhost );
+	if (isLocalhost) {
+		redirectURI						= APP_LOCALHOST_CALLBACK_URL;
+	}
+	if (DEBUG) console.debug( PREFIX + "redirectURI:", redirectURI );
 
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB(comeFromLogout);
@@ -242,7 +253,7 @@ async function step05PARRequest() {
 
     // Prepare the data to perform the call
     // ------------------------------------------
-	let preparedData					= await PKCE.prepareDataForPARRequest( BSKY.user.userHandle, APP_CLIENT_ID, APP_CALLBACK_URL );
+	let preparedData					= await PKCE.prepareDataForPARRequest( BSKY.user.userHandle, APP_CLIENT_ID, redirectURI );
 	if (DEBUG) console.debug( PREFIX + "Received prepared data:", preparedData );
 	BSKY.auth.state						= preparedData.state;
 	BSKY.auth.codeVerifier				= preparedData.codeVerifier;
@@ -316,6 +327,21 @@ function checkIfComesFromLogout() {
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 	return comeFromLogout;
+}
+
+function checkIfWeAreInLocalhost() {
+	const STEP_NAME						= "checkIfWeAreInLocalhost";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Set, in localStorage, we come from "LOGOUT"
+	let thisURL							= new URL(window.location);
+	let isLocalhost						= COMMON.areEquals(thisURL.host, "localhost");
+	if (DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return isLocalhost;
 }
 
 function saveRuntimeLoginDataInLocalStorage() {
