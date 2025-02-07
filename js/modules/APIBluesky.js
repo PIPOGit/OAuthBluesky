@@ -335,7 +335,7 @@ export async function retrieveUnreadNotifications(renderHTMLErrors=true) {
 	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}]` );
 
-	let endpoint						= API.bluesky.XRPC.api.getUnreadCount;
+	let endpoint						= API.bluesky.XRPC.api.pds.getUnreadCount;
  	if (DEBUG) console.debug( PREFIX + "Requesting if there are unread notifications... Invoking endpoint:", endpoint );
 
 	// The URL is protected, so... PDS Server
@@ -389,7 +389,7 @@ export async function retrieveNotifications(renderHTMLErrors=true) {
 	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}] [MAX ${MAX_NOTIS_TO_RETRIEVE} notifications to retrieve]` );
 
-	let endpoint						= API.bluesky.XRPC.api.listNotifications;
+	let endpoint						= API.bluesky.XRPC.api.pds.listNotifications;
  	if (DEBUG) console.debug( PREFIX + "Requesting the unread notifications... Invoking endpoint:", endpoint );
 
 	// The URL is protected, so... PDS Server
@@ -443,7 +443,7 @@ export async function retrieveUserProfile() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getProfile;
+	let endpoint						= API.bluesky.XRPC.api.public.getProfile;
  	if (DEBUG) console.debug( PREFIX + "Requesting the user's profile... Invoking endpoint:", endpoint );
 
 	// The URL is OPEN, so... Public Server
@@ -492,13 +492,68 @@ export async function retrieveUserFollows(cursor) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getFollows;
+	let endpoint						= API.bluesky.XRPC.api.public.getFollows;
  	if (DEBUG) console.debug( PREFIX + "Requesting who the user is following... Invoking endpoint:", endpoint );
 
 	// The URL is OPEN, so... Public Server
 	let root							= API.bluesky.XRPC.public;
 	let url								= root + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
+	url									+= "&limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+	if (DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let userData						= responseFromServer.body;
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return userData;
+}
+
+// Atomic function to retrieve who the user follows
+export async function retrieveRepoListRecords(cursor) {
+	const STEP_NAME						= "retrieveRepoListRecords";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.pds.listRecords;
+ 	if (DEBUG) console.debug( PREFIX + "Requesting who the user is following... Invoking endpoint:", endpoint );
+
+	// The URL is OPEN, so... Public Server
+	let root							= BSKY.auth.userPDSURL + "/xrpc";
+	let url								= root + endpoint;
+	url									+= "?repo=" + encodeURIComponent( BSKY.user.userDid );
+	url									+= "&collection=app.bsky.graph.follow";
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
@@ -546,7 +601,7 @@ export async function retrieveUserFollowers(cursor) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getFollowers;
+	let endpoint						= API.bluesky.XRPC.api.public.getFollowers;
  	if (DEBUG) console.debug( PREFIX + "Requesting who are the user's followers... Invoking endpoint:", endpoint );
 
 	// The URL is OPEN, so... Public Server
@@ -600,7 +655,7 @@ export async function retrieveUserBlocks(cursor) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getBlocks;
+	let endpoint						= API.bluesky.XRPC.api.pds.getBlocks;
  	if (DEBUG) console.debug( PREFIX + "Requesting who the user is blocking... Invoking endpoint:", endpoint );
 
 	// The URL is protected, so... PDS Server
@@ -653,7 +708,7 @@ export async function retrieveUserMutes(cursor) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getMutes;
+	let endpoint						= API.bluesky.XRPC.api.pds.getMutes;
  	if (DEBUG) console.debug( PREFIX + "Requesting who the user is muting... Invoking endpoint:", endpoint );
 
 	// The URL is protected, so... PDS Server
@@ -706,7 +761,7 @@ export async function retrieveUserLists(cursor) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getLists;
+	let endpoint						= API.bluesky.XRPC.api.pds.getLists;
  	if (DEBUG) console.debug( PREFIX + "Requesting the user's lists... Invoking endpoint:", endpoint );
 
 	// The URL is protected, so... PDS Server
@@ -760,7 +815,7 @@ export async function retrieveTrendingTopics(cursor) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL..
-	let endpoint						= API.bluesky.XRPC.api.getTrendingTopics;
+	let endpoint						= API.bluesky.XRPC.api.pds.getTrendingTopics;
  	if (DEBUG) console.debug( PREFIX + "Requesting the Bluesky Trending Topics... Invoking endpoint:", endpoint );
 
 	// The URL is protected, so... PDS Server

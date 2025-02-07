@@ -159,7 +159,7 @@ async function htmlRenderNotification( notification, userAccessToken, clientId, 
 		if (DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
 		
 		// TEST: Get post
-		let bluitUrl					= API.bluesky.XRPC.public + API.bluesky.XRPC.api.getPosts + "?uris=" + encodeURIComponent( notiURI );
+		let bluitUrl					= API.bluesky.XRPC.public + API.bluesky.XRPC.api.public.getPosts + "?uris=" + encodeURIComponent( notiURI );
 		let headers						= null;
 		let fetchOptions				= null;
 		let withAuthentication			= false;

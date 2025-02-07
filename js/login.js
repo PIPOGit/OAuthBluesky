@@ -139,7 +139,7 @@ async function step01RetrieveUserDID() {
 	// Info step
 	HTML.showStepInfo( STEP_NAME, `Retrieving did for ${BSKY.user.userHandle}...` );
 
-    let url								= API.bluesky.XRPC.url + API.bluesky.XRPC.api.resolveHandle + "?handle=" + BSKY.user.userHandle;
+    let url								= API.bluesky.XRPC.url + API.bluesky.XRPC.api.auth.resolveHandle + "?handle=" + BSKY.user.userHandle;
  	if (DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
 	if (DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );

@@ -60,8 +60,8 @@ html {
 .theme-info {
   font-size: smaller;
   border: var(--panel-border-size) solid var(--panel-border-color);
-  color: navy;
-  background-color: azure;
+  color: black;
+  background-color: skyblue;
 }
 
 

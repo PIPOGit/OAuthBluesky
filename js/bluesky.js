@@ -368,7 +368,7 @@ async function getWhoTheUserFollows() {
 		// ------------------------------------------
 		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserFollows", APIBluesky.retrieveUserFollows, cursor );
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
-		
+
 		// Datos. Seguimos?
 		cursor							= apiCallResponse.cursor;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
@@ -387,6 +387,65 @@ async function getWhoTheUserFollows() {
 
 	// Save it.
 	BSKY.user.following					= allData;
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserFollows( allData );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve who the user follows.
+ * -------------------------------------------------------- */
+async function getWhoTheUserFollowsFromTheRepo() {
+	const STEP_NAME						= "getWhoTheUserFollowsFromTheRepo";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows...` );
+
+	// Now, the user's follows.
+	if (DEBUG) console.debug( PREFIX + `Let's retrieve who the user follows...` );
+	let apiCallResponse					= null;
+	let cursor							= null;
+	let hayCursor						= false;
+	let data							= null;
+	let allData							= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's follows (in the repo) to show
+		// ------------------------------------------
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveRepoListRecords", APIBluesky.retrieveRepoListRecords, cursor );
+		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+
+		// Datos. Seguimos?
+		cursor							= apiCallResponse.cursor;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		data							= apiCallResponse.records;
+		subTotal						= data.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} following`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allData );
+	} while ( hayCursor && (n<20) );
+	if (GROUP_DEBUG) console.groupEnd();
+
+	if (DEBUG) console.debug( PREFIX + `Detected ${acumulado} following`, allData );
+
+	// Save it.
+	BSKY.user.following_repo			= allData;
 
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserFollows( allData );
@@ -1087,7 +1146,12 @@ async function fnDashboard() {
 		apiCallResponse					= await getTheUserNotifications();
 
 		// Retrieve who the user is following
+		// Sample: https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?actor=${user.handle}&limit=100
 		apiCallResponse					= await getWhoTheUserFollows();
+
+		// Retrieve who the user is following FROM THE PDS Repository
+		// Sample: ${user.pds.url}/xrpc/com.atproto.repo.listRecords?repo=${user.did}&collection=app.bsky.graph.follow&limit=100
+		apiCallResponse					= await getWhoTheUserFollowsFromTheRepo();
 
 		// Retrieve the user's followers
 		apiCallResponse					= await getTheUserFollowers();

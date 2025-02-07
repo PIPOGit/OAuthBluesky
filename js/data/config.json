@@ -53,22 +53,31 @@
 				"public": "https://public.api.bsky.app/xrpc",
 				"url": "https://bsky.social/xrpc",
 				"api": {
-					"describeRepo": "/com.atproto.repo.describeRepo",
-					"getAccountInfo": "/com.atproto.admin.getAccountInfo",
-					"getBlocks": "/app.bsky.graph.getBlocks",
-					"getFollowers": "/app.bsky.graph.getFollowers",
-					"getFollows": "/app.bsky.graph.getFollows",
-					"getKnownFollowers": "/app.bsky.graph.getKnownFollowers",
-					"getLists": "/app.bsky.graph.getLists",
-					"getMutes": "/app.bsky.graph.getMutes",
-					"getPosts": "/app.bsky.feed.getPosts",
-					"getProfile": "/app.bsky.actor.getProfile",
-					"getProfiles": "/app.bsky.actor.getProfiles",
-					"getRelationships": "/app.bsky.graph.getRelationships",
-					"getTrendingTopics": "/app.bsky.unspecced.getTrendingTopics",
-					"getUnreadCount": "/app.bsky.notification.getUnreadCount",
-					"listNotifications": "/app.bsky.notification.listNotifications",
-					"resolveHandle": "/com.atproto.identity.resolveHandle"
+					"auth": {
+						"resolveHandle": "/com.atproto.identity.resolveHandle"
+					},
+					"pds": {
+						"getBlocks": "/app.bsky.graph.getBlocks",
+						"getLists": "/app.bsky.graph.getLists",
+						"getMutes": "/app.bsky.graph.getMutes",
+						"getTrendingTopics": "/app.bsky.unspecced.getTrendingTopics",
+						"getUnreadCount": "/app.bsky.notification.getUnreadCount",
+						"listNotifications": "/app.bsky.notification.listNotifications",
+						"listRecords": "/com.atproto.repo.listRecords"
+					},
+					"public": {
+						"getFollowers": "/app.bsky.graph.getFollowers",
+						"getFollows": "/app.bsky.graph.getFollows",
+						"getPosts": "/app.bsky.feed.getPosts",
+						"getProfile": "/app.bsky.actor.getProfile"
+					},
+					"unused": {
+						"describeRepo": "/com.atproto.repo.describeRepo",
+						"getAccountInfo": "/com.atproto.admin.getAccountInfo",
+						"getKnownFollowers": "/app.bsky.graph.getKnownFollowers",
+						"getProfiles": "/app.bsky.actor.getProfiles",
+						"getRelationships": "/app.bsky.graph.getRelationships"
+					}
 				}
 			},
 			"plc": {
