@@ -20,8 +20,6 @@ import * as TYPES						from "./modules/common.types.js";
 import * as APIBluesky					from "./modules/APIBluesky.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/BrowserDB.js";
-// Common GEO functions
-import * as GEO							from "./modules/GEO.js";
 // Common HTML functions
 import * as HTML						from "./modules/HTML.js";
 // Common OAuth2 functions

@@ -18,6 +18,8 @@ import * as COMMON						from "./modules/common.functions.js";
 import * as APICall						from "./modules/APICall.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/BrowserDB.js";
+// Common GEO functions
+import * as GEO							from "./modules/GEO.js";
 // Common Crypto functions
 import * as Crypto						from "./modules/OAuth2/Crypto.js";
 

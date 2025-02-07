@@ -233,7 +233,7 @@ function fnAnalizeCallback(toLocalhost=false) {
 
 			// Prepare the object.
 			let callbackData			= new TYPES.CallbackData( iss, state, code, dpopNonce );
-			if (DEBUG) console.debug( PREFIX + "callbackData:", callbackData );
+			if (DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
 
 			// Save the data in the localStorage.
 			localStorage.setItem(LSKEYS.CALLBACK_DATA, JSON.stringify( callbackData ));
