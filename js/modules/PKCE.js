@@ -78,7 +78,12 @@ export async function prepareDataForPARRequest( userHandle, clientId, callbackUr
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-    // The state & code verifier
+	if (DEBUG) console.debug( PREFIX + "Received data:" );
+	if (DEBUG) console.debug( PREFIX + "+ userHandle.:", userHandle );
+	if (DEBUG) console.debug( PREFIX + "+ clientId...:", clientId );
+	if (DEBUG) console.debug( PREFIX + "+ callbackUrl:", callbackUrl );
+
+	// The state & code verifier
     // ------------------------------------------
     let state							= UUID.generateRandomState();
     let codeVerifier					= UUID.generateRandomCodeVerifier();

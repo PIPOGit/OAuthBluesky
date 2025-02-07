@@ -199,7 +199,7 @@ function fnAnalizeCallback(toLocalhost=false) {
 		if (DEBUG) console.debug( PREFIX + "callbackData:", callbackData );
 
 		// Save the data in the localStorage.
-		localStorage.setItem(LSKEYS.CALLBACK_DATA, callbackData);
+		localStorage.setItem(LSKEYS.CALLBACK_DATA, JSON.stringify( callbackData ));
 		if (DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
 
 		redirectURI					= APP_LOCALHOST_DASHBOARD_URL;
@@ -236,7 +236,7 @@ function fnAnalizeCallback(toLocalhost=false) {
 			if (DEBUG) console.debug( PREFIX + "callbackData:", callbackData );
 
 			// Save the data in the localStorage.
-			localStorage.setItem(LSKEYS.CALLBACK_DATA, callbackData);
+			localStorage.setItem(LSKEYS.CALLBACK_DATA, JSON.stringify( callbackData ));
 			if (DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
 		}
 
