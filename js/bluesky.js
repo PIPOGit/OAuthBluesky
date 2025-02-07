@@ -100,7 +100,7 @@ async function startUp() {
 	if (DEBUG) console.debug( PREFIX + "Configuration:", CONFIGURATION );
 	if (DEBUG) console.debug( PREFIX + "DEBUG:", DEBUG, "DEBUG_FOLDED:", DEBUG_FOLDED, "GROUP_DEBUG:", GROUP_DEBUG );
 
-	if (DEBUG) console.debug( PREFIX + "NEOCITIES:", NEOCITIES );
+	if (DEBUG) console.debug( PREFIX + "CLIENT_APP:", CLIENT_APP );
 
 	if (DEBUG) console.debug( PREFIX + "PERMISSION: Notification.permission:", Notification.permission );
 	if (DEBUG) console.debug( PREFIX + "PERMISSION: navigator.geolocation:", navigator.geolocation );
@@ -151,6 +151,7 @@ async function startUp() {
 
 	// El reloj
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
+	if (DEBUG) console.debug( PREFIX + "Clock started" );
 
 	// Geolocation Information
 	let geolocationInfo					= await GEO.getGeolocationInformation();
