@@ -37,6 +37,8 @@ const DEBUG								= CONFIGURATION.global.debug;
 const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
+const LSKEYS							= CONFIGURATION.localStorageKeys;
+const CLIENT_APP						= CONFIGURATION.clientApp;
 
 
 /**********************************************************
