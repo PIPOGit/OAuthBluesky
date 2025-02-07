@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>CALLBACK | The web site of madrilenyer</title>
+
+		<!-- Meta Bootstrap -->
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<!-- Favicon & Inner Stylesheet. -->
+		<link rel="icon" type="image/x-icon" href="../images/madrilenyer.png">
+
+		<!-- ========================================================== -->
+		<!--     CSS Section                                            -->
+		<!-- ========================================================== -->
+
+		<!-- CSS Inner -->
+		<link rel="stylesheet" type="text/css" href="../style/bsky.css" media="all">
+
+		<!-- CSS highlight.js -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/pop.css">
+
+		<!-- CSS Bootstrap -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+		<!-- ========================================================== -->
+		<!--     Javascript Section                                     -->
+		<!-- ========================================================== -->
+
+		<!-- JS Bootstrap -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+		<!-- JS jQuery -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+		<!-- JS highlight.js -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+		<!-- JS Internal -->
+		<script type="module" src="../js/bluesky.js"></script>
+	</head>
+	<body onLoad="BSKY.analizeCallbackURL(true);">
+
+		<!-- El panel central -->
+		<div id="root-container" name="root-container" class="container mt-6 p-4 theme-root hidden">
+
+			<!-- La distribución -->
+			<div class="row">
+
+				<!-- El panel informativo de la izquierda -->
+				<div id="callbackPanel" name="callbackPanel" class="col-8">
+
+					<!-- El título -->
+					<div class="row align-items-center">
+						<div class="col align-self-start">
+							<h1>Bluesky OAuth2 Callback:</h1>
+						</div>
+					</div>
+
+					<!-- La entradilla -->
+					<div class="col-12">
+						<h4>Información recibida:</h4>
+					</div>
+
+					<!-- El formulario de acceso -->
+					<form id="userHandleForm" name="userHandleForm" class="row align-items-center theme-callback">
+
+						<div class="row">
+							<label for="iss" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">ISS:</label>
+							<div class="col-sm-10">
+								<input type="email" class="form-control-plaintext form-control-sm" id="iss" name="iss" placeholder="Received iss" readonly>
+							</div>
+						</div>
+
+						<div class="row">
+							<label for="state" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">State:</label>
+							<div class="col-sm-10">
+								<input type="email" class="form-control-plaintext form-control-sm" id="state" name="state" placeholder="Received state" readonly>
+							</div>
+						</div>
+
+						<div class="row">
+							<label for="code" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">Code:</label>
+							<div class="col-sm-10">
+								<input type="email" class="form-control-plaintext form-control-sm" id="code" name="code" placeholder="Received code" readonly>
+							</div>
+						</div>
+
+						<div class="row">
+							<label for="dpopNonce" class="col-sm-2 col-form-label col-form-label-sm fw-semibold text-end">DPoP Nonce:</label>
+							<div class="col-sm-10">
+								<input type="email" class="form-control-plaintext form-control-sm" id="dpopNonce" name="dpopNonce" placeholder="Received dpop-nonce" readonly>
+							</div>
+						</div>
+					</form>
+				</div>
+
+				<!-- El panel del perfil y de la sesión de la derecha -->
+				<div id="userPanel" name="userPanel" class="container-fluid col-4">
+
+					<!-- El timeout de caducidad del token y la fecha/hora. -->
+					<div class="row g-0 m-0 p-0">
+
+						<!-- El timeout de caducidad del token. -->
+						<div class="col-4">
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">Timeout:</span>
+								<input id="currentTokenTimeout" name="currentTokenTimeout" type="text" aria-label="Current Token Timeout" class="form-control" readonly>
+							</div>
+						</div>
+
+						<!-- La fecha y hora. -->
+						<div class="col-8 d-flex flex-nowrap">
+							<div class="input-group input-group-sm">
+								<span class="input-group-text">Date/time:</span>
+								<input id="currentDateTime" name="currentDateTime" type="text" aria-label="Current Date & Time" class="form-control" readonly>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- El panel de información -->
+		<div id="panel-info" name="panel-info" class="container p-1 px-2 center align-items-start theme-info hidden">
+			<span id="panel-info-step" name="panel-info-step" class="" placeholder="Paso" aria-label="Paso">Paso:</span>
+		</div>
+
+		<!-- El panel de errores -->
+		<div id="panel-error" name="panel-error" class="container p-2 center theme-error hidden">
+			<div class="col-12 input-group input-group-sm">
+				<!-- Título. -->
+				<span id="errorLabel" name="errorLabel" class="input-group-text">Error:</span>
+				<!-- Código de error. -->
+				<span id="error" name="error" class="input-group-text" placeholder="Error" aria-label="Error">Error:</span>
+				<!-- Mensaje de error. -->
+				<input type="text" id="errorDescription" name="errorDescription" class="form-control" placeholder="Error Description" aria-label="Error Description">
+			</div>
+		</div>
+
+	</body>
+</html>

@@ -20,14 +20,12 @@
 	},
 	"clientApp": {
 		"client_id": "https://oauthbluesky.onrender.com/oauth/client-metadata.json",
-
 		"redirect_uri": "https://oauthbluesky.onrender.com/oauth/callback.html",
+		"localhost_redirect_uri": "http://localhost/bluesky/oauth/callback.html",
 		"dashboard": "https://oauthbluesky.onrender.com/dashboard.html",
-
 		"redirect_to_localhost": "https://oauthbluesky.onrender.com/oauth/callback.localhost.html",
 		"callback_to_localhost": "http://localhost/bluesky/oauth/callback.localhost.html",
 		"dashboard_localhost": "http://localhost/bluesky/dashboard.html",
-
 		"redirect_delay": 3
 	},
 	"localStorageKeys": {
