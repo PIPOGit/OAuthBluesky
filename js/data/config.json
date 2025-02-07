@@ -32,6 +32,7 @@
 		"BSKYDATA": "BSKYDATA",
 		"CALLBACK_DATA": "CALLBACK_DATA",
 		"LOGOUT": "LOGOUT",
+		"ROOT_URL": "ROOT_URL",
 		"crypto": {
 			"jwk": "jwk"
 		},

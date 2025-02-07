@@ -152,15 +152,6 @@ async function startUp() {
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
 	if (DEBUG) console.debug( PREFIX + "Clock started" );
 
-	/*
-	// Geolocation Information
-	let geolocationInfo					= await GEO.getGeolocationInformation();
-	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
-
-	// Save the info
-	BSKY.user.geolocation				= geolocationInfo;
-	*/
-
 	// La configuración de HighlightJS
 	hljs.configure({
 		ignoreUnescapedHTML: true
@@ -225,7 +216,7 @@ function restoreDataFromLocalStorage() {
 	let dataInLocalStorage				= localStorage.getItem(LSKEYS.BSKYDATA);
 
 	let saved = JSON.parse( dataInLocalStorage ) || {};
-	if (DEBUG) console.debug(PREFIX + "Gathered data from localStorage, from test:", saved);
+	if (DEBUG) console.debug(PREFIX + "Gathered data from localStorage["+LSKEYS.BSKYDATA+"]:", saved);
 	// Bluesky Variables
 	BSKY.user.userHandle				= saved.userHandle;
 	BSKY.user.userDid					= saved.userDid;
@@ -877,6 +868,18 @@ async function validateAccessToken() {
 
 		// Retrieve the "code"...
 		if (DEBUG) console.debug( PREFIX + "Let's see if we have a code to retrieve the userAccessToken." );
+		
+		// Let's see if there is something in the localStorage...
+		let lsCallbackData				= localStorage.getItem(LSKEYS.CALLBACK_DATA) || null;
+		if (COMMON.isNullOrEmpty(lsCallbackData)) {
+			if (DEBUG) console.debug( PREFIX + "Nothing in the localStorage." );
+		} else {
+			if (DEBUG) console.debug( PREFIX + "Something in the localStorage." );
+			let BSKY.auth.callbackData	= JSON.parse( lsCallbackData );
+			if (DEBUG) console.debug( PREFIX_AFTER + "Detected:", COMMON.prettyJson( BSKY.auth.callbackData ) );
+		}
+		localStorage.removeItem(LSKEYS.CALLBACK_DATA);
+
 		if (DEBUG) console.debug( PREFIX + "Current code:", BSKY.auth.callbackData.code );
 
 		if (COMMON.isNullOrEmpty(BSKY.auth.callbackData.code)) {
@@ -1014,6 +1017,7 @@ async function fnLogout() {
 	if ( header.ok && header.status == 204 ) {
 		// Remove things from localStorage
 		localStorage.removeItem(LSKEYS.BSKYDATA);
+		localStorage.removeItem(LSKEYS.ROOT_URL);
 		localStorage.removeItem(LSKEYS.user.profile);
 
 		// Set, in localStorage, we come from "LOGOUT"
@@ -1022,9 +1026,10 @@ async function fnLogout() {
 		// Remove the crypto key from the database and the database itself.
 		await DB.deleteDatabase();
 
+		if (DEBUG) console.debug( PREFIX + "Redirecting to:", BSKY.auth.root );
 		if (DEBUG) console.debug( PREFIX + "-- END" );
 		if (GROUP_DEBUG) console.groupEnd();
-		window.location					= CONFIGURATION.localhost.root;
+		window.location					= BSKY.auth.root;
 	} else {
 		if (DEBUG) console.warn( PREFIX + "ERROR!" );
 		if (DEBUG) console.debug( PREFIX + "-- END" );

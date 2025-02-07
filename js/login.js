@@ -336,10 +336,13 @@ function checkIfWeAreInLocalhost() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	// Set, in localStorage, we come from "LOGOUT"
+	// Set, in localStorage, where we are.
 	let thisURL							= new URL(window.location);
 	let isLocalhost						= COMMON.areEquals(thisURL.host, "localhost");
 	if (DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
+
+	// The "context".
+	localStorage.setItem(LSKEYS.ROOT_URL, window.location);
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();

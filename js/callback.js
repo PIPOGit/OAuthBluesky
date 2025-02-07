@@ -243,23 +243,7 @@ function fnAnalizeCallback(toLocalhost=false) {
 	}
 	if (DEBUG) console.debug(PREFIX + "Redirecting to", redirectURI);
 
-	/*
-	// Guardamos toda la info y redirigimos a una "página (URL) limpia"
-	if (DEBUG) console.debug( PREFIX + "Saving data in localStorage..." );
-	saveRuntimeDataInLocalStorage();
-
-	// Redirigimos al "dashboard", que es donde tenemos los datos en el "localStorage".
-	// Miramos primero si a la página oficial o a la de desarrollo...
-	if (toLocalhost) {
-		redirectTo						= new URL(CLIENT_APP.callback_to_localhost);
-		redirectTo.search				= thisURL.search;
-	}
-	if (DEBUG) console.debug(PREFIX + "Redirecting to", redirectTo);
-	*/
-
 	if (GROUP_DEBUG) console.groupEnd();
 	window.location						= redirectURI;
 }
-
-
 

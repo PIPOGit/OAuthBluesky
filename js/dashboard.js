@@ -96,6 +96,16 @@ async function startUp() {
 	const refreshTime					= refreshSeconds * 1000;
 	if (DEBUG) console.debug( PREFIX_INNER + `Refreshing data every ${refreshSeconds} second(s)` );
 
+	// Geolocation Information
+	let geolocationInfo					= await GEO.getGeolocationInformation();
+	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
+
+	// Save the info
+	BSKY.user.geolocation				= geolocationInfo;
+
+	// The "context".
+	BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);
+
 	if (DEBUG) console.groupEnd();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
