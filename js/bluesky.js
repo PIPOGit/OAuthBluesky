@@ -875,7 +875,7 @@ async function validateAccessToken() {
 			if (DEBUG) console.debug( PREFIX + "Nothing in the localStorage." );
 		} else {
 			if (DEBUG) console.debug( PREFIX + "Something in the localStorage." );
-			let BSKY.auth.callbackData	= JSON.parse( lsCallbackData );
+			BSKY.auth.callbackData		= JSON.parse( lsCallbackData );
 			if (DEBUG) console.debug( PREFIX_AFTER + "Detected:", COMMON.prettyJson( BSKY.auth.callbackData ) );
 		}
 		localStorage.removeItem(LSKEYS.CALLBACK_DATA);
