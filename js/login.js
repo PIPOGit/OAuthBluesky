@@ -253,6 +253,9 @@ async function step05PARRequest() {
 	// Info step
 	HTML.showStepInfo( STEP_NAME, `Requesting PAR authorization...` );
 
+	// The "context".
+	localStorage.setItem(LSKEYS.CALLBACK_URL, redirectURI);
+
     // Prepare the data to perform the call
     // ------------------------------------------
 	let preparedData					= await PKCE.prepareDataForPARRequest( BSKY.user.userHandle, APP_CLIENT_ID, redirectURI );
@@ -325,6 +328,7 @@ function checkIfComesFromLogout() {
 	comeFromLogout						= ( COMMON.isNullOrEmpty(comeFromLogout) ) ? false : comeFromLogout;
 	if (DEBUG) console.debug( PREFIX + `Are we redirected from LOGOUT:`, comeFromLogout );
 	localStorage.removeItem(LSKEYS.LOGOUT);
+	if (DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.LOGOUT );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();

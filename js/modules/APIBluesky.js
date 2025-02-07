@@ -51,7 +51,6 @@ const CONTENT_TYPE_FORM_ENCODED			= "application/x-www-form-urlencoded";
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
-const APP_CALLBACK_URL					= CLIENT_APP.redirect_uri;
 const MAX_NOTIS_TO_RETRIEVE				= 50;
 
 
@@ -80,7 +79,7 @@ let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
  * This module performs a "try-and-catch" call for a given
  * function.
  * -------------------------------------------------------- */
-export async function tryAndCatch( currentStep, callbackFunction, callbackOptions ) {
+export async function tryAndCatch( currentStep, callbackFunction, callbackOptions=null ) {
 	const STEP_NAME						= "tryAndCatch";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
@@ -185,10 +184,16 @@ export async function performUserLogout() {
 }
 
 // Atomic function to retrieve the user access token
-export async function retrieveUserAccessToken(code) {
+export async function retrieveUserAccessToken() {
 	const STEP_NAME						= "retrieveUserAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [code=="+code+"]" );
+	
+	let code							= BSKY.auth.callbackData.code;
+	let redirectURL						= BSKY.auth.redirectURL;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[redirectURL=="+redirectURL+"] [code=="+code+"]" );
+ 	if (DEBUG) console.debug( PREFIX + "Received data:" );
+ 	if (DEBUG) console.debug( PREFIX + "+ code:", code );
+ 	if (DEBUG) console.debug( PREFIX + "+ redirectURL:", redirectURL );
 
 	// Prepare the URL..
     let url								= BSKY.auth.userTokenEndPoint;
@@ -214,7 +219,7 @@ export async function retrieveUserAccessToken(code) {
 		'code_verifier': BSKY.auth.codeVerifier,
 		// ClientAPP values
 		'client_id': APP_CLIENT_ID,
-		'redirect_uri': APP_CALLBACK_URL
+		'redirect_uri': redirectURL
 	});
 	if (DEBUG) console.debug(PREFIX + "Generated [body]:", COMMON.prettyJson( Object.fromEntries( body ) ));
 
@@ -257,8 +262,10 @@ export async function refreshAccessToken() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+BSKY.user.userHandle+"]" );
 
  	if (DEBUG) console.debug( PREFIX + `Refreshing the access token...` );
+	let redirectURL						= BSKY.auth.redirectURL;
 
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH );
+	if (DEBUG) console.debug( PREFIX + "Current redirectURL:", redirectURL );
 	if (DEBUG) console.debug( PREFIX + "Current userRefreshToken:", BSKY.data.userRefreshToken );
 	if (DEBUG) console.debug( PREFIX + "Current userAuthentication:", BSKY.data.userAuthentication );
 	if (DEBUG) console.debug( PREFIX + "Current userAccessToken:", JWT.jwtToPrettyJSON( BSKY.data.userAccessToken ) );
@@ -279,7 +286,7 @@ export async function refreshAccessToken() {
 		'grant_type': 'refresh_token',
 		// ClientAPP values
 		'client_id': APP_CLIENT_ID,
-		'redirect_uri': APP_CALLBACK_URL,
+		'redirect_uri': redirectURL,
 		// Variable values
 		'refresh_token': BSKY.data.userRefreshToken
 	});

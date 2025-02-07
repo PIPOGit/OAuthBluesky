@@ -397,7 +397,7 @@ export function updateHTMLFields(parsedSearch) {
 }
 
 export function updateUserAccessToken(clientId, userAccessToken) {
-	$( DIV_JQ_CLIENTID ).text( clientId );
+	$( DIV_JQ_CLIENTID ).val( clientId );
 	$( DIV_JQ_ACCESS_TOKEN_JWT ).text( userAccessToken );
 	$( DIV_JQ_ACCESS_TOKEN_JSON ).text( JWT.jwtToPrettyJSON( userAccessToken ) );
 }

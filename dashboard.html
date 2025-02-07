@@ -203,8 +203,10 @@
 					<!-- El formulario con los datos de acceso -->
 					<form id="userHandleForm" name="userHandleForm" class="row align-items-center theme-callback mb-2">
 
-						<div class="row d-grid justify-content-start">
+						<div class="d-flex justify-content-start">
 							<button id="button-refresh-token" name="button-refresh-token" class="btn btn-sm btn-success mx-3 my-1" type="button" onClick="BSKY.refreshAccessToken()">Refresh</button>
+							<a id="button-client-id"     name="button-client-id"     class="btn btn-sm btn-outline-success mx-3 my-1" target="client-id" title="Client ID Metatada" href="javascript:void(0); return false;">Client ID Metatada</a>
+							<a id="button-did-document"  name="button-did-document"  class="btn btn-sm btn-outline-success mx-3 my-1" target="did-document" title="User DID Document" href="javascript:void(0); return false;">User DID Document</a>
 						</div>
 
 						<div class="row">

@@ -1,10 +1,10 @@
 {
 	"global": {
 		"debug": true,
-		"debug_folded": false,
+		"debug_folded": true,
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.0.0",
-		"refresh_dashboard": 15
+		"refresh_dashboard": 30
 	},
 	"localhost": {
 		"root": "http://localhost/bluesky/index.html"
@@ -31,6 +31,7 @@
 	"localStorageKeys": {
 		"BSKYDATA": "BSKYDATA",
 		"CALLBACK_DATA": "CALLBACK_DATA",
+		"CALLBACK_URL": "CALLBACK_URL",
 		"LOGOUT": "LOGOUT",
 		"ROOT_URL": "ROOT_URL",
 		"crypto": {

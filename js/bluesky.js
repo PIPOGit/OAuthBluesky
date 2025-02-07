@@ -55,6 +55,7 @@ const APP_CLIENT_ID						= CLIENT_APP.client_id;
  * Module Variables
  **********************************************************/
 let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
+let timerId								= 0;
 window.BSKY								= window.BSKY || {};
 window.BSKY.data						= {};
 window.BSKY.user						= {};
@@ -867,8 +868,9 @@ async function validateAccessToken() {
 		// Retrieve the "code"...
 		if (DEBUG) console.debug( PREFIX + "Let's see if we have a code to retrieve the userAccessToken." );
 		
+		let lsCallbackData				= null;
 		// Let's see if there is something in the localStorage...
-		let lsCallbackData				= localStorage.getItem(LSKEYS.CALLBACK_DATA) || null;
+		lsCallbackData					= localStorage.getItem(LSKEYS.CALLBACK_DATA) || null;
 		if (COMMON.isNullOrEmpty(lsCallbackData)) {
 			if (DEBUG) console.debug( PREFIX + "Nothing in the localStorage." );
 		} else {
@@ -876,7 +878,15 @@ async function validateAccessToken() {
 			BSKY.auth.callbackData		= JSON.parse( lsCallbackData );
 			if (DEBUG) console.debug( PREFIX_AFTER + "Detected:", COMMON.prettyJson( BSKY.auth.callbackData ) );
 		}
-		localStorage.removeItem(LSKEYS.CALLBACK_DATA);
+
+		lsCallbackData					= localStorage.getItem(LSKEYS.CALLBACK_URL) || null;
+		if (COMMON.isNullOrEmpty(lsCallbackData)) {
+			if (DEBUG) console.debug( PREFIX + "Nothing in the localStorage." );
+		} else {
+			if (DEBUG) console.debug( PREFIX + "Something in the localStorage." );
+			BSKY.auth.redirectURL		= lsCallbackData;
+			if (DEBUG) console.debug( PREFIX_AFTER + "Detected:", BSKY.auth.redirectURL );
+		}
 
 		if (DEBUG) console.debug( PREFIX + "Current code:", BSKY.auth.callbackData.code );
 
@@ -888,7 +898,7 @@ async function validateAccessToken() {
 			// YES. Let's retrieve the token
 
 			// With the "code", let's retrieve the user access_token from the server.
-			apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserAccessToken", APIBluesky.retrieveUserAccessToken, BSKY.auth.callbackData.code );
+			apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserAccessToken", APIBluesky.retrieveUserAccessToken );
 			if (DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
 
 			// Let's group log messages
@@ -1015,8 +1025,15 @@ async function fnLogout() {
 	if ( header.ok && header.status == 204 ) {
 		// Remove things from localStorage
 		localStorage.removeItem(LSKEYS.BSKYDATA);
+		if (DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.BSKYDATA );
 		localStorage.removeItem(LSKEYS.ROOT_URL);
+		if (DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.ROOT_URL );
 		localStorage.removeItem(LSKEYS.user.profile);
+		if (DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.user.profile );
+		localStorage.removeItem(LSKEYS.CALLBACK_DATA);
+		if (DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.CALLBACK_DATA );
+		localStorage.removeItem(LSKEYS.CALLBACK_URL);
+		if (DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.CALLBACK_URL );
 
 		// Set, in localStorage, we come from "LOGOUT"
 		localStorage.setItem(LSKEYS.LOGOUT, true);
@@ -1053,6 +1070,33 @@ async function fnDashboard() {
 
 	// Restore data from localStorage.
 	restoreDataFromLocalStorage();
+
+	// Los botones del userDid y el clientId Metadata
+	let $linkClientID					= $( "#button-client-id" );
+	let $linkDIDDocument				= $( "#button-did-document" );
+	$linkClientID.attr("href",  APP_CLIENT_ID);
+	$linkDIDDocument.attr("href",  "https://web.plc.directory/did/" + BSKY.user.userDid);
+
+	// Update the page.
+	await updateDashboard();
+
+	// + Call every "refreshTime" seconds.
+	const refreshSeconds				= CONFIGURATION.global.refresh_dashboard;
+	const refreshTime					= refreshSeconds * 1000;
+	if (DEBUG) console.debug( PREFIX + `Refreshing dashboard every ${refreshSeconds} second(s)` );
+	timerId								= setInterval(() => updateDashboard(), refreshTime);
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+async function updateDashboard() {
+	const STEP_NAME						= "updateDashboard";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_AFTER					= `${PREFIX}[After] `;
+	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// ------------------------------------------
 	// Steps.
@@ -1109,5 +1153,3 @@ async function fnDashboard() {
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
-
-

@@ -40,12 +40,14 @@ const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
 
+// Bluesky constants
+const APP_CLIENT_ID						= CLIENT_APP.client_id;
+
 
 /**********************************************************
  * Module Variables
  **********************************************************/
 let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
-let timerId								= 0;
 
 
 /**********************************************************
@@ -95,10 +97,6 @@ async function startUp() {
 	await DB.checkCryptoKeyInDB();
 
 	// Perform dashboard operations
-	// + Call first.
-	const refreshSeconds				= CONFIGURATION.global.refresh_dashboard;
-	const refreshTime					= refreshSeconds * 1000;
-	if (DEBUG) console.debug( PREFIX_INNER + `Refreshing data every ${refreshSeconds} second(s)` );
 
 	// Geolocation Information
 	let geolocationInfo					= await GEO.getGeolocationInformation();
@@ -114,9 +112,6 @@ async function startUp() {
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (DEBUG) console.groupEnd();
-
-	// + Call every "refreshTime" seconds.
 	BSKY.dashboard();
-	timerId								= setInterval(() => BSKY.dashboard(), refreshTime);
 }
 
