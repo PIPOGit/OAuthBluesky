@@ -156,7 +156,7 @@ function fnAnalizeCallback(toLocalhost=false) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// By default...
-	let redirectTo						= APP_DASHBOARD_URL;
+	redirectURI							= APP_DASHBOARD_URL;
 
 	// Let's pickup the incoming data from the query string.
 	// ----------------------------------------------------------------
@@ -241,8 +241,9 @@ function fnAnalizeCallback(toLocalhost=false) {
 		}
 
 	}
-	if (DEBUG) console.debug( PREFIX + "redirectURI:", redirectURI );
+	if (DEBUG) console.debug(PREFIX + "Redirecting to", redirectURI);
 
+	/*
 	// Guardamos toda la info y redirigimos a una "página (URL) limpia"
 	if (DEBUG) console.debug( PREFIX + "Saving data in localStorage..." );
 	saveRuntimeDataInLocalStorage();
@@ -254,9 +255,10 @@ function fnAnalizeCallback(toLocalhost=false) {
 		redirectTo.search				= thisURL.search;
 	}
 	if (DEBUG) console.debug(PREFIX + "Redirecting to", redirectTo);
+	*/
 
 	if (GROUP_DEBUG) console.groupEnd();
-	window.location						= redirectTo;
+	window.location						= redirectURI;
 }
 
 

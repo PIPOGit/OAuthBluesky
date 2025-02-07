@@ -165,7 +165,7 @@ async function step01RetrieveUserDID() {
 }
 
 async function stop02RetrieveUserDIDDocument() {
-	const STEP_NAME						= "step01RetrieveUserDID";
+	const STEP_NAME						= "stop02RetrieveUserDIDDocument";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userDid=="+BSKY.user.userDid+"]" );
 
@@ -400,8 +400,8 @@ function checkUserHandle() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Update the "user handle" field with the value in localStorage, if any.
-	BSKY.user.userHandle				= localStorage.getItem(LSKEYS.user.handle);
-	if ( BSKY.user.userHandle ) {
+	BSKY.user.userHandle				= localStorage.getItem(LSKEYS.user.handle) || null;
+	if ( BSKY.user.userHandle && !COMMON.isNullOrEmpty(BSKY.user.userHandle) ) {
 		let $input						= $( "#userHandle" );
 		if ( $input.length ) {
 			$input.val( BSKY.user.userHandle );
