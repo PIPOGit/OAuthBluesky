@@ -21,6 +21,7 @@
 	"clientApp": {
 		"client_id": "https://oauthbluesky.onrender.com/oauth/client-metadata.json",
 		"redirect_uri": "https://oauthbluesky.onrender.com/oauth/callback.html",
+		"dashboard": "https://oauthbluesky.onrender.com/dashboard.html",
 		"redirect_delay": 3
 	},
 	"localStorageKeys": {
