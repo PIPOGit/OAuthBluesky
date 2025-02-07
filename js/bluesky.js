@@ -157,7 +157,7 @@ async function startUp() {
 	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
 
 	// Save the info
-	BSKY.user.geolocation				= geolocationInfo;
+	// BSKY.user.geolocation				= geolocationInfo;
 
 	// La configuración de HighlightJS
 	hljs.configure({
