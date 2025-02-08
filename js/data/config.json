@@ -4,7 +4,7 @@
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.0.0",
-		"refresh_dashboard": 30
+		"refresh_dashboard": 15
 	},
 	"localhost": {
 		"root": "http://localhost/bluesky/index.html"
@@ -51,7 +51,8 @@
 	"api": {
 		"bluesky": {
 			"profile": {
-				"url": "https://bsky.app/profile/"
+				"url": "https://bsky.app/profile/",
+				"pld": "https://web.plc.directory/did/"
 			},
 			"XRPC": {
 				"public": "https://public.api.bsky.app/xrpc",

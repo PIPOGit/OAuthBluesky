@@ -34,6 +34,10 @@ const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 // Inner constants
 const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
+const CLIENT_APP						= CONFIGURATION.clientApp;
+
+// Bluesky constants
+const APP_CLIENT_ID						= CLIENT_APP.client_id;
 
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
@@ -46,6 +50,8 @@ const DIV_TOAST							= "toast-followers-change";
 const DIV_PANEL_ERROR					= "panel-error";
 const DIV_PANEL_INFO					= "panel-info";
 const DIV_PANEL_INFO_STEP				= `${DIV_PANEL_INFO}-step`;
+const DIV_BTN_CLIENT_ID					= "button-client-id";
+const DIV_BTN_DID_DOCUMENT				= "button-did-document";
 
 // HTML jQuery DIVs/Placeholders constants
 const DIV_JQ_ERROR						= "#error";
@@ -76,6 +82,8 @@ const DIV_JQ_PROFILE_DESCRIPTION		= "#profile-description";
 const DIV_JQ_TOAST						= `#${DIV_TOAST}`;
 const DIV_JQ_PANEL_INFO					= `#${DIV_PANEL_INFO}`;
 const DIV_JQ_PANEL_INFO_STEP			= `#${DIV_PANEL_INFO_STEP}`;
+const DIV_JQ_BTN_CLIENT_ID				= `#${DIV_BTN_CLIENT_ID}`;
+const DIV_JQ_BTN_DID_DOCUMENT			= `#${DIV_BTN_DID_DOCUMENT}`;
 
 /**********************************************************
  * Module Variables
@@ -402,6 +410,13 @@ export function updateUserAccessToken(clientId, userAccessToken) {
 	$( DIV_JQ_ACCESS_TOKEN_JSON ).text( JWT.jwtToPrettyJSON( userAccessToken ) );
 }
 
+export function updateUserDIDInfo() {
+	let $linkClientID					= $( DIV_JQ_BTN_CLIENT_ID );
+	let $linkDIDDocument				= $( DIV_JQ_BTN_DID_DOCUMENT );
+	$linkClientID.attr("href",  APP_CLIENT_ID);
+	$linkDIDDocument.attr("href",  API.bluesky.profile.pld + BSKY.user.userDid);
+}
+
 /* --------------------------------------------------------
  * Notifications management.
  * -------------------------------------------------------- */
@@ -619,18 +634,10 @@ export function htmlRenderTrendingTopics( data ) {
 }
 
 export function showStepInfo( step, message ) {
-	const STEP_NAME						= "showStepInfo";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[step=${step}] [message=${message}]` );
-
 	if ( !COMMON.isNullOrEmpty( message ) ) {
 		$( DIV_JQ_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
 	} else {
 		$( DIV_JQ_PANEL_INFO_STEP ).html( "&nbsp;" );
 	}
-
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
 }
 

@@ -1064,21 +1064,25 @@ async function fnLogout() {
 async function fnDashboard() {
 	const STEP_NAME						= "fnDashboard";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_AFTER					= `${PREFIX}[After] `;
-	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
+	let apiCallResponse					= null;
+
 	// Restore data from localStorage.
+	if (DEBUG) console.debug(PREFIX + "Restoring data...");
 	restoreDataFromLocalStorage();
 
 	// Los botones del userDid y el clientId Metadata
-	let $linkClientID					= $( "#button-client-id" );
-	let $linkDIDDocument				= $( "#button-did-document" );
-	$linkClientID.attr("href",  APP_CLIENT_ID);
-	$linkDIDDocument.attr("href",  "https://web.plc.directory/did/" + BSKY.user.userDid);
+	if (DEBUG) console.debug(PREFIX + "User DID Info...");
+	HTML.updateUserDIDInfo();
 
 	// Update the page.
-	await updateDashboard();
+	if (DEBUG) console.debug(PREFIX + "Update the dashboard...");
+	apiCallResponse						= await updateDashboard();
+
+	// "Constant data".
+	if (DEBUG) console.debug(PREFIX + "Update the 'static' info...");
+	apiCallResponse						= await updateStaticInfo();
 
 	// + Call every "refreshTime" seconds.
 	const refreshSeconds				= CONFIGURATION.global.refresh_dashboard;
@@ -1094,8 +1098,6 @@ async function fnDashboard() {
 async function updateDashboard() {
 	const STEP_NAME						= "updateDashboard";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_AFTER					= `${PREFIX}[After] `;
-	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// ------------------------------------------
@@ -1108,18 +1110,44 @@ async function updateDashboard() {
 
 		// Later, retrieve the rest of things.
 		// ------------------------------------------
-		// Retrieve the user's profile to show
-		apiCallResponse					= await getTheUserProfile();
 
 		// Retrieve the user's notifications.
 		apiCallResponse					= await getTheUserNotifications();
 
+		// Retrieve the Trending Topics
+		apiCallResponse					= await getTheTrendingTopics();
+	} catch (error) {
+		if (GROUP_DEBUG) console.groupEnd();
+
+		// Show the error and update the HTML fields
+		HTML.updateHTMLError(error);
+		throw( error );
+	}
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, null );
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+async function updateStaticInfo() {
+	const STEP_NAME						= "updateStaticInfo";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// ------------------------------------------
+	// Steps.
+	let apiCallResponse					= null;
+	try {
+		// Retrieve the user's profile to show
+		apiCallResponse					= await getTheUserProfile();
+
 		// Retrieve who the user is following
-		// Sample: https://public.api.bsky.app/xrpc/app.bsky.graph.getFollows?actor=${user.handle}&limit=100
 		apiCallResponse					= await getWhoTheUserFollows();
 
 		// Retrieve who the user is following FROM THE PDS Repository
-		// Sample: ${user.pds.url}/xrpc/com.atproto.repo.listRecords?repo=${user.did}&collection=app.bsky.graph.follow&limit=100
 		apiCallResponse					= await getWhoTheUserFollowsFromTheRepo();
 
 		// Retrieve the user's followers
@@ -1133,9 +1161,6 @@ async function updateDashboard() {
 
 		// Retrieve the user's lists
 		apiCallResponse					= await getTheUserLists();
-
-		// Retrieve the Trending Topics
-		apiCallResponse					= await getTheTrendingTopics();
 
 		// Now, check relationships...
 		apiCallResponse					= await getTheRelations();
@@ -1153,3 +1178,4 @@ async function updateDashboard() {
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
+
