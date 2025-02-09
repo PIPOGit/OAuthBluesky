@@ -1085,11 +1085,11 @@ async function fnDashboard() {
 	const refreshStaticTime				= refreshStaticSeconds * 1000;
 	if (DEBUG) console.debug(PREFIX + `TIMED Update the 'static' info every ${refreshStaticSeconds} second(s)` );
 	// timerId								= setInterval(() => updateStaticInfo(), refreshStaticTime);
-	(function loop() {
+	(function staticLoop() {
 		setTimeout(() => {
 			// Your logic here
 			updateStaticInfo();
-			loop();
+			staticLoop();
 		}, refreshStaticTime);
 	})();
 
@@ -1098,11 +1098,11 @@ async function fnDashboard() {
 	const refreshDashboardTime			= refreshDashboardSeconds * 1000;
 	if (DEBUG) console.debug(PREFIX + `TIMED Update the dashboard every ${refreshDashboardSeconds} second(s)` );
 	// timerId								= setInterval(() => updateDashboard(), refreshDashboardTime);
-	(function loop() {
+	(function dynamicLoop() {
 		setTimeout(() => {
 			// Your logic here
 			updateDashboard();
-			loop();
+			dynamicLoop();
 		}, refreshDashboardTime);
 	})();
 
