@@ -4,7 +4,8 @@
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.0.0",
-		"refresh_dashboard": 15
+		"refresh_dashboard": 15,
+		"refresh_static": 60
 	},
 	"localhost": {
 		"root": "http://localhost/bluesky/index.html"

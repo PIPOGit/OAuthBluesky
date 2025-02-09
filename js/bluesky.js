@@ -362,7 +362,7 @@ async function getWhoTheUserFollows() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 
 		// Datos. Seguimos?
-		cursor							= apiCallResponse.cursor;
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -421,7 +421,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 
 		// Datos. Seguimos?
-		cursor							= apiCallResponse.cursor;
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -480,7 +480,7 @@ async function getTheUserFollowers() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
-		cursor							= apiCallResponse.cursor;
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -540,7 +540,7 @@ async function getWhoTheUserIsBlocking() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
-		cursor							= apiCallResponse.cursor;
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -600,7 +600,7 @@ async function getWhoTheUserIsMuting() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
-		cursor							= apiCallResponse.cursor;
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -660,7 +660,7 @@ async function getTheUserLists() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
-		cursor							= apiCallResponse.cursor;
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -727,7 +727,7 @@ async function getTheTrendingTopics() {
 		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
 		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.cursor ) ? apiCallResponse.cursor : null;
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
@@ -1069,26 +1069,42 @@ async function fnDashboard() {
 	let apiCallResponse					= null;
 
 	// Restore data from localStorage.
-	if (DEBUG) console.debug(PREFIX + "Restoring data...");
 	restoreDataFromLocalStorage();
 
 	// Los botones del userDid y el clientId Metadata
-	if (DEBUG) console.debug(PREFIX + "User DID Info...");
 	HTML.updateUserDIDInfo();
 
+	// "Constant data".
+	apiCallResponse						= await updateStaticInfo();
+
 	// Update the page.
-	if (DEBUG) console.debug(PREFIX + "Update the dashboard...");
 	apiCallResponse						= await updateDashboard();
 
 	// "Constant data".
-	if (DEBUG) console.debug(PREFIX + "Update the 'static' info...");
-	apiCallResponse						= await updateStaticInfo();
+	const refreshStaticSeconds			= CONFIGURATION.global.refresh_static;
+	const refreshStaticTime				= refreshStaticSeconds * 1000;
+	if (DEBUG) console.debug(PREFIX + `TIMED Update the 'static' info every ${refreshStaticSeconds} second(s)` );
+	// timerId								= setInterval(() => updateStaticInfo(), refreshStaticTime);
+	(function loop() {
+		setTimeout(() => {
+			// Your logic here
+			updateStaticInfo();
+			loop();
+		}, refreshStaticTime);
+	})();
 
-	// + Call every "refreshTime" seconds.
-	const refreshSeconds				= CONFIGURATION.global.refresh_dashboard;
-	const refreshTime					= refreshSeconds * 1000;
-	if (DEBUG) console.debug( PREFIX + `Refreshing dashboard every ${refreshSeconds} second(s)` );
-	timerId								= setInterval(() => updateDashboard(), refreshTime);
+	// Update the page.
+	const refreshDashboardSeconds		= CONFIGURATION.global.refresh_dashboard;
+	const refreshDashboardTime			= refreshDashboardSeconds * 1000;
+	if (DEBUG) console.debug(PREFIX + `TIMED Update the dashboard every ${refreshDashboardSeconds} second(s)` );
+	// timerId								= setInterval(() => updateDashboard(), refreshDashboardTime);
+	(function loop() {
+		setTimeout(() => {
+			// Your logic here
+			updateDashboard();
+			loop();
+		}, refreshDashboardTime);
+	})();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1141,6 +1157,13 @@ async function updateStaticInfo() {
 	// Steps.
 	let apiCallResponse					= null;
 	try {
+		// First, let's validate the access token.
+		// ------------------------------------------
+		apiCallResponse					= await validateAccessToken();
+
+		// Later, retrieve the rest of things.
+		// ------------------------------------------
+
 		// Retrieve the user's profile to show
 		apiCallResponse					= await getTheUserProfile();
 
