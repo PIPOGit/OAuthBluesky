@@ -1171,7 +1171,7 @@ async function updateStaticInfo() {
 		apiCallResponse					= await getWhoTheUserFollows();
 
 		// Retrieve who the user is following FROM THE PDS Repository
-		apiCallResponse					= await getWhoTheUserFollowsFromTheRepo();
+		// apiCallResponse					= await getWhoTheUserFollowsFromTheRepo();
 
 		// Retrieve the user's followers
 		apiCallResponse					= await getTheUserFollowers();

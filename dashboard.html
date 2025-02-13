@@ -67,7 +67,6 @@
 							</div>
 						</div>
 					</div>
-
 				</div>
 
 				<!-- El panel de los tiempos -->
@@ -163,40 +162,6 @@
 			<!-- El div de los paneles -->
 			<div class="tab-content p-2" id="myTabContent" name="myTabContent">
 
-				<!-- El panel de My Profile -->
-				<div id="panel-my-profile" name="panel-my-profile" class="tab-pane fade show active theme-my-profile" role="tabpanel" aria-labelledby="pill-my-profile" tabindex="0">
-					<div class="row">
-						<div class="col-4">
-							<!-- La tarjeta. -->
-							<div class="card bg-transparent border-0 justify-content-between align-items-center">
-								<div class="row g-0">
-									<div class="col-2">
-										<img id="profile-avatar" name="profile-avatar" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
-									</div>
-									<div class="col-10">
-										<div class="card-body p-1">
-											<h5 class="card-title mb-0"><span id="profile-name" name="profile-name">Account Display Name</span></h5>
-											<div class="card-text"><a href="javascript:void(0);" id="profile-handle-link" name="profile-handle-link" class="link-primary">@<span id="profile-handle" name="profile-handle">handle</span></a></div>
-											<div class="card-text">
-												<small class="text-body-secondary">
-													<span id="profile-followers" name="profile-followers" class="fw-semibold">----</span> followers,
-													<span id="profile-following" name="profile-following" class="fw-semibold">----</span> following,
-													<span id="profile-posts"     name="profile-posts"     class="fw-semibold">----</span> posts
-												</small>
-											</div>
-											<div class="card-text border-top border-2 bg-body-secondary">
-												<span id="profile-description" name="profile-description" class="px-2">Description of the Bluesky account</span>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-8">
-						</div>
-					</div>
-				</div>
-
 				<!-- El panel del access_token -->
 				<div id="panel-access-token" name="panel-access-token" class="tab-pane fade theme-access-token" role="tabpanel" aria-labelledby="pill-access-token" tabindex="0">
 
@@ -249,6 +214,40 @@
 					<pre><code id="access_token_json" name="access_token_json" class="language-json"></code></pre><hr/>
 				</div>
 
+				<!-- El panel de My Profile -->
+				<div id="panel-my-profile" name="panel-my-profile" class="tab-pane fade show active theme-my-profile" role="tabpanel" aria-labelledby="pill-my-profile" tabindex="0">
+					<div class="row">
+						<div class="col-4">
+							<!-- La tarjeta. -->
+							<div class="card bg-transparent border-0 justify-content-between align-items-center">
+								<div class="row g-0">
+									<div class="col-2">
+										<img id="profile-avatar" name="profile-avatar" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
+									</div>
+									<div class="col-10">
+										<div class="card-body p-1">
+											<h5 class="card-title mb-0"><span id="profile-name" name="profile-name">Account Display Name</span></h5>
+											<div class="card-text"><a href="javascript:void(0);" id="profile-handle-link" name="profile-handle-link" class="link-primary">@<span id="profile-handle" name="profile-handle">handle</span></a></div>
+											<div class="card-text">
+												<small class="text-body-secondary">
+													<span id="profile-followers" name="profile-followers" class="fw-semibold">----</span> followers,
+													<span id="profile-following" name="profile-following" class="fw-semibold">----</span> following,
+													<span id="profile-posts"     name="profile-posts"     class="fw-semibold">----</span> posts
+												</small>
+											</div>
+											<div class="card-text border-top border-2 bg-body-secondary">
+												<span id="profile-description" name="profile-description" class="px-2">Description of the Bluesky account</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="col-8">
+						</div>
+					</div>
+				</div>
+
 				<!-- El panel de las notificaciones -->
 				<div id="panel-notifications" name="panel-notifications" class="tab-pane fade theme-notifications" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
 					<span id="notificationsNumber" name="notificationsNumber" class="input-group-text"></span>
@@ -258,37 +257,106 @@
 
 				<!-- El panel de los following -->
 				<div id="panel-following" name="panel-following" class="tab-pane fade theme-following" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
-					<a class="link-primary" href="https://docs.bsky.app/docs/api/app-bsky-graph-get-follows" target="_new">following</a>
+					<div class="theme-table">
+						<table id="table-following" name="table-following" class="table table-sm table-striped table-hover">
+							<thead class="table-header theme-table-header">
+								<tr>
+									<th scope="col" class="col-1">#</th>
+									<th scope="col">User</th>
+									<th scope="col">Description</th>
+									<th scope="col" class="col-2">Since</th>
+								</tr>
+							</thead>
+							<tbody class="table-group-divider theme-table-body">
+							</tbody>
+						</table>
+					</div>
 				</div>
 
 				<!-- El panel de los followers -->
 				<div id="panel-followers" name="panel-followers" class="tab-pane fade theme-followers" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
-					<a class="link-primary" href="https://docs.bsky.app/docs/api/app-bsky-graph-get-followers" target="_new">followers</a>
+					<div class="theme-table">
+						<table id="table-followers" name="table-followers" class="table table-sm table-striped table-hover">
+							<thead class="table-header theme-table-header">
+								<tr>
+									<th scope="col" class="col-1">#</th>
+									<th scope="col">User</th>
+									<th scope="col">Description</th>
+									<th scope="col" class="col-2">Since</th>
+								</tr>
+							</thead>
+							<tbody class="table-group-divider theme-table-body">
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- El panel de los blocking -->
+				<div id="panel-blocking" name="panel-blocking" class="tab-pane fade theme-blocking" role="tabpanel" aria-labelledby="pill-blocking" tabindex="0">
+					<div class="theme-table">
+						<table id="table-blocking" name="table-blocking" class="table table-sm table-striped table-hover">
+							<thead class="table-header theme-table-header">
+								<tr>
+									<th scope="col" class="col-1">#</th>
+									<th scope="col" class="col-1">Muted</th>
+									<th scope="col">User</th>
+									<th scope="col">Description</th>
+									<th scope="col" class="col-2">Since</th>
+								</tr>
+							</thead>
+							<tbody class="table-group-divider theme-table-body">
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- El panel de los muteados -->
+				<div id="panel-muting" name="panel-muting" class="tab-pane fade theme-muting" role="tabpanel" aria-labelledby="pill-muting" tabindex="0">
+					<div class="theme-table">
+						<table id="table-muting" name="table-muting" class="table table-sm table-striped table-hover">
+							<thead class="table-header theme-table-header">
+								<tr>
+									<th scope="col" class="col-1">#</th>
+									<th scope="col" class="col-1">Blocked</th>
+									<th scope="col">User</th>
+									<th scope="col">Description</th>
+									<th scope="col" class="col-2">Since</th>
+								</tr>
+							</thead>
+							<tbody class="table-group-divider theme-table-body">
+							</tbody>
+						</table>
+					</div>
 				</div>
 
 				<!-- El panel de mis listas -->
 				<div id="panel-my-lists" name="panel-my-lists" class="tab-pane fade theme-my-lists" role="tabpanel" aria-labelledby="pill-my-lists" tabindex="0">
 					<a class="link-primary" href="https://docs.bsky.app/docs/api/app-bsky-graph-get-lists" target="_new">My Lists</a>
+					<div class="theme-table">
+						<table id="table-my-lists" name="table-my-lists" class="table table-sm table-striped table-hover">
+							<thead class="table-header theme-table-header">
+								<tr>
+									<th scope="col" class="col-1">#</th>
+									<th scope="col" class="col-1">Members</th>
+									<th scope="col">Name</th>
+									<th scope="col">Description</th>
+									<th scope="col" class="col-2">Since</th>
+								</tr>
+							</thead>
+							<tbody class="table-group-divider theme-table-body">
+							</tbody>
+						</table>
+					</div>
 				</div>
 
 				<!-- El panel de mis feeds -->
 				<div id="panel-my-feeds" name="panel-my-feeds" class="tab-pane fade theme-my-feeds" role="tabpanel" aria-labelledby="pill-my-feeds" tabindex="0">
-					<a class="link-primary" href="https://docs.bsky.app/docs/api/app-bsky-graph-get-feeds" target="_new">My Feeds</a>
+					<a class="link-primary" href="https://docs.bsky.app/docs/api/app-bsky-feed-get-actor-feeds" target="_new">My Feeds</a>
 				</div>
 
 				<!-- El panel de los en listas-->
 				<div id="panel-in-lists" name="panel-in-lists" class="tab-pane fade theme-in-lists" role="tabpanel" aria-labelledby="pill-in-lists" tabindex="0">
 					In Lists
-				</div>
-
-				<!-- El panel de los blocking -->
-				<div id="panel-blocking" name="panel-blocking" class="tab-pane fade theme-blocking" role="tabpanel" aria-labelledby="pill-blocking" tabindex="0">
-					<a class="link-primary" href="https://docs.bsky.app/docs/api/app-bsky-graph-get-blocks" target="_new">Blocking</a>
-				</div>
-
-				<!-- El panel de los muteados -->
-				<div id="panel-muting" name="panel-muting" class="tab-pane fade theme-muting" role="tabpanel" aria-labelledby="pill-muting" tabindex="0">
-					<a href="https://docs.bsky.app/docs/api/app-bsky-graph-get-mutes" target="_new">Muting</a>
 				</div>
 			</div>
 		</div>

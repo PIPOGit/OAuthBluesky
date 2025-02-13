@@ -99,50 +99,56 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 		HTML.clearHTMLError();
 	} catch (error) {
 		if (GROUP_DEBUG) console.groupEnd();
+		
+		// Check if it's a "controlled error".
+		if ( error.hasOwnProperty("step") ) {
+			// Check if the error is due to a different dpop-nonce in step 12...
+			let sameSteps					= COMMON.areEquals(error.step, currentStep);
+			let distinctDPoPNonce			= !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived);
+			if ( sameSteps && distinctDPoPNonce) {
+				// Show the error and update the HTML fields
+				HTML.updateHTMLError(error, false);
 
-		// Check if the error is due to a different dpop-nonce in step 12...
-		let sameSteps					= COMMON.areEquals(error.step, currentStep);
-		let distinctDPoPNonce			= !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived);
-		if ( sameSteps && distinctDPoPNonce) {
-			// Show the error and update the HTML fields
-			HTML.updateHTMLError(error, false);
+				if (DEBUG) console.debug( PREFIX + "Let's retry..." );
+				if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
+				try {
+					apiCallResponse			= await callbackFunction(callbackOptions);
+					if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
 
-			if (DEBUG) console.debug( PREFIX + "Let's retry..." );
-			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
-			try {
-				apiCallResponse			= await callbackFunction(callbackOptions);
-				if (DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
-
-				// Clear and hide error fields and panel
-				HTML.clearHTMLError();
-			} catch (error) {
-				if (GROUP_DEBUG) console.groupEnd();
-				
-				// TODO: Si el error es de expiración del token [401]
-				// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
-				if (   ( error.status==401 )									// authentication error
-					&& ( error.isJson )											// json format
-					&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
-					// Redirigir a "logout".
-					if (DEBUG) console.debug( PREFIX + "-- END" );
+					// Clear and hide error fields and panel
+					HTML.clearHTMLError();
+				} catch (error) {
 					if (GROUP_DEBUG) console.groupEnd();
-					await fnLogout();
-				} else {
-					// Show the error and update the HTML fields
-					if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
-					HTML.updateHTMLError(error);
-					throw( error );
+					
+					// TODO: Si el error es de expiración del token [401]
+					// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
+					if (   ( error.status==401 )									// authentication error
+						&& ( error.isJson )											// json format
+						&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
+						// Redirigir a "logout".
+						if (DEBUG) console.debug( PREFIX + "-- END" );
+						if (GROUP_DEBUG) console.groupEnd();
+						await fnLogout();
+					} else {
+						// Show the error and update the HTML fields
+						if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
+						HTML.updateHTMLError(error);
+						throw( error );
+					}
 				}
-			}
-			if (GROUP_DEBUG) console.groupEnd();
-		} else {
-			if (DEBUG) console.debug( PREFIX_RETRY + `[sameSteps=${sameSteps}]` );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [error.step]`, error.step );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [currentStep]`, currentStep );
-			if (DEBUG) console.debug( PREFIX_RETRY + `[distinctDPoPNonce=${distinctDPoPNonce}]` );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceUsed]`, BSKY.data.dpopNonceUsed );
-			if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceReceived]`, BSKY.data.dpopNonceReceived );
+				if (GROUP_DEBUG) console.groupEnd();
+			} else {
+				if (DEBUG) console.debug( PREFIX_RETRY + `[sameSteps=${sameSteps}]` );
+				if (DEBUG) console.debug( PREFIX_RETRY + `+ [error.step]`, error.step );
+				if (DEBUG) console.debug( PREFIX_RETRY + `+ [currentStep]`, currentStep );
+				if (DEBUG) console.debug( PREFIX_RETRY + `[distinctDPoPNonce=${distinctDPoPNonce}]` );
+				if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceUsed]`, BSKY.data.dpopNonceUsed );
+				if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceReceived]`, BSKY.data.dpopNonceReceived );
 
+				// Show the error and update the HTML fields
+				HTML.updateHTMLError(error);
+			}
+		} else {
 			// Show the error and update the HTML fields
 			HTML.updateHTMLError(error);
 		}
