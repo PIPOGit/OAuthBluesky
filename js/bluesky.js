@@ -147,10 +147,6 @@ async function startUp() {
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
 
-	// El reloj
-	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
-	if (DEBUG) console.debug( PREFIX + "Clock started" );
-
 	// La configuración de HighlightJS
 	hljs.configure({
 		ignoreUnescapedHTML: true
@@ -440,7 +436,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 	BSKY.user.following_repo			= allData;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserFollows( allData );
+	HTML.htmlRenderUserFollowsFromRepo( allData );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();

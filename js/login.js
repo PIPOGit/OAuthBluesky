@@ -123,7 +123,7 @@ async function startUp() {
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB(comeFromLogout);
 
-	// Update the "userHandle" field
+	// Update the "user_handle" field
 	checkUserHandle();
 
 	// BS Toast Test
@@ -142,6 +142,12 @@ async function startUp() {
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
+
+/* --------------------------------------------------------
+ * LOGIN PROCESS.
+ *
+ * OAuth2 login processes.
+ * -------------------------------------------------------- */
 async function step01RetrieveUserDID() {
 	const STEP_NAME						= "step01RetrieveUserDID";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -318,6 +324,12 @@ function step06RedirectUserToBlueskyAuthPage() {
     window.location = url;
 }
 
+/* --------------------------------------------------------
+ * LOGIN PROCESS.
+ *
+ * Function to check whether we come from the logged-out
+ * process.
+ * -------------------------------------------------------- */
 function checkIfComesFromLogout() {
 	const STEP_NAME						= "checkIfComesFromLogout";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -335,6 +347,11 @@ function checkIfComesFromLogout() {
 	return comeFromLogout;
 }
 
+/* --------------------------------------------------------
+ * LOGIN PROCESS.
+ *
+ * Function to check whether we are in the "local environment".
+ * -------------------------------------------------------- */
 function checkIfWeAreInLocalhost() {
 	const STEP_NAME						= "checkIfWeAreInLocalhost";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -353,6 +370,14 @@ function checkIfWeAreInLocalhost() {
 	return isLocalhost;
 }
 
+
+/* --------------------------------------------------------
+ * LOGIN PROCESS.
+ *
+ * Function to save data before we move to the Bluesky
+ * auth page, to retrieve the runtime data after successful
+ * authorization.
+ * -------------------------------------------------------- */
 function saveRuntimeLoginDataInLocalStorage() {
 	const STEP_NAME						= "saveRuntimeLoginDataInLocalStorage";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -408,12 +433,14 @@ function checkUserHandle() {
 
 	// Update the "user handle" field with the value in localStorage, if any.
 	BSKY.user.userHandle				= localStorage.getItem(LSKEYS.user.handle) || null;
-	if ( BSKY.user.userHandle && !COMMON.isNullOrEmpty(BSKY.user.userHandle) ) {
-		let $input						= $( "#userHandle" );
+	if ( BSKY.user.userHandle && !COMMON.isNullOrEmpty(BSKY.user.userHandle) && !COMMON.areEquals(BSKY.user.userHandle.toLowerCase(), "null") ) {
+		let $input						= $( "#user_handle" );
 		if ( $input.length ) {
 			$input.val( BSKY.user.userHandle );
 			if (DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${BSKY.user.userHandle}"` );
 		}
+	} else {
+		localStorage.removeItem(LSKEYS.user.handle)
 	}
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -445,41 +472,60 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 	COMMON.show( "panel-info" );
 
 	let variable						= null;
+	
+	try {
+		if (DEBUG) console.debug( PREFIX + "Current handle:", handle );
+		BSKY.user.userHandle				= handle;
 
-	if (DEBUG) console.debug( PREFIX + "Current handle:", handle );
-	BSKY.user.userHandle				= handle;
+		variable							= await step01RetrieveUserDID();
+		// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
+		if (DEBUG) console.debug( PREFIX + "Current userDid:", BSKY.user.userDid );
 
-	variable							= await step01RetrieveUserDID();
-	// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-	if (DEBUG) console.debug( PREFIX + "Current userDid:", BSKY.user.userDid );
+		variable							= await stop02RetrieveUserDIDDocument();
+		// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
+		if (DEBUG) console.debug( PREFIX + "Current userDidDocument:", COMMON.prettyJson( BSKY.auth.userDidDocument ) );
+		if (DEBUG) console.debug( PREFIX + "Current userPDSURL:", BSKY.auth.userPDSURL );
 
-	variable							= await stop02RetrieveUserDIDDocument();
-	// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-	if (DEBUG) console.debug( PREFIX + "Current userDidDocument:", COMMON.prettyJson( BSKY.auth.userDidDocument ) );
-	if (DEBUG) console.debug( PREFIX + "Current userPDSURL:", BSKY.auth.userPDSURL );
+		variable							= await step03RetrievePDSServerMetadata();
+		// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
+		if (DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", COMMON.prettyJson( BSKY.auth.userPDSMetadata ) );
+		if (DEBUG) console.debug( PREFIX + "Current userAuthServerURL:", BSKY.auth.userAuthServerURL );
 
-	variable							= await step03RetrievePDSServerMetadata();
-	// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-	if (DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", COMMON.prettyJson( BSKY.auth.userPDSMetadata ) );
-	if (DEBUG) console.debug( PREFIX + "Current userAuthServerURL:", BSKY.auth.userAuthServerURL );
+		variable							= await step04RetrieveAuthServerDiscoveryMetadata();
+		// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
+		if (DEBUG) console.debug( PREFIX + "Current userAuthServerDiscovery:", COMMON.prettyJson( BSKY.auth.userAuthServerDiscovery ) );
+		if (DEBUG) console.debug( PREFIX + "Current userAuthorizationEndPoint:", BSKY.auth.userAuthorizationEndPoint );
+		if (DEBUG) console.debug( PREFIX + "Current userTokenEndPoint:", BSKY.auth.userTokenEndPoint );
+		if (DEBUG) console.debug( PREFIX + "Current userPAREndPoint:", BSKY.auth.userPAREndPoint );
+		if (DEBUG) console.debug( PREFIX + "Current userRevocationEndPoint:", BSKY.auth.userRevocationEndPoint );
 
-	variable							= await step04RetrieveAuthServerDiscoveryMetadata();
-	// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-	if (DEBUG) console.debug( PREFIX + "Current userAuthServerDiscovery:", COMMON.prettyJson( BSKY.auth.userAuthServerDiscovery ) );
-	if (DEBUG) console.debug( PREFIX + "Current userAuthorizationEndPoint:", BSKY.auth.userAuthorizationEndPoint );
-	if (DEBUG) console.debug( PREFIX + "Current userTokenEndPoint:", BSKY.auth.userTokenEndPoint );
-	if (DEBUG) console.debug( PREFIX + "Current userPAREndPoint:", BSKY.auth.userPAREndPoint );
-	if (DEBUG) console.debug( PREFIX + "Current userRevocationEndPoint:", BSKY.auth.userRevocationEndPoint );
+		variable							= await step05PARRequest();
+		// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
+		if (DEBUG) console.debug( PREFIX + "Current userAuthServerRequestURI:", BSKY.auth.userAuthServerRequestURI );
 
-	variable							= await step05PARRequest();
-	// if (DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-	if (DEBUG) console.debug( PREFIX + "Current userAuthServerRequestURI:", BSKY.auth.userAuthServerRequestURI );
+		// Enable login button. // button-login
+		COMMON.hide( "panel-info" );
+		$( "#button-login" ).removeAttr( "disabled" );
 
-	if (DEBUG) console.debug( PREFIX + "Redirecting user to the Bluesky Authorization Server page..." );
-	step06RedirectUserToBlueskyAuthPage();
+		if (DEBUG) console.debug( PREFIX + "Redirecting user to the Bluesky Authorization Server page..." );
+		step06RedirectUserToBlueskyAuthPage();
+	} catch ( error ) {
+		if (DEBUG) console.debug( PREFIX + "-- END" );
+		if (GROUP_DEBUG) console.groupEnd();
+		if (DEBUG) console.error( PREFIX + "Detected error:", COMMON.prettyJson( error ) );
+
+		// Clear info panel
+		HTML.clearStepInfo();
+		COMMON.hide( "panel-info" );
+
+		// Hide error panel and show the info one.
+		COMMON.show( "panel-error" );
+
+		// Enable login button. // button-login
+		$( "#button-login" ).removeAttr( "disabled" );
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
-
 

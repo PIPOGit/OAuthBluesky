@@ -42,6 +42,7 @@ const APP_CLIENT_ID						= CLIENT_APP.client_id;
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
 const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true };
+const DESC_MAX_CHARS					= 60;
 
 // HTML normal DIVs/Placeholders constants
 const DIV_DATE_TIME						= "currentDateTime";
@@ -52,6 +53,11 @@ const DIV_PANEL_INFO					= "panel-info";
 const DIV_PANEL_INFO_STEP				= `${DIV_PANEL_INFO}-step`;
 const DIV_BTN_CLIENT_ID					= "button-client-id";
 const DIV_BTN_DID_DOCUMENT				= "button-did-document";
+const DIV_TABLE_MY_LISTS				= "table-my-lists";
+const DIV_TABLE_MUTING					= "table-muting";
+const DIV_TABLE_BLOCKING				= "table-blocking";
+const DIV_TABLE_FOLLOWING				= "table-following";
+const DIV_TABLE_FOLLOWERS				= "table-followers";
 
 // HTML jQuery DIVs/Placeholders constants
 const DIV_JQ_ERROR						= "#error";
@@ -84,6 +90,11 @@ const DIV_JQ_PANEL_INFO					= `#${DIV_PANEL_INFO}`;
 const DIV_JQ_PANEL_INFO_STEP			= `#${DIV_PANEL_INFO_STEP}`;
 const DIV_JQ_BTN_CLIENT_ID				= `#${DIV_BTN_CLIENT_ID}`;
 const DIV_JQ_BTN_DID_DOCUMENT			= `#${DIV_BTN_DID_DOCUMENT}`;
+const DIV_JQ_TABLE_MY_LISTS				= `#${DIV_TABLE_MY_LISTS}`;
+const DIV_JQ_TABLE_MUTING				= `#${DIV_TABLE_MUTING}`;
+const DIV_JQ_TABLE_BLOCKING				= `#${DIV_TABLE_BLOCKING}`;
+const DIV_JQ_TABLE_FOLLOWING			= `#${DIV_TABLE_FOLLOWING}`;
+const DIV_JQ_TABLE_FOLLOWERS			= `#${DIV_TABLE_FOLLOWERS}`;
 
 /**********************************************************
  * Module Variables
@@ -500,12 +511,12 @@ export function htmlRenderUserProfile( profile ) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.debug( PREFIX + "User Profile:", profile );
-	
+
 	$( DIV_JQ_PROFILE_AVATAR ).attr( "src", profile.avatar );
 	$( DIV_JQ_PROFILE_AVATAR_TOP ).attr( "src", profile.avatar );
 
-	$( DIV_JQ_PROFILE_NAME ).html( profile.displayName );
-	$( DIV_JQ_PROFILE_NAME_TOP ).html( profile.displayName );
+	$( DIV_JQ_PROFILE_NAME ).html( profile.displayName || profile.handle );
+	$( DIV_JQ_PROFILE_NAME_TOP ).html( profile.displayName || profile.handle );
 
 	$( DIV_JQ_PROFILE_HANDLE ).html( profile.handle );
 	$( DIV_JQ_PROFILE_HANDLE_TOP ).html( profile.handle );
@@ -550,7 +561,8 @@ export function htmlRenderUserProfile( profile ) {
 			$toastImg.attr( "src", profile.avatar );
 			$toastBody.html( html );
 			$toast.show({"animation": true, "autohide": true, "delay": 1000});
-			setTimeout(() => { $toast.hide({"animation": true}); }, delay );
+			// setTimeout(() => { $toast.hide({"animation": true}); }, delay );
+			// One way: bootstrap.Toast.getOrCreateInstance( "#toast-sample" ).show();
 			if (GROUP_DEBUG) console.groupEnd();
 		} else {
 			if (DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
@@ -564,10 +576,151 @@ export function htmlRenderUserProfile( profile ) {
 export function htmlRenderUserFollows( data ) {
 	const STEP_NAME						= "htmlRenderUserFollows";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
+	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
+	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
+	// DIV_JQ_TABLE_FOLLOWING			= `#${DIV_TABLE_FOLLOWING}`;
+
+	/*
+	 * Received an array of:
+		{
+			"did": "did:plc:apkhfnhhbxsei3ni7dkvyvan",
+			"handle": "diazibao.bsky.social",
+			"displayName": "Toni Díaz",
+			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:apkhfnhhbxsei3ni7dkvyvan/bafkreiffiyebrfqwvyv5nh73wqokklraw4lumwnr55mtpgamabhduddmvi@jpeg",
+			"associated": {
+			"chat": {
+			"allowIncoming": "following"
+			}
+			},
+			"labels": [],
+			"createdAt": "2023-09-12T13:09:07.483Z",
+			"description": "«Mal español», pero «bueno worker». \nGuionista en '(P)ícaro', 'Hackers del cerebro', 'Operación Brooklyn', 'Lucía en la telaraña', 'Infierno de plata', 'Debates insólitos'. Profesor de escritura de documental en Scuola Holden. \nDe Madrid en Turín.",
+			"indexedAt": "2025-01-14T18:35:33.948Z"
+		}
+		{
+			"did": "did:plc:osg56mcvgaylhs2lqmeh4wkb",
+			"handle": "lamuertaviva.bsky.social",
+			"displayName": "LaMuertaViva",
+			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:osg56mcvgaylhs2lqmeh4wkb/bafkreifn76sltmraav52x5bdknhlr5u7iayxc2lh3hakgfgbakam6clz2q@jpeg",
+			"associated": {
+			"chat": {
+			"allowIncoming": "all"
+			}
+			},
+			"labels": [
+			{
+			"src": "did:plc:osg56mcvgaylhs2lqmeh4wkb",
+			"uri": "at://did:plc:osg56mcvgaylhs2lqmeh4wkb/app.bsky.actor.profile/self",
+			"cid": "bafyreidcm6ppu4eghtd245cory3iskvu4wwjkzvhqtrcw43ojp3udmtqyy",
+			"val": "!no-unauthenticated",
+			"cts": "1970-01-01T00:00:00.000Z"
+			}
+			],
+			"createdAt": "2023-09-01T12:36:43.053Z",
+			"description": "Resucitada y hambrienta. Loca de los gatos. Anarcofeminista. Cordosiesa por necesidad. Bitchstar. #endowarrior #crohn #ND She/Her LG(B)TIQ+ No me toques las palmas que me conozco.",
+			"indexedAt": "2025-01-21T01:24:05.644Z"
+		}
+		{
+			"did": "did:plc:sflxm2fxohaqpfgahgdlm7rl",
+			"handle": "surfdude29.ispost.ing",
+			"displayName": "surfdude29",
+			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:sflxm2fxohaqpfgahgdlm7rl/bafkreih2lr64l2a2nkofqfmak2izv66wlrmrvn6cr74jgorxxvurxllc2y@jpeg",
+			"associated": {
+			"chat": {
+			"allowIncoming": "all"
+			}
+			},
+			"labels": [],
+			"createdAt": "2023-08-24T20:02:12.400Z",
+			"description": "geriatric millennial nebula who reskeets a lot 💫 some original posts here and there, mostly on bsky nerdery but could be anything really ¯\\_(ツ)_/¯\n📍UK 🇬🇧",
+			"indexedAt": "2025-01-29T00:16:22.644Z"
+		}
+	 *
+	 */
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWING + " tbody" );
+	const content						= ( idx, user ) => `<tr class="align-top">
+											<td>${idx}</td>
+											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
+											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
+											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
+											</tr>`;
+	// Clear the current content.
+	$tableBody.empty();
+	// Add data.
+	for ( index in data ) {
+		htmlContent						= content( Number(index)+1, data[index] );
+		$tableBody.append( htmlContent );
+	}
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderUserFollowsFromRepo( data ) {
+	const STEP_NAME						= "htmlRenderUserFollowsFromRepo";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
+	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
+	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
+
+	/*
+	 * Received an array of:
+		{
+		  "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3li2xzgdvwo22",
+		  "cid": "bafyreicrmjb4jabxmjglsjsbtabfft6a33c6dtvi6ampbojg2pwarhknci",
+		  "value": {
+			"$type": "app.bsky.graph.follow",
+			"subject": "did:plc:yusufixihqclq3mb2o5o6iif",
+			"createdAt": "2025-02-13T15:13:06.647Z"
+		  }
+		}
+		{
+		  "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3li2unj7njk2h",
+		  "cid": "bafyreieky52bekgu7hwcbd4f5j6kifl2dpdafngoxwgspfkrq7emhy55je",
+		  "value": {
+			"$type": "app.bsky.graph.follow",
+			"subject": "did:plc:lnwaez6y2snt7jh2tbmktgkg",
+			"createdAt": "2025-02-13T14:12:45.664Z"
+		  }
+		}
+		{
+		  "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lhvhkp7cjz2t",
+		  "cid": "bafyreic34rqons4t6m5ljmjb2menrj7ovcxf5ybocmzpjicw62yigx5i4m",
+		  "value": {
+			"$type": "app.bsky.graph.follow",
+			"subject": "did:plc:apkhfnhhbxsei3ni7dkvyvan",
+			"createdAt": "2025-02-11T10:35:14.576Z"
+		  }
+		}
+	 *
+	 */
+
+	/*
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWING + " tbody" );
+	const content						= ( idx, user ) => `<tr class="align-top">
+											<td>${idx}</td>
+											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
+											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
+											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
+											</tr>`;
+	// Clear the current content.
+	$tableBody.empty();
+	// Add data.
+	for ( index in data ) {
+		htmlContent						= content( Number(index)+1, data[index] );
+		$tableBody.append( htmlContent );
+	}
+	 */
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -576,10 +729,57 @@ export function htmlRenderUserFollows( data ) {
 export function htmlRenderUserFollowers( data ) {
 	const STEP_NAME						= "htmlRenderUserFollowers";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+	/*
+	 * Received an array of:
+		{
+			"did": "did:plc:szrzcynttcpksg3uprql4evb",
+			"handle": "kurita31.bsky.social",
+			"displayName": "",
+			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:szrzcynttcpksg3uprql4evb/bafkreiaqdsyld6gg53iphiclqdy2t6jbhspsch4q5ixozit634cjek46ji@jpeg",
+			"labels": [],
+			"createdAt": "2025-01-22T16:02:02.644Z",
+			"indexedAt": "2025-01-22T16:02:02.644Z"
+		}
+		{
+			"did": "did:plc:oqremqjfrq52vnym2333s2sa",
+			"handle": "zfegn.bsky.social",
+			"displayName": "Georgiana",
+			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oqremqjfrq52vnym2333s2sa/bafkreiexoeghmufsscm7cmsfdhqt3v3arze4b7ipf66as7khso3d6vumau@jpeg",
+			"labels": [],
+			"createdAt": "2025-02-11T04:14:39.442Z",
+			"description": "♍ 20 🪑 interior design\nmy private content ⇓\nhttps://linksly.site/onlyfans/zfegn",
+			"indexedAt": "2025-02-11T20:46:33.945Z"
+		}
+		{
+			"did": "did:plc:lp7gmgrjmmsgdfvc2sgpkzyc",
+			"handle": "pablosciuto.bsky.social",
+			"displayName": "Pablo Sciuto",
+			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:lp7gmgrjmmsgdfvc2sgpkzyc/bafkreich3qinnarbtq32ixyvau76opjaq2w2qwskmfl2sts54y2tvlrljm@jpeg",
+			"labels": [],
+			"createdAt": "2024-09-06T22:22:57.027Z",
+			"description": "Músico y escritor hispano-uruguayo.\nhttps://linktr.ee/pablosciuto",
+			"indexedAt": "2025-02-12T10:39:24.844Z"
+		}
+	 *
+	 */
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWERS + " tbody" );
+	const content						= ( idx, user ) => `<tr class="align-top">
+											<td>${idx}</td>
+											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
+											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
+											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
+											</tr>`;
+	// Clear the current content.
+	$tableBody.empty();
+	// Add data.
+	for ( index in data ) {
+		htmlContent						= content( Number(index)+1, data[index] );
+		$tableBody.append( htmlContent );
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -588,10 +788,25 @@ export function htmlRenderUserFollowers( data ) {
 export function htmlRenderUserBlocks( data ) {
 	const STEP_NAME						= "htmlRenderUserBlocks";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableBody						= $( DIV_JQ_TABLE_BLOCKING + " tbody" );
+	const content						= ( idx, user ) => `<tr class="align-top">
+											<td>${idx}</td>
+											<td>${user.viewer.muted}</td>
+											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
+											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
+											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
+											</tr>`;
+	// Clear the current content.
+	$tableBody.empty();
+	// Add data.
+	for ( index in data ) {
+		htmlContent						= content( Number(index)+1, data[index] );
+		$tableBody.append( htmlContent );
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -600,10 +815,25 @@ export function htmlRenderUserBlocks( data ) {
 export function htmlRenderUserMutes( data ) {
 	const STEP_NAME						= "htmlRenderUserMutes";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableBody						= $( DIV_JQ_TABLE_MUTING + " tbody" );
+	const content						= ( idx, user ) => `<tr class="align-top">
+											<td>${idx}</td>
+											<td>${user.viewer.blockedBy}</td>
+											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
+											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
+											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
+											</tr>`;
+	// Clear the current content.
+	$tableBody.empty();
+	// Add data.
+	for ( index in data ) {
+		htmlContent						= content( Number(index)+1, data[index] );
+		$tableBody.append( htmlContent );
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -612,10 +842,29 @@ export function htmlRenderUserMutes( data ) {
 export function htmlRenderUserLists( data ) {
 	const STEP_NAME						= "htmlRenderUserLists";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableBody						= $( DIV_JQ_TABLE_MY_LISTS + " tbody" );
+	const content						= ( idx, list, id ) => `<tr class="align-top">
+											<td>${idx}</td>
+											<td>${list.listItemCount}</td>
+											<td><a href="https://bsky.app/profile/${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}">${list.name}</a></td>
+											<td>${(list.description) ? list.description.substring(0, DESC_MAX_CHARS) : ""}</td>
+											<td>${new Date(list.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
+											</tr>`;
+	// Clear the current content.
+	$tableBody.empty();
+	// Add data.
+	let item							= null;
+	let id								= null;
+	for ( index in data ) {
+		item							= data[index];
+		id								= item.uri.split("/")[4];
+		htmlContent						= content( Number(index)+1, item, id );
+		$tableBody.append( htmlContent );
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -624,7 +873,6 @@ export function htmlRenderUserLists( data ) {
 export function htmlRenderTrendingTopics( data ) {
 	const STEP_NAME						= "htmlRenderTrendingTopics";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
@@ -633,7 +881,11 @@ export function htmlRenderTrendingTopics( data ) {
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
-export function showStepInfo( step, message ) {
+export function clearStepInfo() {
+	showStepInfo();
+}
+
+export function showStepInfo( step=null, message=null ) {
 	if ( !COMMON.isNullOrEmpty( message ) ) {
 		$( DIV_JQ_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
 	} else {

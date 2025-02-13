@@ -20,6 +20,8 @@ import * as APICall						from "./modules/APICall.js";
 import * as DB							from "./modules/BrowserDB.js";
 // Common GEO functions
 import * as GEO							from "./modules/GEO.js";
+// Common HTML functions
+import * as HTML						from "./modules/HTML.js";
 // Common Crypto functions
 import * as Crypto						from "./modules/OAuth2/Crypto.js";
 
@@ -97,6 +99,11 @@ async function startUp() {
 	await DB.checkCryptoKeyInDB();
 
 	// Perform dashboard operations
+	// ------------------------------------
+
+	// El reloj
+	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
+	if (DEBUG) console.debug( PREFIX + "Clock started" );
 
 	// Geolocation Information
 	let geolocationInfo					= await GEO.getGeolocationInformation();
