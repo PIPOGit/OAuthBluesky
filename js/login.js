@@ -124,10 +124,10 @@ async function startUp() {
 	await DB.checkCryptoKeyInDB(comeFromLogout);
 
 	// Update the "user_handle" field
-	checkUserHandle();
+	let gotUserHandle					= checkUserHandle();
 
 	// BS Toast Test
-	if (!comeFromLogout) {
+	if (gotUserHandle && !comeFromLogout) {
 		$( "#toast-sample > .toast-body" ).html( `Welcome back, ${BSKY.user.userHandle}!` );
 		bootstrap.Toast.getOrCreateInstance( "#toast-sample" ).show();
 	}
@@ -432,6 +432,7 @@ function checkUserHandle() {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Update the "user handle" field with the value in localStorage, if any.
+	let previous						= false;
 	BSKY.user.userHandle				= localStorage.getItem(LSKEYS.user.handle) || null;
 	if ( BSKY.user.userHandle && !COMMON.isNullOrEmpty(BSKY.user.userHandle) && !COMMON.areEquals(BSKY.user.userHandle.toLowerCase(), "null") ) {
 		let $input						= $( "#user_handle" );
@@ -439,11 +440,13 @@ function checkUserHandle() {
 			$input.val( BSKY.user.userHandle );
 			if (DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${BSKY.user.userHandle}"` );
 		}
+		previous						= true;
 	} else {
 		localStorage.removeItem(LSKEYS.user.handle)
 	}
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
+	return previous;
 }
 
 

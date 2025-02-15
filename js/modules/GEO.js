@@ -56,7 +56,8 @@ export async function getGeolocationInformation() {
 	let url								= null;
 	let responseFromServer				= null;
 	let response						= {};
-	
+
+	/*
 	try {
 		root							= API.geo.myIPio.rootUrl;
 		endpoint						= API.geo.myIPio['ip.json'];
@@ -70,6 +71,7 @@ export async function getGeolocationInformation() {
 		// Show the error and update the HTML fields
 		// HTML.updateHTMLError(error);
 	}
+	*/
 
 	try {
 		root							= API.geo.bdc.rootUrl;

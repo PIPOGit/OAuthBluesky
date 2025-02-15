@@ -5,10 +5,7 @@
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.0.0",
 		"refresh_dashboard": 15,
-		"refresh_static": 60
-	},
-	"localhost": {
-		"root": "http://localhost/bluesky/index.html"
+		"refresh_static": 300
 	},
 	"bluesky": {
 		"token_expiration_threshold": 10

@@ -14,7 +14,7 @@ import CONFIGURATION					from "../data/config.json" with { type: "json" };
 // Common functions
 import * as COMMON						from "./common.functions.js";
 // Common Crypto functions
-import * as Crypto						from "./OAuth2/Crypto.js";
+import * as CRYPT						from "./OAuth2/Crypt.js";
 // IDB functions
 import { openDB, deleteDB }				from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
@@ -159,7 +159,7 @@ export async function del(key)		{ return await database.delete(DB_JWK_TABLENAME,
 export async function checkCryptoKeyInDB(comeFromLogout=false) {
 	const STEP_NAME						= "checkCryptoKeyInDB";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[KEY=${Crypto.JWK_DB_KEY}] [DB=${DB_NAME}] [TABLENAME=${DB_JWK_TABLENAME}]` );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[KEY=${CRYPT.JWK_DB_KEY}] [DB=${DB_NAME}] [TABLENAME=${DB_JWK_TABLENAME}]` );
 
 	// If we come from LOGOUT, we must not create a new crypto key and/or store it in the database.
 	if (comeFromLogout) {
@@ -174,22 +174,22 @@ export async function checkCryptoKeyInDB(comeFromLogout=false) {
 	await connect();
 	if (DEBUG) console.debug( PREFIX + `Initialized the database.` );
 
-	if (DEBUG) console.debug( PREFIX + `Checking whether the Crypto Key exists in the database:`, Crypto.JWK_DB_KEY );
-	let savedCryptoKey					= await get( Crypto.JWK_DB_KEY );
+	if (DEBUG) console.debug( PREFIX + `Checking whether the Crypto Key exists in the database:`, CRYPT.JWK_DB_KEY );
+	let savedCryptoKey					= await get( CRYPT.JWK_DB_KEY );
 	
 	if ( COMMON.isNullOrEmpty(savedCryptoKey) ) {
 		if (DEBUG) console.debug( PREFIX + `The Crypto Key DOES NOT exists in the database. Create a new key and store it in the DB:` );
 
 		// Create (received a cryptoKey and a jwk )
-		let cryptKey					= await Crypto.generateCryptoKey();
+		let cryptKey					= await CRYPT.generateCryptoKey();
 		if (DEBUG) console.debug( PREFIX + `+ Got a crypto key:`, cryptKey );
 
 		// Save
-		savedCryptoKey					= await put( Crypto.JWK_DB_KEY, cryptKey );
+		savedCryptoKey					= await put( CRYPT.JWK_DB_KEY, cryptKey );
 		if (DEBUG) console.debug( PREFIX + `Stored the Crypto Key in the database:`, savedCryptoKey );
 
 		// Check
-		savedCryptoKey					= await get( Crypto.JWK_DB_KEY );
+		savedCryptoKey					= await get( CRYPT.JWK_DB_KEY );
 		if (DEBUG) console.debug( PREFIX + `+ Checked:`, savedCryptoKey );
 	} else {
 		if (DEBUG) console.debug( PREFIX + `The Crypto Key exists in the database:`, savedCryptoKey );
@@ -209,7 +209,7 @@ export async function deleteDatabase() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_THEN					= `${PREFIX}[THEN] `;
 	const PREFIX_CATCH					= `${PREFIX}[CATCH] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[KEY=${Crypto.JWK_DB_KEY}] [DB=${DB_NAME}] [TABLENAME=${DB_JWK_TABLENAME}]` );
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[KEY=${CRYPT.JWK_DB_KEY}] [DB=${DB_NAME}] [TABLENAME=${DB_JWK_TABLENAME}]` );
 
 	// Delete values
 	window.BSKY.data.cryptoKey			= null;

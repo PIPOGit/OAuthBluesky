@@ -47,6 +47,11 @@ const DESC_MAX_CHARS					= 60;
 // HTML normal DIVs/Placeholders constants
 const DIV_DATE_TIME						= "currentDateTime";
 const DIV_TAB_NOTIS_BADGE				= "pill-notifications-badge";
+const DIV_TAB_BLOCKS_BADGE				= "pill-blocking-badge";
+const DIV_TAB_FOLLOWERS_BADGE			= "pill-followers-badge";
+const DIV_TAB_FOLLOWING_BADGE			= "pill-following-badge";
+const DIV_TAB_MUTED_BADGE				= "pill-muting-badge";
+const DIV_TAB_MY_LISTS_BADGE			= "pill-my-lists-badge";
 const DIV_TOAST							= "toast-followers-change";
 const DIV_PANEL_ERROR					= "panel-error";
 const DIV_PANEL_INFO					= "panel-info";
@@ -59,6 +64,7 @@ const DIV_TABLE_BLOCKING				= "table-blocking";
 const DIV_TABLE_FOLLOWING				= "table-following";
 const DIV_TABLE_FOLLOWERS				= "table-followers";
 
+
 // HTML jQuery DIVs/Placeholders constants
 const DIV_JQ_ERROR						= "#error";
 const DIV_JQ_ERROR_DESCRIPTION			= "#errorDescription";
@@ -69,9 +75,12 @@ const DIV_JQ_CODE						= "#code";
 const DIV_JQ_DPOP_NONCE					= "#dpopNonce";
 const DIV_JQ_DATE_TIME					= `#${DIV_DATE_TIME}`;
 const DIV_JQ_NOTIFICATIONS				= "#notifications";
-const DIV_JQ_NOTIFICATIONS_JSON			= "#notifications_json";
-const DIV_JQ_NOTIFICATIONS_NUMBER		= "#notificationsNumber";
 const DIV_JQ_TAB_NOTIS_BADGE			= `#${DIV_TAB_NOTIS_BADGE}`;
+const DIV_JQ_TAB_BLOCKS_BADGE			= `#${DIV_TAB_BLOCKS_BADGE}`;
+const DIV_JQ_TAB_FOLLOWERS_BADGE		= `#${DIV_TAB_FOLLOWERS_BADGE}`;
+const DIV_JQ_TAB_FOLLOWING_BADGE		= `#${DIV_TAB_FOLLOWING_BADGE}`;
+const DIV_JQ_TAB_MUTED_BADGE			= `#${DIV_TAB_MUTED_BADGE}`;
+const DIV_JQ_TAB_MY_LISTS_BADGE			= `#${DIV_TAB_MY_LISTS_BADGE}`;
 const DIV_JQ_ACCESS_TOKEN_JWT			= "#access_token_jwt";
 const DIV_JQ_ACCESS_TOKEN_JSON			= "#access_token_json";
 const DIV_JQ_PROFILE_AVATAR				= "#profile-avatar";
@@ -107,147 +116,6 @@ let expiration							= 0;
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-async function htmlRenderNotification( notification, userAccessToken, clientId, accessTokenHash ) {
-	const STEP_NAME						= "htmlRenderNotification";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-
-	// Vamos preparando el HTML para la notificación.
-	let jqRoot							= $( DIV_JQ_NOTIFICATIONS );
-
-	let cid								= notification.cid;
-	let uri								= notification.uri;
-	let isRead							= notification.isRead;
-	let notiReason						= notification.reason;
-	let when							= new Date( notification.indexedAt );
-
-	let author							= notification.author;
-	let authorHandle					= author.handle;
-	let authorName						= author.displayName || author.handle;
-	let authorDid						= author.did;
-	let authorDescription				= author.description;
-	let authorAvatar					= author.avatar;
-	let authorURL						= "https://bsky.app/profile/" + authorHandle;
-
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+notiReason+"] ["+authorName+"] ["+when.toLocaleString()+"]" );
-
-	// Actualizamos el HTML con el autor.
-	let html							= jqRoot.html() + `<div id="notification-${cid}" name="notification${cid}" class="notification">`;
-	html								+= `<div class="header">`;
-	html								+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
-	html								+= `  <a href="${authorURL}"><strong>${authorName}</strong></a>`;
-	html								+= `</div>`;
-	html								+= `<ul style="margin: 0px 0px 8px 0px">`;
-	html								+= `  <li class="notificacion-data">Handle: <strong>${authorHandle}</strong></li>`;
-	html								+= `  <li class="notificacion-data">Did: <strong>${authorDid}</strong></li>`;
-	html								+= `  <li class="notificacion-data">Description: <strong>${authorDescription}</strong></li>`;
-
-	if (DEBUG) console.debug(PREFIX + "Updating Notification:");
-	if (DEBUG) console.debug(PREFIX + "+ notification:", notification);
-	if (DEBUG) console.debug(PREFIX + "+ isRead:", isRead);
-	if (DEBUG) console.debug(PREFIX + "+ when:", when.toLocaleString() );
-	if (DEBUG) console.debug(PREFIX + "+ Author:", authorName);
-	if (DEBUG) console.debug(PREFIX + "  > handle:", authorHandle);
-	if (DEBUG) console.debug(PREFIX + "  > did:", authorDid);
-	if (DEBUG) console.debug(PREFIX + "  > description:", authorDescription);
-	if (DEBUG) console.debug(PREFIX + "  > avatar:", authorAvatar);
-	if (DEBUG) console.debug(PREFIX + "  > URL:", authorURL);
-
-	/*
-	 * Possible reasons:
-		"reason": "follow",
-		"reason": "like",
-		"reason": "reply",
-		"reason": "repost",
-	*/
-	if (DEBUG) console.debug(PREFIX + "+ Reason:", notiReason);
-
-	if ( COMMON.areEquals( notiReason, "follow" ) ) {
-		// It's a "follow" notification.
-		html							+= `  <li class="notificacion-data"><strong>${notiReason} you</strong></li>`;
-	} else {
-		// It's about an action on a post.
-		let notiURI						= "";
-		if ( COMMON.areEquals( notiReason, "reply" ) ) {
-			notiURI						= notification.record.reply.parent.uri;
-		} else {
-			notiURI						= notification.record.subject.uri;
-		}
-		let notiURISplitted				= notiURI.substring(5).split("/")
-		let notiDID						= notiURISplitted[0];
-		let notiBluitID					= notiURISplitted[2];
-		let userProfileURL				= "https://bsky.app/profile/" + notiDID + "/post/" + notiBluitID;
-		if (DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
-		
-		// TEST: Get post
-		let bluitUrl					= API.bluesky.XRPC.public + API.bluesky.XRPC.api.public.getPosts + "?uris=" + encodeURIComponent( notiURI );
-		let headers						= null;
-		let fetchOptions				= null;
-		let withAuthentication			= false;
-		if (withAuthentication) {
-			if (DEBUG) console.debug(PREFIX + "Testing to retrieve the bluit:");
-			if (DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
-
-			let dpopRequest				= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, clientId, userAccessToken, accessTokenHash, bluitUrl, BSKY.data.dpopNonce, APICall.HTML_GET);
-			let dpopProof				= await DPOP.createDPoPProof(dpopRequest)
-			if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-			headers						= {
-				'Authorization': `DPoP ${userAccessToken}`,
-				'DPoP': dpopProof,
-				'Accept': APICall.CONTENT_TYPE_JSON,
-				'DPoP-Nonce': dpopNonce
-			}
-			fetchOptions				= {
-				method: APICall.HTML_GET,
-				headers: headers
-			}
-		} else {
-			headers						= {
-				'Accept': APICall.CONTENT_TYPE_JSON,
-			}
-			fetchOptions				= {
-				method: APICall.HTML_GET,
-				headers: headers
-			}
-		}
-		if (DEBUG) console.debug(PREFIX + "+ withAuthentication:", withAuthentication);
-		if (DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
-		if (DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
-		if (DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-		let callResponse				= await APICall.makeAPICall( STEP_NAME, bluitUrl, fetchOptions )
-		if (DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
-		let bluits						= callResponse.body.posts;
-		if (DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
-		let bluit						= bluits[0];
-		if (DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
-
-		// Agregamos la info al html...
-		let referredText				= `Not detected yet for ${notiReason}!`;
-		switch ( notiReason.toLowerCase() ) {
-			case "like":
-				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
-				break;
-			case "reply":
-				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
-				break;
-			case "repost":
-				referredText			= `Not detected yet for ${notiReason}!`;
-				break;
-			default:
-				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
-		}
-		if (DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
-		html							+= `  <li class="notificacion-data">${notiReason} <a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}</li>`;
-	}
-	html								+= `</ul>`;
-
-	// Pintamos el HTML.
-	html								+= '</div>';
-	jqRoot.html( html );
-
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
-}
 
 
 /**********************************************************
@@ -263,10 +131,9 @@ export function clock() {
 	$( DIV_JQ_DATE_TIME ).val( now.toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS ) );
 }
 
-export function htmlRenderHighlight() {
+export function updateHighlight() {
 	$( DIV_JQ_ACCESS_TOKEN_JSON ).removeAttr('data-highlighted');
 	$( DIV_JQ_ACCESS_TOKEN_JWT ).removeAttr('data-highlighted');
-	$( DIV_JQ_NOTIFICATIONS_JSON ).removeAttr('data-highlighted');
 	hljs.highlightAll();
 }
 
@@ -428,17 +295,178 @@ export function updateUserDIDInfo() {
 	$linkDIDDocument.attr("href",  API.bluesky.profile.pld + BSKY.user.userDid);
 }
 
+
 /* --------------------------------------------------------
- * Notifications management.
+ * INFO Panel management.
  * -------------------------------------------------------- */
+export function clearStepInfo() {
+	showStepInfo();
+}
+
+export function showStepInfo( step=null, message=null ) {
+	if ( !COMMON.isNullOrEmpty( message ) ) {
+		if ( !COMMON.isNullOrEmpty( step ) ) {
+			$( DIV_JQ_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
+		} else {
+			$( DIV_JQ_PANEL_INFO_STEP ).html( `${message}` );
+		}
+	} else {
+		$( DIV_JQ_PANEL_INFO_STEP ).html( "&nbsp;" );
+	}
+}
+
+
+/* --------------------------------------------------------
+ * HTML Render: Notification.
+ * -------------------------------------------------------- */
+async function htmlRenderSingleNotification( notification, userAccessToken, clientId, accessTokenHash ) {
+	const STEP_NAME						= "htmlRenderSingleNotification";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+
+	// Vamos preparando el HTML para la notificación.
+	let jqRoot							= $( DIV_JQ_NOTIFICATIONS );
+
+	let cid								= notification.cid;
+	let uri								= notification.uri;
+	let isRead							= notification.isRead;
+	let notiReason						= notification.reason;
+	let when							= new Date( notification.indexedAt );
+
+	let author							= notification.author;
+	let authorHandle					= author.handle;
+	let authorName						= author.displayName || author.handle;
+	let authorDid						= author.did;
+	let authorDescription				= author.description;
+	let authorAvatar					= author.avatar;
+	let authorURL						= "https://bsky.app/profile/" + authorHandle;
+
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+notiReason+"] ["+authorName+"] ["+when.toLocaleString()+"]" );
+
+	// Actualizamos el HTML con el autor.
+	let html							= jqRoot.html() + `<div id="notification-${cid}" name="notification${cid}" class="notification">`;
+	html								+= `<div class="header">`;
+	html								+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
+	html								+= `  <a href="${authorURL}"><strong>${authorName}</strong></a>`;
+	html								+= `</div>`;
+	html								+= `<ul style="margin: 0px 0px 8px 0px">`;
+	html								+= `  <li class="notificacion-data">Handle: <strong>${authorHandle}</strong> (<i>Did: <strong>${authorDid}</strong></i>)</li>`;
+	// html								+= `  <li class="notificacion-data">Description: <strong>${authorDescription}</strong></li>`;
+
+	if (DEBUG) console.debug(PREFIX + "Updating Notification:");
+	if (DEBUG) console.debug(PREFIX + "+ notification:", notification);
+	if (DEBUG) console.debug(PREFIX + "+ isRead:", isRead);
+	if (DEBUG) console.debug(PREFIX + "+ when:", when.toLocaleString() );
+	if (DEBUG) console.debug(PREFIX + "+ Author:", authorName);
+	if (DEBUG) console.debug(PREFIX + "  > handle:", authorHandle);
+	if (DEBUG) console.debug(PREFIX + "  > did:", authorDid);
+	if (DEBUG) console.debug(PREFIX + "  > description:", authorDescription);
+	if (DEBUG) console.debug(PREFIX + "  > avatar:", authorAvatar);
+	if (DEBUG) console.debug(PREFIX + "  > URL:", authorURL);
+
+	/*
+	 * Possible reasons:
+		"reason": "follow",
+		"reason": "like",
+		"reason": "reply",
+		"reason": "repost",
+	*/
+	if (DEBUG) console.debug(PREFIX + "+ Reason:", notiReason);
+
+	if ( COMMON.areEquals( notiReason, "follow" ) ) {
+		// It's a "follow" notification.
+		html							+= `  <li class="notificacion-data"><strong>${notiReason} you</strong></li>`;
+	} else {
+		// It's about an action on a post.
+		let notiURI						= "";
+		if ( COMMON.areEquals( notiReason, "reply" ) ) {
+			notiURI						= notification.record.reply.parent.uri;
+		} else {
+			notiURI						= notification.record.subject.uri;
+		}
+		let notiURISplitted				= notiURI.substring(5).split("/")
+		let notiDID						= notiURISplitted[0];
+		let notiBluitID					= notiURISplitted[2];
+		let userProfileURL				= "https://bsky.app/profile/" + notiDID + "/post/" + notiBluitID;
+		if (DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
+		
+		// TEST: Get post
+		let bluitUrl					= API.bluesky.XRPC.public + API.bluesky.XRPC.api.public.getPosts + "?uris=" + encodeURIComponent( notiURI );
+		let headers						= null;
+		let fetchOptions				= null;
+		let withAuthentication			= false;
+		if (withAuthentication) {
+			if (DEBUG) console.debug(PREFIX + "Testing to retrieve the bluit:");
+			if (DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
+
+			let dpopRequest				= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, clientId, userAccessToken, accessTokenHash, bluitUrl, BSKY.data.dpopNonce, APICall.HTML_GET);
+			let dpopProof				= await DPOP.createDPoPProof(dpopRequest)
+			if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+			headers						= {
+				'Authorization': `DPoP ${userAccessToken}`,
+				'DPoP': dpopProof,
+				'Accept': APICall.CONTENT_TYPE_JSON,
+				'DPoP-Nonce': dpopNonce
+			}
+			fetchOptions				= {
+				method: APICall.HTML_GET,
+				headers: headers
+			}
+		} else {
+			headers						= {
+				'Accept': APICall.CONTENT_TYPE_JSON,
+			}
+			fetchOptions				= {
+				method: APICall.HTML_GET,
+				headers: headers
+			}
+		}
+		if (DEBUG) console.debug(PREFIX + "+ withAuthentication:", withAuthentication);
+		if (DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
+		if (DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
+		if (DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+		let callResponse				= await APICall.makeAPICall( STEP_NAME, bluitUrl, fetchOptions )
+		if (DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
+		let bluits						= callResponse.body.posts;
+		if (DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
+		let bluit						= bluits[0];
+		if (DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
+
+		// Agregamos la info al html...
+		let referredText				= `Not detected yet for ${notiReason}!`;
+		switch ( notiReason.toLowerCase() ) {
+			case "like":
+				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
+				break;
+			case "reply":
+				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
+				break;
+			case "repost":
+				referredText			= `Not detected yet for ${notiReason}!`;
+				break;
+			default:
+				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
+		}
+		if (DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
+		html							+= `  <li class="notificacion-data">${notiReason} <a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}</li>`;
+	}
+	html								+= `</ul>`;
+
+	// Pintamos el HTML.
+	html								+= '</div>';
+	jqRoot.html( html );
+
+	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+}
+
 export function htmlRenderNoNotifications() {
 	// Ponemos el badge a 0 y lo ocultamos
 	$( DIV_JQ_TAB_NOTIS_BADGE ).html(0);
 	COMMON.hide( DIV_TAB_NOTIS_BADGE );
 
 	// Limpiamos el "DIV" de las notis.
-	$( DIV_JQ_NOTIFICATIONS ).html( "" );
-	$( DIV_JQ_NOTIFICATIONS_JSON ).text( "{}" );
+	$( DIV_JQ_NOTIFICATIONS ).html( "No notifications found" );
 }
 
 export async function htmlRenderNotifications( notifications, userAccessToken, clientId, accessTokenHash ) {
@@ -474,9 +502,7 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 
 	let totalUnread						= unreadNotifications.length;
 	let currentUnread					= 0;
-	if ( totalUnread == 0) {
-		if (DEBUG) console.debug( PREFIX + "Currently, no UNREAD notifications." );
-	} else {
+	if ( totalUnread > 0) {
 		if (DEBUG) console.debug( PREFIX + "%cCurrently, " + totalUnread + " UNREAD notifications:", COMMON.CONSOLE_STYLE );
 		if (DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
 
@@ -488,21 +514,17 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 		for ( let key in unreadNotifications ) {
 			currentUnread++;
 			if (DEBUG) console.groupCollapsed( PREFIX + `[Noti ${currentUnread}/${totalUnread}]` );
-			await htmlRenderNotification( unreadNotifications[key], userAccessToken, clientId, accessTokenHash );
+			await htmlRenderSingleNotification( unreadNotifications[key], userAccessToken, clientId, accessTokenHash );
 			if (DEBUG) console.groupEnd(PREFIX);
 		}
 	}
 
-	// Update the HTML fields
-	$( DIV_JQ_NOTIFICATIONS_NUMBER ).text( "Pendientes de leer: " + unreadNotifications.length );
-	$( DIV_JQ_NOTIFICATIONS_JSON ).text( COMMON.prettyJson( notifications ) );
-	htmlRenderHighlight();
-
 	if (GROUP_DEBUG) console.groupEnd(PREFIX);
 }
 
+
 /* --------------------------------------------------------
- * Profile management.
+ * HTML Render: User Profile.
  * -------------------------------------------------------- */
 export function htmlRenderUserProfile( profile ) {
 	const STEP_NAME						= "htmlRenderUserProfile";
@@ -551,7 +573,6 @@ export function htmlRenderUserProfile( profile ) {
 		if ( (diffFollowing>0) || (diffFollowers>0)) {
 			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 			// El toast.
-			let toastDivID				= "toast-followers-change";
 			let $toast					= $( DIV_JQ_TOAST );
 			let $toastImg				= $( DIV_JQ_TOAST + " > .toast-header > img" );
 			let $toastBody				= $( DIV_JQ_TOAST + " > .toast-body" );
@@ -560,7 +581,7 @@ export function htmlRenderUserProfile( profile ) {
 
 			$toastImg.attr( "src", profile.avatar );
 			$toastBody.html( html );
-			$toast.show({"animation": true, "autohide": true, "delay": 1000});
+			$toast.show({"animation": true, "autohide": true, "delay": 5000});
 			// setTimeout(() => { $toast.hide({"animation": true}); }, delay );
 			// One way: bootstrap.Toast.getOrCreateInstance( "#toast-sample" ).show();
 			if (GROUP_DEBUG) console.groupEnd();
@@ -573,6 +594,30 @@ export function htmlRenderUserProfile( profile ) {
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
+
+/* --------------------------------------------------------
+ * HTML Render: User Follows.
+ * -------------------------------------------------------- */
+function htmlRenderSingleFollow( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleFollow";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+
+	if (DEBUG) console.debug( PREFIX + "USER:", user );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return html;
+}
+
 export function htmlRenderUserFollows( data ) {
 	const STEP_NAME						= "htmlRenderUserFollows";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -581,86 +626,34 @@ export function htmlRenderUserFollows( data ) {
 	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
 	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
 	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
-	// DIV_JQ_TABLE_FOLLOWING			= `#${DIV_TABLE_FOLLOWING}`;
 
-	/*
-	 * Received an array of:
-		{
-			"did": "did:plc:apkhfnhhbxsei3ni7dkvyvan",
-			"handle": "diazibao.bsky.social",
-			"displayName": "Toni Díaz",
-			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:apkhfnhhbxsei3ni7dkvyvan/bafkreiffiyebrfqwvyv5nh73wqokklraw4lumwnr55mtpgamabhduddmvi@jpeg",
-			"associated": {
-			"chat": {
-			"allowIncoming": "following"
-			}
-			},
-			"labels": [],
-			"createdAt": "2023-09-12T13:09:07.483Z",
-			"description": "«Mal español», pero «bueno worker». \nGuionista en '(P)ícaro', 'Hackers del cerebro', 'Operación Brooklyn', 'Lucía en la telaraña', 'Infierno de plata', 'Debates insólitos'. Profesor de escritura de documental en Scuola Holden. \nDe Madrid en Turín.",
-			"indexedAt": "2025-01-14T18:35:33.948Z"
-		}
-		{
-			"did": "did:plc:osg56mcvgaylhs2lqmeh4wkb",
-			"handle": "lamuertaviva.bsky.social",
-			"displayName": "LaMuertaViva",
-			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:osg56mcvgaylhs2lqmeh4wkb/bafkreifn76sltmraav52x5bdknhlr5u7iayxc2lh3hakgfgbakam6clz2q@jpeg",
-			"associated": {
-			"chat": {
-			"allowIncoming": "all"
-			}
-			},
-			"labels": [
-			{
-			"src": "did:plc:osg56mcvgaylhs2lqmeh4wkb",
-			"uri": "at://did:plc:osg56mcvgaylhs2lqmeh4wkb/app.bsky.actor.profile/self",
-			"cid": "bafyreidcm6ppu4eghtd245cory3iskvu4wwjkzvhqtrcw43ojp3udmtqyy",
-			"val": "!no-unauthenticated",
-			"cts": "1970-01-01T00:00:00.000Z"
-			}
-			],
-			"createdAt": "2023-09-01T12:36:43.053Z",
-			"description": "Resucitada y hambrienta. Loca de los gatos. Anarcofeminista. Cordosiesa por necesidad. Bitchstar. #endowarrior #crohn #ND She/Her LG(B)TIQ+ No me toques las palmas que me conozco.",
-			"indexedAt": "2025-01-21T01:24:05.644Z"
-		}
-		{
-			"did": "did:plc:sflxm2fxohaqpfgahgdlm7rl",
-			"handle": "surfdude29.ispost.ing",
-			"displayName": "surfdude29",
-			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:sflxm2fxohaqpfgahgdlm7rl/bafkreih2lr64l2a2nkofqfmak2izv66wlrmrvn6cr74jgorxxvurxllc2y@jpeg",
-			"associated": {
-			"chat": {
-			"allowIncoming": "all"
-			}
-			},
-			"labels": [],
-			"createdAt": "2023-08-24T20:02:12.400Z",
-			"description": "geriatric millennial nebula who reskeets a lot 💫 some original posts here and there, mostly on bsky nerdery but could be anything really ¯\\_(ツ)_/¯\n📍UK 🇬🇧",
-			"indexedAt": "2025-01-29T00:16:22.644Z"
-		}
-	 *
-	 */
 	let index							= 0;
 	let htmlContent						= null;
 	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWING + " tbody" );
-	const content						= ( idx, user ) => `<tr class="align-top">
-											<td>${idx}</td>
-											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
-											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
-											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
-											</tr>`;
+
 	// Clear the current content.
 	$tableBody.empty();
-	// Add data.
-	for ( index in data ) {
-		htmlContent						= content( Number(index)+1, data[index] );
-		$tableBody.append( htmlContent );
+
+	// Total
+	let total							= data.length;
+	$( DIV_JQ_TAB_FOLLOWING_BADGE ).html(total);
+	if ( total>0 ) {
+		// Add data.
+		data.forEach( user => {
+			index++;
+			htmlContent					= htmlRenderSingleFollow( index, user );
+			$tableBody.append( htmlContent );
+		});
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
+
+/* --------------------------------------------------------
+ * HTML Render: User Follows (from repository).
+ * -------------------------------------------------------- */
 export function htmlRenderUserFollowsFromRepo( data ) {
 	const STEP_NAME						= "htmlRenderUserFollowsFromRepo";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -726,63 +719,81 @@ export function htmlRenderUserFollowsFromRepo( data ) {
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
+
+/* --------------------------------------------------------
+ * HTML Render: User Followers.
+ * -------------------------------------------------------- */
+function htmlRenderSingleFollower( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleFollower";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+
+	if (DEBUG) console.debug( PREFIX + "USER:", user );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return html;
+}
+
 export function htmlRenderUserFollowers( data ) {
 	const STEP_NAME						= "htmlRenderUserFollowers";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	/*
-	 * Received an array of:
-		{
-			"did": "did:plc:szrzcynttcpksg3uprql4evb",
-			"handle": "kurita31.bsky.social",
-			"displayName": "",
-			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:szrzcynttcpksg3uprql4evb/bafkreiaqdsyld6gg53iphiclqdy2t6jbhspsch4q5ixozit634cjek46ji@jpeg",
-			"labels": [],
-			"createdAt": "2025-01-22T16:02:02.644Z",
-			"indexedAt": "2025-01-22T16:02:02.644Z"
-		}
-		{
-			"did": "did:plc:oqremqjfrq52vnym2333s2sa",
-			"handle": "zfegn.bsky.social",
-			"displayName": "Georgiana",
-			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:oqremqjfrq52vnym2333s2sa/bafkreiexoeghmufsscm7cmsfdhqt3v3arze4b7ipf66as7khso3d6vumau@jpeg",
-			"labels": [],
-			"createdAt": "2025-02-11T04:14:39.442Z",
-			"description": "♍ 20 🪑 interior design\nmy private content ⇓\nhttps://linksly.site/onlyfans/zfegn",
-			"indexedAt": "2025-02-11T20:46:33.945Z"
-		}
-		{
-			"did": "did:plc:lp7gmgrjmmsgdfvc2sgpkzyc",
-			"handle": "pablosciuto.bsky.social",
-			"displayName": "Pablo Sciuto",
-			"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:lp7gmgrjmmsgdfvc2sgpkzyc/bafkreich3qinnarbtq32ixyvau76opjaq2w2qwskmfl2sts54y2tvlrljm@jpeg",
-			"labels": [],
-			"createdAt": "2024-09-06T22:22:57.027Z",
-			"description": "Músico y escritor hispano-uruguayo.\nhttps://linktr.ee/pablosciuto",
-			"indexedAt": "2025-02-12T10:39:24.844Z"
-		}
-	 *
-	 */
 	let index							= 0;
 	let htmlContent						= null;
 	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWERS + " tbody" );
-	const content						= ( idx, user ) => `<tr class="align-top">
-											<td>${idx}</td>
-											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
-											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
-											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
-											</tr>`;
+
 	// Clear the current content.
 	$tableBody.empty();
-	// Add data.
-	for ( index in data ) {
-		htmlContent						= content( Number(index)+1, data[index] );
-		$tableBody.append( htmlContent );
+
+	// Total
+	let total							= data.length;
+	$( DIV_JQ_TAB_FOLLOWERS_BADGE ).html(total);
+	if ( total>0 ) {
+		// Add data.
+		data.forEach( user => {
+			index++;
+			htmlContent					= htmlRenderSingleFollower( index, user );
+			$tableBody.append( htmlContent );
+		});
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * HTML Render: User Blocks.
+ * -------------------------------------------------------- */
+function htmlRenderSingleBlock( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleBlock";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+
+	if (DEBUG) console.debug( PREFIX + "USER:", user );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td>${user.viewer.muted}</td>`;
+	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return html;
 }
 
 export function htmlRenderUserBlocks( data ) {
@@ -793,23 +804,49 @@ export function htmlRenderUserBlocks( data ) {
 	let index							= 0;
 	let htmlContent						= null;
 	let $tableBody						= $( DIV_JQ_TABLE_BLOCKING + " tbody" );
-	const content						= ( idx, user ) => `<tr class="align-top">
-											<td>${idx}</td>
-											<td>${user.viewer.muted}</td>
-											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
-											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
-											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
-											</tr>`;
+
 	// Clear the current content.
 	$tableBody.empty();
-	// Add data.
-	for ( index in data ) {
-		htmlContent						= content( Number(index)+1, data[index] );
-		$tableBody.append( htmlContent );
+
+	// Total
+	let total							= data.length;
+	$( DIV_JQ_TAB_BLOCKS_BADGE ).html(total);
+	if ( total>0 ) {
+		// Add data.
+		data.forEach( user => {
+			index++;
+			htmlContent					= htmlRenderSingleBlock( index, user );
+			$tableBody.append( htmlContent );
+		});
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * HTML Render: User Mutes.
+ * -------------------------------------------------------- */
+function htmlRenderSingleMute( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleMute";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+
+	if (DEBUG) console.debug( PREFIX + "USER:", user );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td>${user.viewer.blockedBy}</td>`;
+	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return html;
 }
 
 export function htmlRenderUserMutes( data ) {
@@ -820,23 +857,49 @@ export function htmlRenderUserMutes( data ) {
 	let index							= 0;
 	let htmlContent						= null;
 	let $tableBody						= $( DIV_JQ_TABLE_MUTING + " tbody" );
-	const content						= ( idx, user ) => `<tr class="align-top">
-											<td>${idx}</td>
-											<td>${user.viewer.blockedBy}</td>
-											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
-											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
-											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
-											</tr>`;
+
 	// Clear the current content.
 	$tableBody.empty();
-	// Add data.
-	for ( index in data ) {
-		htmlContent						= content( Number(index)+1, data[index] );
-		$tableBody.append( htmlContent );
+
+	// Total
+	let total							= data.length;
+	$( DIV_JQ_TAB_MUTED_BADGE ).html(total);
+	if ( total>0 ) {
+		// Add data.
+		data.forEach( user => {
+			index++;
+			htmlContent					= htmlRenderSingleMute( index, user );
+			$tableBody.append( htmlContent );
+		});
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * HTML Render: User Lists.
+ * -------------------------------------------------------- */
+function htmlRenderSingleList( idx, list, id ) {
+	const STEP_NAME						= "htmlRenderSingleList";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${idx}] [id=${id}]` );
+
+	if (DEBUG) console.debug( PREFIX + "LIST:", list );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td>${list.listItemCount}</td>`;
+	html								+= `<td><a href="https://bsky.app/profile/${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}">${list.name}</a></td>`;
+	html								+= `<td>${(list.description) ? list.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(list.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+	return html;
 }
 
 export function htmlRenderUserLists( data ) {
@@ -845,31 +908,34 @@ export function htmlRenderUserLists( data ) {
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let index							= 0;
+	let id								= null;
 	let htmlContent						= null;
 	let $tableBody						= $( DIV_JQ_TABLE_MY_LISTS + " tbody" );
-	const content						= ( idx, list, id ) => `<tr class="align-top">
-											<td>${idx}</td>
-											<td>${list.listItemCount}</td>
-											<td><a href="https://bsky.app/profile/${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}">${list.name}</a></td>
-											<td>${(list.description) ? list.description.substring(0, DESC_MAX_CHARS) : ""}</td>
-											<td>${new Date(list.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
-											</tr>`;
+
 	// Clear the current content.
 	$tableBody.empty();
-	// Add data.
-	let item							= null;
-	let id								= null;
-	for ( index in data ) {
-		item							= data[index];
-		id								= item.uri.split("/")[4];
-		htmlContent						= content( Number(index)+1, item, id );
-		$tableBody.append( htmlContent );
+
+	// Total
+	let total							= data.length;
+	$( DIV_JQ_TAB_MY_LISTS_BADGE ).html(total);
+	if ( total>0 ) {
+		// Add data.
+		data.forEach( list => {
+			index++;
+			id							= list.uri.split("/")[4];
+			htmlContent					= htmlRenderSingleList( index, list, id );
+			$tableBody.append( htmlContent );
+		});
 	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
 }
 
+
+/* --------------------------------------------------------
+ * HTML Render: Trending Topics.
+ * -------------------------------------------------------- */
 export function htmlRenderTrendingTopics( data ) {
 	const STEP_NAME						= "htmlRenderTrendingTopics";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -879,17 +945,5 @@ export function htmlRenderTrendingTopics( data ) {
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
-}
-
-export function clearStepInfo() {
-	showStepInfo();
-}
-
-export function showStepInfo( step=null, message=null ) {
-	if ( !COMMON.isNullOrEmpty( message ) ) {
-		$( DIV_JQ_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
-	} else {
-		$( DIV_JQ_PANEL_INFO_STEP ).html( "&nbsp;" );
-	}
 }
 

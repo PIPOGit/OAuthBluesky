@@ -10,7 +10,7 @@ import CONFIGURATION					from "../data/config.json" with { type: "json" };
 // Common functions
 import * as COMMON						from "./common.functions.js";
 // Common Crypto functions
-import * as Crypto						from "./OAuth2/Crypto.js";
+import * as CRYPT						from "./OAuth2/Crypt.js";
 // Common UUID functions
 import * as UUID						from "./OAuth2/UUID.js";
 
@@ -68,7 +68,7 @@ export function base64urlencode(str) {
 
 // Return the base64-urlencoded sha256 hash for the PKCE challenge
 export async function pkceChallengeFromVerifier(v) {
-    let hashed							= await Crypto.sha256(v);
+    let hashed							= await CRYPT.sha256(v);
     return base64urlencode(hashed);
 }
 

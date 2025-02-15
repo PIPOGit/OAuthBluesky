@@ -25,7 +25,7 @@ import * as HTML						from "./modules/HTML.js";
 // Common OAuth2 functions
 import * as OAuth2						from "./modules/OAuth2.js";
 // Common Crypto functions
-import * as Crypto						from "./modules/OAuth2/Crypto.js";
+import * as CRYPT						from "./modules/OAuth2/Crypt.js";
 // Common JWT functions
 import * as JWT							from "./modules/OAuth2/JWT.js";
 
@@ -817,7 +817,7 @@ function postProcessAccessToken() {
 
 	// Update HTML fields
 	HTML.updateUserAccessToken(APP_CLIENT_ID, BSKY.data.userAccessToken);
-	HTML.htmlRenderHighlight();
+	HTML.updateHighlight();
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -908,7 +908,7 @@ async function validateAccessToken() {
 			if (DEBUG) console.debug(PREFIX_AFTER + "userAccessToken:", BSKY.data.userAccessToken);
 
 			// Let's create also the access token HASH...
-			BSKY.data.accessTokenHash	= await Crypto.createHash(BSKY.data.userAccessToken, true);
+			BSKY.data.accessTokenHash	= await CRYPT.createHash(BSKY.data.userAccessToken, true);
 			if (DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", BSKY.data.accessTokenHash);
 			if (GROUP_DEBUG) console.groupEnd();
 		}

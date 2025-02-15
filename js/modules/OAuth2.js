@@ -194,7 +194,8 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 		let delay					= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
 
 		$toastBody.html( html );
-		$toast.show({"animation": true, "autohide": true, "delay": 1000});
+		// $toast.show({"animation": true, "autohide": true, "delay": 3000});
+		bootstrap.Toast.getOrCreateInstance( `#${toastDivID}` ).show();
 		// Update the time...
 		// TODO: A verlo... setTimeout(() => { $toastBodySpan.val( $toastBodySpan ); }, delay );
 		// setTimeout(() => { $toast.hide({"animation": true}); }, delay );

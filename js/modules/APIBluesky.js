@@ -16,7 +16,7 @@ import * as APICall						from "./APICall.js";
 // Common HTML functions
 import * as HTML						from "./HTML.js";
 // Common Crypto functions
-import * as Crypto						from "./OAuth2/Crypto.js";
+import * as CRYPT						from "./OAuth2/Crypt.js";
 // Common DPOP functions
 import * as DPOP						from "./OAuth2/dpopProof.js";
 // Common JWT functions
@@ -331,7 +331,7 @@ export async function refreshAccessToken() {
 	if (DEBUG) console.debug(PREFIX_AFTER + "userRefreshToken:", BSKY.data.userRefreshToken);
 
 	// Let's create also the access token HASH...
-	BSKY.data.accessTokenHash			= await Crypto.createHash(BSKY.data.userAccessToken, true);
+	BSKY.data.accessTokenHash			= await CRYPT.createHash(BSKY.data.userAccessToken, true);
 	if (DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.accessTokenHash:", BSKY.data.accessTokenHash);
 	if (DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
 	if (GROUP_DEBUG) console.groupEnd();

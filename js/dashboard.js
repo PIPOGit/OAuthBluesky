@@ -22,8 +22,6 @@ import * as DB							from "./modules/BrowserDB.js";
 import * as GEO							from "./modules/GEO.js";
 // Common HTML functions
 import * as HTML						from "./modules/HTML.js";
-// Common Crypto functions
-import * as Crypto						from "./modules/OAuth2/Crypto.js";
 
 
 /**********************************************************
@@ -102,17 +100,30 @@ async function startUp() {
 	// ------------------------------------
 
 	// El reloj
+	// ------------------------------------
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
 	if (DEBUG) console.debug( PREFIX + "Clock started" );
 
 	// Geolocation Information
+	// ------------------------------------
 	let geolocationInfo					= await GEO.getGeolocationInformation();
 	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
 
 	// Save the info
 	BSKY.user.geolocation				= geolocationInfo;
 
+	// Geolocation Update
+	let where							= BSKY.user.geolocation.bdc.localityInfo.administrative;
+	let place							= where[where.length-1];
+	$( "#currentGeolocation" ).val( place.name );
+
+	// La versión.
+	// ------------------------------------
+	$( "#version > #app_name" ).html( CONFIGURATION.global.appName );
+	$( "#version > #app_version" ).html( CONFIGURATION.global.appVersion );
+
 	// The "context".
+	// ------------------------------------
 	BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);
 
 	if (DEBUG) console.groupEnd();

@@ -12,7 +12,7 @@ import * as TYPES					from "../common.types.js";
 // Common Base64 functions
 import * as Base64					from "./Base64Url.js";
 // Common Crypto functions
-import * as Crypto					from "./Crypto.js";
+import * as CRYPT					from "./Crypt.js";
 // Common UUID functions
 import * as UUID					from "./UUID.js";
 // Common JWT functions
@@ -52,7 +52,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
     // ------------------------------------------
     let dpopProofHeader = {
         typ: DPoP_HEADER_TYPE,
-        alg: Crypto.KEY_ALGORITM,
+        alg: CRYPT.KEY_ALGORITM,
         jwk: jwk
     };
 	if (DEBUG) console.debug( PREFIX + "dpopProofHeader:", COMMON.prettyJson( dpopProofHeader ) );
@@ -86,7 +86,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
     ].join(".");
 
     // + Sign
-    let signatureAsBase64 = await Crypto.sign(privateKey, partialToken)
+    let signatureAsBase64 = await CRYPT.sign(privateKey, partialToken)
 
 
     // The DPoP-Proof

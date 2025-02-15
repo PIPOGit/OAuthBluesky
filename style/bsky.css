@@ -1,7 +1,6 @@
 /* ********************************************************
  * IMPORTs externos
  * ********************************************************/
-@import url("bsky.botonera.css");		/* Para la botonera */
 @import url("bsky.error.css");			/* Todo lo relacionado con los errores. */
 @import url("bsky.tables.css");			/* Las tablas */
 @import url("bsky.tabs.css");			/* Las tabs y los paneles */
@@ -17,8 +16,10 @@
  * El :root pseudo-element, para las variables.
  * ********************************************************/
 :root {
-  /* Global root panel width. */
-  --panel-root-width: 70%;
+
+  /* Heights. */
+  --page-height: 640px;
+  --table-height: 600px;
 
   /* Normal panels. */
   --panel-border-size: 1px;
@@ -35,21 +36,9 @@
  * ********************************************************/
 /* html { */
 body {
-  /* Base styles go here */
   font: 16px/1.5; Verdana, Arial, sans-serif;
   margin: auto;
-  /* width: var(--panel-root-width); */
-  /* padding: 40px 40px; */
   background-color: white;
-}
-
-
-/* ********************************************************
- * El panel global.
- * ********************************************************/
-.theme-root {
-  border: var(--panel-border-size) solid var(--panel-border-color);
-  background-color: azure;
 }
 
 
@@ -86,3 +75,7 @@ body {
 }
 
 
+#version {
+  font-size: smaller;
+  border-top: 1px solid black;
+}

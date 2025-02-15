@@ -52,7 +52,11 @@ export async function generate() {
 }
 
 export function generateRandomState() {
-	return self.crypto.randomUUID();
+    if (self?.crypto?.randomUUID) {
+		return self.crypto.randomUUID();
+    } else {
+        console.error("self.crypto not available");
+    }
 }
 
 export function generateRandomCodeVerifier() {

@@ -10,7 +10,7 @@ import * as COMMON					from "../common.functions.js";
 // Common Base64 functions
 import * as Base64					from "./Base64Url.js";
 // Common Crypto functions
-import * as Crypto					from "./Crypto.js";
+import * as CRYPT					from "./Crypt.js";
 
 
 /**********************************************************
@@ -51,7 +51,7 @@ export async function create(privateKey, header, payload) {
     ].join(".");
 
     const messageAsUint8Array = Base64.utf8ToUint8Array(partialToken);
-    var signatureAsBase64 = await Crypto.Sign(privateKey, messageAsUint8Array);
+    var signatureAsBase64 = await CRYPT.Sign(privateKey, messageAsUint8Array);
     var token = `${partialToken}.${signatureAsBase64}`;
 
     return token;        

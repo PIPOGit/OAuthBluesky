@@ -1,0 +1,19 @@
+/* ********************************************************
+ * Dashboard page
+ * ********************************************************/
+.root-panel {
+  height: var(--page-height);
+}
+.left-panel {
+	border-right: 4px solid navy;
+	background-color: azure;
+}
+.right-panel {
+	background-color: #f8f8f8;
+}
+.vh-75 {
+	height: 75vh !important;
+}
+.vh-25 {
+	height: 25vh !important;
+}
