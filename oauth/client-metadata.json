@@ -5,7 +5,7 @@
 		"authorization_code",
 		"refresh_token"
 	],
-	"scope": "atproto transition:generic transition:chat.bsky openid",
+	"scope": "atproto transition:generic transition:chat.bsky",
 	"response_types": [
 		"code id_token",
 		"code"
