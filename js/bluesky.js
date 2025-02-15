@@ -152,6 +152,12 @@ async function startUp() {
 		ignoreUnescapedHTML: true
 	});
 
+	// La versión.
+	// ------------------------------------
+	$( "#appName" ).html( CONFIGURATION.global.appName );
+	$( "#version > #app_name" ).html( CONFIGURATION.global.appName );
+	$( "#version > #app_version" ).html( CONFIGURATION.global.appVersion );
+
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (DEBUG) console.groupEnd();
 }
@@ -708,51 +714,26 @@ async function getTheTrendingTopics() {
 	let data							= {};
 	data.topics							= {};
 	data.suggested						= {};
-	let allData							= {};
-	allData.topics						= [];
-	allData.suggested					= [];
-	let acumulado						= 0;
 	let subTotal						= 0;
-	let n								= 0;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
-	do {
-		n++;
-		// Retrieve the Trending Topics
-		// ------------------------------------------
-		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveTrendingTopics", APIBluesky.retrieveTrendingTopics, cursor );
-		if (PREFIX_ALL) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
-		
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
-		if (DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
-		// Topics
-		data.topics						= apiCallResponse.topics;
-		subTotal						= data.topics.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Topics`, data.topics );
-		allData.topics.push(...data.topics);
-		acumulado						= allData.topics.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} Trending Topics - Topics`, allData.topics );
+	// Retrieve the Trending Topics
+	// ------------------------------------------
+	data								= await APIBluesky.tryAndCatch( "retrieveTrendingTopics", APIBluesky.retrieveTrendingTopics, cursor );
+	if (PREFIX_ALL) console.debug( PREFIX + `+ Current data:`, data );
 
-		// Suggested
-		data.suggested					= apiCallResponse.suggested;
-		subTotal						= data.suggested.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Suggested`, data.suggested );
-		allData.suggested.push(...data.suggested);
-		acumulado						= allData.suggested.length;
-		if (DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} Trending Topics - Suggested`, allData.suggested );
+	// Topics
+	subTotal							= data.topics.length;
+	if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Topics`, data.topics );
 
-	} while ( hayCursor && (n<20) );
-	if (GROUP_DEBUG) console.groupEnd();
-
-	if (DEBUG) console.debug( PREFIX + `Detected Trending Topics`, allData );
+	// Suggested
+	subTotal							= data.suggested.length;
+	if (DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Suggested`, data.suggested );
 
 	// Save it.
-	BSKY.user.trendingTopics			= allData;
+	BSKY.user.trendingTopics			= data;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderTrendingTopics( allData );
+	HTML.htmlRenderTrendingTopics( data );
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
@@ -1070,11 +1051,14 @@ async function fnDashboard() {
 	// Los botones del userDid y el clientId Metadata
 	HTML.updateUserDIDInfo();
 
-	// "Constant data".
-	apiCallResponse						= await updateStaticInfo();
+	// Retrieve the user's profile to show
+	apiCallResponse						= await getTheUserProfile();
 
 	// Update the page.
 	apiCallResponse						= await updateDashboard();
+
+	// "Constant data".
+	apiCallResponse						= await updateStaticInfo();
 
 	// "Constant data".
 	const refreshStaticSeconds			= CONFIGURATION.global.refresh_static;

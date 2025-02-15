@@ -5,7 +5,7 @@
 		"authorization_code",
 		"refresh_token"
 	],
-	"scope": "atproto transition:generic transition:chat.bsky",
+	"scope": "atproto transition:generic transition:chat.bsky openid",
 	"response_types": [
 		"code id_token",
 		"code"
@@ -16,6 +16,6 @@
 	],
 	"dpop_bound_access_tokens": true,
 	"token_endpoint_auth_method": "none",
-	"client_name": "Madrilenyer Example Browser App",
+	"client_name": "BlueSkyAPP Browser App",
 	"client_uri": "https://oauthbluesky.onrender.com"
 }

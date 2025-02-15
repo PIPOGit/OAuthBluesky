@@ -117,11 +117,6 @@ async function startUp() {
 	let place							= where[where.length-1];
 	$( "#currentGeolocation" ).val( place.name );
 
-	// La versión.
-	// ------------------------------------
-	$( "#version > #app_name" ).html( CONFIGURATION.global.appName );
-	$( "#version > #app_version" ).html( CONFIGURATION.global.appVersion );
-
 	// The "context".
 	// ------------------------------------
 	BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);

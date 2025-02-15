@@ -103,8 +103,11 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 		// Check if it's a "controlled error".
 		if ( error.hasOwnProperty("step") ) {
 			// Check if the error is due to a different dpop-nonce in step 12...
-			let sameSteps					= COMMON.areEquals(error.step, currentStep);
-			let distinctDPoPNonce			= !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived);
+			let sameSteps				= COMMON.areEquals(error.step, currentStep);
+			let distinctDPoPNonce		= !COMMON.areEquals(BSKY.data.dpopNonceUsed, BSKY.data.dpopNonceReceived);
+			// Puede venir también un: "{"error":"InternalServerError","message":"Internal Server Error"}"
+			let serverError				= COMMON.areEquals(error.json.message, "Internal Server Error");
+
 			if ( sameSteps && distinctDPoPNonce) {
 				// Show the error and update the HTML fields
 				HTML.updateHTMLError(error, false);
@@ -129,6 +132,12 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 						if (DEBUG) console.debug( PREFIX + "-- END" );
 						if (GROUP_DEBUG) console.groupEnd();
 						await fnLogout();
+					} else if ( ( error.status==502 )								// Internal Server Error {error: 'InternalServerError', message: 'Internal Server Error'}
+						&& ( error.isJson )											// json format
+						&& ( COMMON.areEquals( error.json.error, 'InternalServerError' ) ) ) {	// 'invalid token'
+						// Do nothing
+						if (DEBUG) console.debug( PREFIX + "-- END" );
+						if (GROUP_DEBUG) console.groupEnd();
 					} else {
 						// Show the error and update the HTML fields
 						if (DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
@@ -144,6 +153,7 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 				if (DEBUG) console.debug( PREFIX_RETRY + `[distinctDPoPNonce=${distinctDPoPNonce}]` );
 				if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceUsed]`, BSKY.data.dpopNonceUsed );
 				if (DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceReceived]`, BSKY.data.dpopNonceReceived );
+				if (DEBUG) console.debug( PREFIX_RETRY + `[serverError=${serverError}]` );
 
 				// Show the error and update the HTML fields
 				HTML.updateHTMLError(error);

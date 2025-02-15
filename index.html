@@ -58,13 +58,16 @@
 				<div class="col p-4 py-2 align-content-center text-center left-panel">
 
 					<!-- El título -->
-					<h1>OAuthBluesky</h1>
+					<h1 id="appName">BlueSkyAPP</h1>
 
 					<!-- La entradilla -->
 					<div class="about">
 						<h4>User Access Form</h4>
 						An application by <a href="https://bsky.app/profile/madrilenyer.bsky.social" target="_blank">@madrilenyer.bsky.social</a>
 					</div>
+
+					<!-- La versión. -->
+					<div id="version" name="version" class="sticky-bottom">&copy;&reg; Madrilenyer&trade;, 2025 | <span id="app_name">BlueSkyAPP</span>, v<span id="app_version">1.0</span></div>
 				</div>
 
 				<!-- Panel derecho -->
@@ -124,18 +127,16 @@
 
 						<!-- Mensaje de error. -->
 						<input type="text" id="errorDescription" name="errorDescription" class="form-control" placeholder="Error Description" aria-label="Error Description">
-
 					</div>
-
 				</div>
-
 			</div>
-
 		</div>
 
 		<!-- Los toasts -->
 		<div class="toast-container position-fixed top-0 start-0 p-3">
-			<div id="toast-sample" name="toast-sample" class="toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="3000">
+
+			<!-- Toast for user wellcome back. -->
+			<div id="toast-welcome" name="toast-welcome" class="toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="3000">
 				<div class="toast-header">
 					<i class="bi bi-info-square-fill text-success me-2"></i>
 					<strong class="me-auto">Profile Stats</strong>

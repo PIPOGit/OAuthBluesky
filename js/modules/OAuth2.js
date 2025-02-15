@@ -186,19 +186,16 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 		// BS Toast Test
 		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `BS Toast Test` );
 		// El toast.
-		let toastDivID				= "toast-followers-change";
-		let $toast					= $( `#${toastDivID}` );
-		let $toastBody				= $( `#${toastDivID} > .toast-body` );
-		let $toastBodySpan			= $( `#${toastDivID} > .toast-body > span` );
-		let html					= `Token about to expire! Less than ${msToTime(TOKEN_THRESHOLD*1000)} minutes: <span>${msToTime(diffToExpire)}</span> seconds`;
-		let delay					= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
-
+		let toastDivID					= "toast-followers-change";
+		let toastJQDivID				= `#${toastDivID}`;
+		let delay						= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
+		let toastOptions				= {"animation": true, "autohide": true, "delay": delay};
+		let $toast						= $( toastJQDivID, toastOptions );
+		let $toastBody					= $( toastJQDivID + ` > .toast-body` );
+		let $toastBodySpan				= $( toastJQDivID + ` > .toast-body > span` );
+		let html						= `Token about to expire! Less than ${msToTime(TOKEN_THRESHOLD*1000)} minutes: <span>${msToTime(diffToExpire)}</span> seconds`;
 		$toastBody.html( html );
-		// $toast.show({"animation": true, "autohide": true, "delay": 3000});
-		bootstrap.Toast.getOrCreateInstance( `#${toastDivID}` ).show();
-		// Update the time...
-		// TODO: A verlo... setTimeout(() => { $toastBodySpan.val( $toastBodySpan ); }, delay );
-		// setTimeout(() => { $toast.hide({"animation": true}); }, delay );
+		$toast.show();
 		if (GROUP_DEBUG) console.groupEnd();
 	}
 

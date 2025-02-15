@@ -98,6 +98,7 @@ async function startUp() {
 	// Actualizamos el objeto raiz.
 	// + Functions
 	window.BSKY.authenticateWithBluesky = fnAuthenticateWithBluesky;
+	window.BSKY.launchToast				= fnLaunchToast;
 	if (DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
 
 	// ================================================================
@@ -128,8 +129,8 @@ async function startUp() {
 
 	// BS Toast Test
 	if (gotUserHandle && !comeFromLogout) {
-		$( "#toast-sample > .toast-body" ).html( `Welcome back, ${BSKY.user.userHandle}!` );
-		bootstrap.Toast.getOrCreateInstance( "#toast-sample" ).show();
+		$( "#toast-welcome > .toast-body" ).html( `Welcome back, ${BSKY.user.userHandle}!` );
+		bootstrap.Toast.getOrCreateInstance( "#toast-welcome" ).show();
 	}
 
 	if (DEBUG) console.groupEnd();
@@ -449,6 +450,29 @@ function checkUserHandle() {
 	return previous;
 }
 
+function fnLaunchToast( obj ) {
+	const STEP_NAME						= "fnLaunchToast";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (DEBUG) console.debug( PREFIX + "OBJ:", obj );
+	if (DEBUG) console.debug( PREFIX + "OBJ.dataset:", obj.dataset );
+	if (DEBUG) console.debug( PREFIX + "OBJ.dataset.toastId:", obj.dataset.toastId );
+
+	if (obj.dataset.toastId) {
+		let id							= obj.dataset.toastId;
+		let jqID						= "#" + id;
+		if (DEBUG) console.debug( PREFIX + "GOT OBJ.dataset.toastId:", `[id==${id}] [jqID==${jqID}]` );
+		
+		let toastOptions				= null;
+		// let toastOptions				= {"animation": true, "autohide": true, "delay": 5000};
+		let jqBSToast					= new bootstrap.Toast( jqID, toastOptions );
+		jqBSToast.show();
+	}
+
+	if (DEBUG) console.debug( PREFIX + "-- END" );
+	if (GROUP_DEBUG) console.groupEnd();
+}
 
 
 /**********************************************************

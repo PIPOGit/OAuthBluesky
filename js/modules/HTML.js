@@ -42,7 +42,7 @@ const APP_CLIENT_ID						= CLIENT_APP.client_id;
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
 const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true };
-const DESC_MAX_CHARS					= 60;
+const DESC_MAX_CHARS					= 40;
 
 // HTML normal DIVs/Placeholders constants
 const DIV_DATE_TIME						= "currentDateTime";
@@ -63,6 +63,7 @@ const DIV_TABLE_MUTING					= "table-muting";
 const DIV_TABLE_BLOCKING				= "table-blocking";
 const DIV_TABLE_FOLLOWING				= "table-following";
 const DIV_TABLE_FOLLOWERS				= "table-followers";
+const DIV_TRENDING_TOPICS				= "trending-topics";
 
 
 // HTML jQuery DIVs/Placeholders constants
@@ -104,6 +105,7 @@ const DIV_JQ_TABLE_MUTING				= `#${DIV_TABLE_MUTING}`;
 const DIV_JQ_TABLE_BLOCKING				= `#${DIV_TABLE_BLOCKING}`;
 const DIV_JQ_TABLE_FOLLOWING			= `#${DIV_TABLE_FOLLOWING}`;
 const DIV_JQ_TABLE_FOLLOWERS			= `#${DIV_TABLE_FOLLOWERS}`;
+const DIV_JQ_TRENDING_TOPICS			= `#${DIV_TRENDING_TOPICS}`;
 
 /**********************************************************
  * Module Variables
@@ -194,6 +196,16 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 				let msg					= `[${error.step}] Error [${error.statusText}] invocando a: [${error.url}]`;
 				$( DIV_JQ_ERROR_DESCRIPTION ).val(msg);
 			}
+		}
+	} else if ( error.error && error.message ) {
+		// Puede venir también un: "{"error":"InternalServerError","message":"Internal Server Error"}"
+		if (DEBUG) console.debug(PREFIX + "+ error.......:", error.error);
+		if (DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+
+		// Update the error fields
+		if ( renderHTMLErrors ) {
+			$( DIV_JQ_ERROR ).html(error.error);
+			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
 		}
 	} else {
 		// Unknown error type. Update the error fields
@@ -369,6 +381,7 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 		"reason": "like",
 		"reason": "reply",
 		"reason": "repost",
+		// like, repost, follow, mention, reply, quote, starterpack-joined
 	*/
 	if (DEBUG) console.debug(PREFIX + "+ Reason:", notiReason);
 
@@ -378,8 +391,10 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 	} else {
 		// It's about an action on a post.
 		let notiURI						= "";
+		let replyText					= null;
 		if ( COMMON.areEquals( notiReason, "reply" ) ) {
 			notiURI						= notification.record.reply.parent.uri;
+			replyText					= notification.record.text;
 		} else {
 			notiURI						= notification.record.subject.uri;
 		}
@@ -449,7 +464,11 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
 		}
 		if (DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
-		html							+= `  <li class="notificacion-data">${notiReason} <a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}</li>`;
+		html							+= `  <li class="notificacion-data">${notiReason} <a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
+		if (replyText) {
+			html						+= `<br/><i class="text-primary">${replyText}</i>`;
+		}
+		html							+= `</li>`;
 	}
 	html								+= `</ul>`;
 
@@ -573,7 +592,8 @@ export function htmlRenderUserProfile( profile ) {
 		if ( (diffFollowing>0) || (diffFollowers>0)) {
 			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 			// El toast.
-			let $toast					= $( DIV_JQ_TOAST );
+			let toastOptions			= {"animation": true, "autohide": true, "delay": 5000};
+			let $toast					= $( DIV_JQ_TOAST, toastOptions );
 			let $toastImg				= $( DIV_JQ_TOAST + " > .toast-header > img" );
 			let $toastBody				= $( DIV_JQ_TOAST + " > .toast-body" );
 			let html					= `Diferencia de ${diffFollowers} followers y de ${diffFollowing} following`;
@@ -581,9 +601,7 @@ export function htmlRenderUserProfile( profile ) {
 
 			$toastImg.attr( "src", profile.avatar );
 			$toastBody.html( html );
-			$toast.show({"animation": true, "autohide": true, "delay": 5000});
-			// setTimeout(() => { $toast.hide({"animation": true}); }, delay );
-			// One way: bootstrap.Toast.getOrCreateInstance( "#toast-sample" ).show();
+			$toast.show();
 			if (GROUP_DEBUG) console.groupEnd();
 		} else {
 			if (DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
@@ -941,7 +959,145 @@ export function htmlRenderTrendingTopics( data ) {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
+	let index							= 0;
+	let id								= null;
+	let htmlContent						= "";
+	let $container						= $( DIV_JQ_TRENDING_TOPICS );
+
+	// Clear the current content.
+	$container.html("");
+
+	/* Trending Topics
+		{
+			"topics": [
+				{
+					"topic": "SNL Concert",
+					"link": "/profile/trending.bsky.app/feed/90941852"
+				},
+				{
+					"topic": "WWE SmackDown",
+					"link": "/profile/trending.bsky.app/feed/90892200"
+				},
+				{
+					"topic": "CDC Layoffs",
+					"link": "/profile/trending.bsky.app/feed/90412700"
+				},
+				{
+					"topic": "Texas Outbreak",
+					"link": "/profile/trending.bsky.app/feed/90355383"
+				}
+			],
+			"suggested": [
+				{
+					"topic": "Popular with Friends",
+					"link": "/profile/bsky.app/feed/with-friends"
+				},
+				{
+					"topic": "Quiet Posters",
+					"link": "/profile/why.bsky.team/feed/infreq"
+				},
+				{
+					"topic": "Sports",
+					"link": "/profile/crevier.bsky.social/feed/aaanstr6k5dvo"
+				},
+				{
+					"topic": "NFL",
+					"link": "/profile/parkermolloy.com/feed/aaai44jkavvrs"
+				},
+				{
+					"topic": "NBA",
+					"link": "/profile/davelevitan.bsky.social/feed/aaadvxju4txkk"
+				},
+				{
+					"topic": "WNBA",
+					"link": "/profile/trollhamels.bsky.social/feed/aaac3xufjdvjg"
+				},
+				{
+					"topic": "MLB",
+					"link": "/profile/parkermolloy.com/feed/aaap7dpu57ve6"
+				},
+				{
+					"topic": "NHL",
+					"link": "/profile/hockeyhotline.bsky.social/feed/aaacm5rbitxqa"
+				},
+				{
+					"topic": "Cats",
+					"link": "/profile/jaz.bsky.social/feed/cv:cat"
+				},
+				{
+					"topic": "Gardening",
+					"link": "/profile/eepy.bsky.social/feed/aaao6g552b33o"
+				},
+				{
+					"topic": "Dogs",
+					"link": "/profile/jaz.bsky.social/feed/cv:dog"
+				},
+				{
+					"topic": "Game Dev",
+					"link": "/profile/trezy.codes/feed/game-dev"
+				},
+				{
+					"topic": "Web Dev",
+					"link": "/profile/did:plc:m2sjv3wncvsasdapla35hzwj/feed/web-development"
+				},
+				{
+					"topic": "Video Games",
+					"link": "/profile/wyattswickedgoods.com/feed/aaaaieaxm5v3y"
+				},
+				{
+					"topic": "Anime",
+					"link": "/profile/anianimals.moe/feed/anime-en-new"
+				},
+				{
+					"topic": "Music",
+					"link": "/profile/cookieduh.xyz/feed/aaagw7oidihfs"
+				},
+				{
+					"topic": "Film & TV",
+					"link": "/profile/francesmeh.reviews/feed/aaaotdzmoni2q"
+				},
+				{
+					"topic": "Taylor Swift",
+					"link": "/profile/heheviolet.bsky.social/feed/aaakqsvp6kke4"
+				},
+				{
+					"topic": "Fashion",
+					"link": "/profile/sammyouatts.bsky.social/feed/aaacqhe34hlv6"
+				},
+				{
+					"topic": "Pop Culture",
+					"link": "/profile/nahuel.bsky.social/feed/aaae2qpt4236c"
+				},
+				{
+					"topic": "Fitness/Health",
+					"link": "/profile/sammyouatts.bsky.social/feed/aaadcogx3hvwc"
+				},
+				{
+					"topic": "Beauty",
+					"link": "/profile/abmuse.net/feed/aaac256qq7vh4"
+				},
+				{
+					"topic": "Science",
+					"link": "/profile/bossett.social/feed/for-science"
+				},
+				{
+					"topic": "Blacksky Trending",
+					"link": "/profile/rudyfraser.com/feed/blacksky-trend"
+				}
+			]
+		}
+	 */
+
+	// Total
+	let total							= data.topics.length;
+	if ( total>0 ) {
+		// Add data.
+		data.topics.forEach( item => {
+			index++;
+			htmlContent					+= `<a href="${API.bluesky.profile.root}${item.link}" role="button" class="btn btn-sm btn-outline-dark m-1" target="_blank" aria-disabled="true">${item.topic}</button>`;
+		});
+		$container.html( htmlContent );
+	}
 
 	if (DEBUG) console.debug( PREFIX + "-- END" );
 	if (GROUP_DEBUG) console.groupEnd();
