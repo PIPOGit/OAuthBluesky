@@ -1,9 +1,9 @@
 {
 	"global": {
-		"debug": true,
+		"debug": false,
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
-		"appVersion": "1.1.0",
+		"appVersion": "1.2.0",
 		"refresh_dashboard": 15,
 		"refresh_static": 300
 	},
@@ -62,18 +62,21 @@
 					},
 					"pds": {
 						"getBlocks": "/app.bsky.graph.getBlocks",
+						"getConvoForMembers": "/chat.bsky.convo.getConvoForMembers",
 						"getLists": "/app.bsky.graph.getLists",
 						"getMutes": "/app.bsky.graph.getMutes",
 						"getTrendingTopics": "/app.bsky.unspecced.getTrendingTopics",
 						"getUnreadCount": "/app.bsky.notification.getUnreadCount",
 						"listNotifications": "/app.bsky.notification.listNotifications",
-						"listRecords": "/com.atproto.repo.listRecords"
+						"listRecords": "/com.atproto.repo.listRecords",
+						"sendMessage": "/chat.bsky.convo.sendMessage"
 					},
 					"public": {
 						"getFollowers": "/app.bsky.graph.getFollowers",
 						"getFollows": "/app.bsky.graph.getFollows",
 						"getPosts": "/app.bsky.feed.getPosts",
-						"getProfile": "/app.bsky.actor.getProfile"
+						"getProfile": "/app.bsky.actor.getProfile",
+						"searchActorsTypeahead": "/app.bsky.actor.searchActorsTypeahead"
 					},
 					"unused": {
 						"describeRepo": "/com.atproto.repo.describeRepo",

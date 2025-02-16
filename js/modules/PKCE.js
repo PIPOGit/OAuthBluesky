@@ -20,12 +20,6 @@ import * as UUID						from "./OAuth2/UUID.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION					= "1.0.0";
-const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
-
-// Logging constants
-const DEBUG								= CONFIGURATION.global.debug;
-const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
 
@@ -33,7 +27,6 @@ const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 
 
 /**********************************************************
@@ -76,24 +69,24 @@ export async function pkceChallengeFromVerifier(v) {
 export async function prepareDataForPARRequest( userHandle, clientId, callbackUrl ) {
 	const STEP_NAME						= "prepareDataForPARRequest";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.debug( PREFIX + "Received data:" );
-	if (DEBUG) console.debug( PREFIX + "+ userHandle.:", userHandle );
-	if (DEBUG) console.debug( PREFIX + "+ clientId...:", clientId );
-	if (DEBUG) console.debug( PREFIX + "+ callbackUrl:", callbackUrl );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received data:" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ userHandle.:", userHandle );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ clientId...:", clientId );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ callbackUrl:", callbackUrl );
 
 	// The state & code verifier
     // ------------------------------------------
     let state							= UUID.generateRandomState();
     let codeVerifier					= UUID.generateRandomCodeVerifier();
-	if (DEBUG) console.debug( PREFIX + "Generated state:", state );
-	if (DEBUG) console.debug( PREFIX + "Generated codeVerifier:", codeVerifier );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated state:", state );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated codeVerifier:", codeVerifier );
 
     // The code verifier challenge
     // ------------------------------------------
     let codeChallenge					= await pkceChallengeFromVerifier(codeVerifier);
-	if (DEBUG) console.debug( PREFIX + "Generated codeChallenge:", codeChallenge );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated codeChallenge:", codeChallenge );
 
     // Build up the URL.
     // Just, to make it simple! I know there are better ways to do this, BUT...
@@ -107,9 +100,9 @@ export async function prepareDataForPARRequest( userHandle, clientId, callbackUr
     body								+= "&code_challenge=" + codeChallenge;
     body								+= "&state=" + state;
     body								+= "&login_hint=" + userHandle;
-	if (DEBUG) console.debug( PREFIX + "Generated body:", body );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated body:", body );
 
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
 	
 	return{ state: state, codeVerifier: codeVerifier, codeChallenge: codeChallenge, body: body };
 }

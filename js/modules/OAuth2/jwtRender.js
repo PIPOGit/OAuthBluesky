@@ -11,21 +11,14 @@ import CONFIGURATION				from "../../data/config.json" with { type: "json" };
 /**********************************************************
  * Module Constants
  **********************************************************/
-// Module SELF constants
-const MODULE_NAME					= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION				= "1.0.0";
-const MODULE_PREFIX					= `[${MODULE_NAME}]: `;
 
 
 // Inner constants
-const DEBUG							= CONFIGURATION.global.debug;
-const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
 
 
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
 
 
 /**********************************************************

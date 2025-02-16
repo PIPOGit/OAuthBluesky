@@ -16,12 +16,8 @@ import * as Base64					from "./Base64Url.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME					= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION				= "1.0.0";
-const MODULE_PREFIX					= `[${MODULE_NAME}]: `;
 
 // Inner constants
-const DEBUG							= CONFIGURATION.global.debug;
-const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
 
 // Crypt constants
 export const JWK_DB_KEY				= "jwkBluesky";
@@ -36,7 +32,6 @@ export const HASHING_ALGORITM		= "SHA-256";
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
 
 
 /**********************************************************
@@ -50,7 +45,7 @@ let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
 export async function generateCryptoKey() {
 	const STEP_NAME						= "generateCryptoKey";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX);
 
 	// Create the crypto key.
     // Must save it, 'cause we'll reuse it later.
@@ -71,23 +66,23 @@ export async function generateCryptoKey() {
     // ------------------------------------------
     delete jwk.ext;
     delete jwk.key_ops;
-	if (DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( jwk ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( jwk ) );
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return { cryptoKey: cryptoKey, jwk: jwk };
 }
 
 export async function generateKey() {
 	const STEP_NAME						= "generateKey";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX);
 
     let cryptoKeyOptions = { name: SIGNING_ALGORITM, namedCurve: CURVE_ALGORITM };
     let cryptoKeyPurposes = ["sign", "verify"];
-	if (DEBUG) console.debug(PREFIX + "Generating a new key with:");
-	if (DEBUG) console.debug(PREFIX + "+ cryptoKeyOptions:", cryptoKeyOptions);
-	if (DEBUG) console.debug(PREFIX + "+ cryptoKeyPurposes:", cryptoKeyPurposes);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Generating a new key with:");
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cryptoKeyOptions:", cryptoKeyOptions);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cryptoKeyPurposes:", cryptoKeyPurposes);
 
     var key = await crypto.subtle.generateKey(cryptoKeyOptions, false, cryptoKeyPurposes).then(function(eckey) {
 		return eckey;
@@ -95,8 +90,8 @@ export async function generateKey() {
 		console.error(err);
 	});
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     return key;
 }
 

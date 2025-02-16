@@ -22,4 +22,7 @@ a, a:visited {
   width: auto;
   padding: 10px 40px;
 }
+.theme-smaller {
+  font-size: smaller;
+}
 

@@ -29,12 +29,6 @@ import * as HTML						from "./modules/HTML.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION					= "1.0.0";
-const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
-
-// Logging constants
-const DEBUG								= CONFIGURATION.global.debug;
-const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
 const LSKEYS							= CONFIGURATION.localStorageKeys;
@@ -47,7 +41,6 @@ const APP_CLIENT_ID						= CLIENT_APP.client_id;
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 
 
 /**********************************************************
@@ -79,19 +72,19 @@ async function startUp() {
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
-	if (DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
 
 	// ================================================================
 	// Module info.
-	if (DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
 
 	// ================================================================
 	// Module END
-	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
+	console.info( `Loaded module ${MODULE_NAME}.` );
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
-	if (DEBUG) console.groupCollapsed( PREFIX_INNER );
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_INNER );
 
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB();
@@ -102,12 +95,12 @@ async function startUp() {
 	// El reloj
 	// ------------------------------------
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
-	if (DEBUG) console.debug( PREFIX + "Clock started" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Clock started" );
 
 	// Geolocation Information
 	// ------------------------------------
 	let geolocationInfo					= await GEO.getGeolocationInformation();
-	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
 
 	// Save the info
 	BSKY.user.geolocation				= geolocationInfo;
@@ -121,10 +114,42 @@ async function startUp() {
 	// ------------------------------------
 	BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);
 
-	if (DEBUG) console.groupEnd();
+	// Los eventos de los modales Bootstrap
+	// ------------------------------------
+	COMMON.fnGetById('modal-settings').addEventListener( 'show.bs.modal', modalEventForSettings );
+	COMMON.fnGetById('modal-search-user').addEventListener( 'show.bs.modal', modalEventForSearchUsers );
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.groupEnd();
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
 	BSKY.dashboard();
 }
 
+function modalEventForSettings( event ) {
+	const STEP_NAME						= "modalEventForSettings";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Launched modal, with", event );
+	$( '#flexSwitchCheckDebug' ).prop( 'checked', window.BSKY.DEBUG );
+	$( '#flexSwitchCheckGroupedDebug' ).prop( 'checked', window.BSKY.DEBUG_FOLDED );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ window.BSKY.DEBUG: [${window.BSKY.DEBUG}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ window.BSKY.DEBUG_FOLDED: [${window.BSKY.DEBUG_FOLDED}]` );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
+}
+
+function modalEventForSearchUsers( event ) {
+	const STEP_NAME						= "modalEventForSearchUsers";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Launched modal, with", event );
+	$( '#search-profile-pattern' ).val( '' );
+	$( `#search-profile-results` ).empty();
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
+}

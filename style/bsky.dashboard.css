@@ -2,7 +2,7 @@
  * Dashboard page
  * ********************************************************/
 .root-panel {
-  height: var(--page-height);
+  height: var(--bsky-page-height);
 }
 .left-panel {
 	border-right: 4px solid navy;
