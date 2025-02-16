@@ -21,12 +21,6 @@ import * as JWT							from "./OAuth2/JWT.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION					= "1.0.0";
-const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
-
-// Logging constants
-const DEBUG								= CONFIGURATION.global.debug;
-const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // HTML methods
 export const HTML_GET					= "GET";
@@ -43,7 +37,6 @@ export const CONTENT_TYPE_FORM_ENCODED	= "application/x-www-form-urlencoded";
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 
 // Inner variables
 let responseHeaders						= null;
@@ -59,8 +52,8 @@ let responseError						= null;
 function showResponseHeaders(data) {
 	const STEP_NAME						= "showResponseHeaders";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX + "[RESPONSE=="+(data.ok?"OK":"ERROR")+" ("+data.status+")]");
-	if (DEBUG) console.debug(PREFIX + "Received response:", COMMON.prettyJson(data));
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX + "[RESPONSE=="+(data.ok?"OK":"ERROR")+" ("+data.status+")]");
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Received response:", COMMON.prettyJson(data));
 
 	let response = {};
 	response.bodyUsed					= data.bodyUsed;
@@ -71,22 +64,22 @@ function showResponseHeaders(data) {
 	response.type						= data.type;
 	response.url						= data.url;
 	response.headers					= {};
-	if (DEBUG) console.debug(PREFIX + "+ Response[bodyUsed]:", data.bodyUsed);
-	if (DEBUG) console.debug(PREFIX + "+ Response[ok]:", data.ok);
-	if (DEBUG) console.debug(PREFIX + "+ Response[redirected]:", data.redirected);
-	if (DEBUG) console.debug(PREFIX + "+ Response[status]:", data.status);
-	if (DEBUG) console.debug(PREFIX + "+ Response[statusText]:", data.statusText);
-	if (DEBUG) console.debug(PREFIX + "+ Response[type]:", data.type);
-	if (DEBUG) console.debug(PREFIX + "+ Response[url]:", data.url);
-	if (DEBUG) console.debug(PREFIX + "+ Response Headers:");
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[bodyUsed]:", data.bodyUsed);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[ok]:", data.ok);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[redirected]:", data.redirected);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[status]:", data.status);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[statusText]:", data.statusText);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[type]:", data.type);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[url]:", data.url);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response Headers:");
 	for (var pair of data.headers.entries()) {
 		response.headers[pair[0]]		= pair[1];
-		if (DEBUG) console.debug(PREFIX + "  + Header["+pair[0]+"]:", pair[1]);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "  + Header["+pair[0]+"]:", pair[1]);
 	}
-	if (DEBUG) console.debug(PREFIX + "Returning response:", COMMON.prettyJson(response));
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Returning response:", COMMON.prettyJson(response));
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	
 	return response;
 }
@@ -95,13 +88,13 @@ function showResponseHeaders(data) {
 function analizeResponseHeaders(response) {
 	const STEP_NAME						= "analizeResponseHeaders";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Analize the received data
 	// "content-type" header
 	if ( response.headers["content-type"] ) {
 		const contentType				= response.headers["content-type"];
-		if (DEBUG) console.debug( PREFIX + "contentType:", contentType );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "contentType:", contentType );
 	}
 
 	// "dpop-nonce" header
@@ -111,18 +104,18 @@ function analizeResponseHeaders(response) {
 		BSKY.data.dpopNonce				= response.headers["dpop-nonce"];
 		BSKY.data.dpopNonceReceived		= BSKY.data.dpopNonce;
 		$("#dpopNonce").val(BSKY.data.dpopNonce);
-		if (DEBUG) console.info( PREFIX + "%cReceived dpop-nonce header: [" + BSKY.data.dpopNonce + "]", COMMON.CONSOLE_STYLE );
+		if (window.BSKY.DEBUG) console.info( PREFIX + "%cReceived dpop-nonce header: [" + BSKY.data.dpopNonce + "]", COMMON.CONSOLE_STYLE );
 	}
 
 	// "www-authenticate" header
 	if ( response.headers["www-authenticate"] ) {
 		// Here, we gather the "www-authenticate" header.
 		BSKY.data.wwwAuthenticate		= response.headers["www-authenticate"];
-		if (DEBUG) console.info( PREFIX + "%cReceived www-authenticate header: [" + BSKY.data.wwwAuthenticate + "]", COMMON.CONSOLE_STYLE );
+		if (window.BSKY.DEBUG) console.info( PREFIX + "%cReceived www-authenticate header: [" + BSKY.data.wwwAuthenticate + "]", COMMON.CONSOLE_STYLE );
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	
 	return response;
 }
@@ -133,20 +126,20 @@ function analizeResponseHeaders(response) {
 async function processAPICallResponse(step, response) {
 	const STEP_NAME						= "processAPICallResponse";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Process the HTTP Response
 	if ( response.ok ) {
 		responseHeaders					= showResponseHeaders( response );
-		if (DEBUG) console.debug( PREFIX + "responseHeaders:", responseHeaders );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "responseHeaders:", responseHeaders );
 		analizeResponseHeaders( responseHeaders );
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return ( response.status == 204 ) ? response.text() : response.json();
 	} else {
 		let errorObject					= null;
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return response.text().then( data => {
 			responseHeaders				= showResponseHeaders( response );
 			analizeResponseHeaders( responseHeaders );
@@ -179,20 +172,20 @@ export async function makeAPICall( step, url, fetchOptions=null, renderHTMLError
 
  	let responseFromServer				= await fetch( url, fetchOptions ).then( response => {
         // Process the HTTP Response
-		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[From=${step}] [URL=${url}] [renderHTMLErrors=${renderHTMLErrors}]` );
+		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[From=${step}] [URL=${url}] [renderHTMLErrors=${renderHTMLErrors}]` );
 		let processedResponse			= processAPICallResponse( step, response );
 		return processedResponse;
     }).then( data => {
         // Process the HTTP Response Body
 		responseBody					= data;
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
         // Return something
 		return data;
     }).catch( error => {
 		responseError					= error;
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		HTML.processAPICallErrorResponse( error, renderHTMLErrors );
     });
 	

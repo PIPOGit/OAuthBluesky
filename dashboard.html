@@ -117,19 +117,21 @@
 					</div>
 
 					<!-- El menú lateral. -->
+					<!-- TODO: See: https://getbootstrap.com/docs/5.3/components/list-group/#javascript-behavior -->
 					<div class="row px-1 d-flex border-2 border-top border-primary">
-						<div class="nav nav-pills flex-column align-items-end" id="pills-tab" role="tablist">
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-access-token"	name="pill-access-token"	data-bs-target="#panel-access-token"	aria-controls="panel-access-token"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false">AccessToken</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex active"	id="pill-my-profile"	name="pill-my-profile"		data-bs-target="#panel-my-profile"		aria-controls="panel-my-profile"		type="button" data-bs-toggle="pill" role="tab" aria-selected="true" aria-current="page">User Profile</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-notifications"	name="pill-notifications"	data-bs-target="#panel-notifications"	aria-controls="panel-notifications"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-notifications-badge" name="pill-notifications-badge" class="badge bg-warning"></span>&nbsp;Notificaciones</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-following"		name="pill-following"		data-bs-target="#panel-following"		aria-controls="panel-following"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-following-badge" name="pill-following-badge" class="badge bg-warning"></span>&nbsp;Following</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-followers"		name="pill-followers"		data-bs-target="#panel-followers"		aria-controls="panel-followers"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-followers-badge" name="pill-followers-badge" class="badge bg-success-subtle"></span>&nbsp;Followers</button>
-
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-blocking"		name="pill-blocking"		data-bs-target="#panel-blocking"		aria-controls="panel-blocking"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-blocking-badge" name="pill-blocking-badge" class="badge bg-success-subtle"></span>&nbsp;Blocking</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-muting"		name="pill-muting"			data-bs-target="#panel-muting"			aria-controls="panel-muting"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-muting-badge" name="pill-muting-badge" class="badge bg-danger"></span>&nbsp;Muting</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-my-lists"		name="pill-my-lists"		data-bs-target="#panel-my-lists"		aria-controls="panel-my-lists"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-my-lists-badge" name="pill-my-lists-badge" class="badge bg-info"></span>&nbsp;My Lists</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-my-feeds"		name="pill-my-feeds"		data-bs-target="#panel-my-feeds"		aria-controls="panel-my-feeds"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-my-feeds-badge" name="pill-my-feeds-badge" class="badge bg-info"></span>&nbsp;My Feeds</button>
-							<button class="nav-link btn btn-sm text-primary fw-semibold position-relative justify-content-end d-flex"			id="pill-in-lists"		name="pill-in-lists"		data-bs-target="#panel-in-lists"		aria-controls="panel-in-lists"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-in-lists-badge" name="pill-in-lists-badge" class="badge bg-success"></span>&nbsp;In Lists</button>
+						<div class="nav nav-pills flex-column align-items-end text-primary" id="pills-tab" role="tablist">
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modal-settings"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-gear"></i>&nbsp;Settings</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-access-token"	name="pill-access-token"	data-bs-target="#panel-access-token"	aria-controls="panel-access-token"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><i class="bi bi-person-badge"></i>&nbsp;AccessToken</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex active"	id="pill-my-profile"	name="pill-my-profile"		data-bs-target="#panel-my-profile"		aria-controls="panel-my-profile"		type="button" data-bs-toggle="pill" role="tab" aria-selected="true" aria-current="page"><i class="bi bi-person-vcard"></i>&nbsp;User Profile</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modal-search-user"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-people"></i>&nbsp;Search User</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-notifications"	name="pill-notifications"	data-bs-target="#panel-notifications"	aria-controls="panel-notifications"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-notifications-badge" name="pill-notifications-badge" class="badge bg-warning"></span>&nbsp;<i class="bi bi-bell"></i>&nbsp;Notificaciones</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-following"		name="pill-following"		data-bs-target="#panel-following"		aria-controls="panel-following"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-following-badge" name="pill-following-badge" class="badge bg-warning"></span>&nbsp;<i class="bi bi-person-standing"></i>&nbsp;Following</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-followers"		name="pill-followers"		data-bs-target="#panel-followers"		aria-controls="panel-followers"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-followers-badge" name="pill-followers-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-walking"></i>&nbsp;Followers</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-blocking"		name="pill-blocking"		data-bs-target="#panel-blocking"		aria-controls="panel-blocking"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-blocking-badge" name="pill-blocking-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-dash"></i>&nbsp;Blocking</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-muting"		name="pill-muting"			data-bs-target="#panel-muting"			aria-controls="panel-muting"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-muting-badge" name="pill-muting-badge" class="badge bg-danger"></span>&nbsp;<i class="bi bi-person-slash"></i>&nbsp;Muting</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-my-lists"		name="pill-my-lists"		data-bs-target="#panel-my-lists"		aria-controls="panel-my-lists"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-my-lists-badge" name="pill-my-lists-badge" class="badge bg-info"></span>&nbsp;<i class="bi bi-list-ul"></i>&nbsp;My Lists</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-my-feeds"		name="pill-my-feeds"		data-bs-target="#panel-my-feeds"		aria-controls="panel-my-feeds"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-my-feeds-badge" name="pill-my-feeds-badge" class="badge bg-info"></span>&nbsp;My Feeds</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-in-lists"		name="pill-in-lists"		data-bs-target="#panel-in-lists"		aria-controls="panel-in-lists"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-in-lists-badge" name="pill-in-lists-badge" class="badge bg-success"></span>&nbsp;In Lists</button>
 						</div>
 					</div>
 
@@ -382,6 +384,99 @@
 				</div>
 				<div class="toast-body">
 					Hello, world! This is a toast message.
+				</div>
+			</div>
+		</div>
+
+		<!-- Los modales -->
+		<!-- Modal: Settings -->
+		<div class="modal fade" id="modal-settings" tabindex="-1" aria-labelledby="modal-settings-label" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-5" id="modal-settings-label">Settings</h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<form>
+							<fieldset class="px-2">
+								<legend class="fw-medium">Refresh Data Options</legend>
+								<div class="m-2 px-4">
+									<!-- El Static data -->
+									<label for="refreshStaticSeconds" class="form-label">Refresh Static data: <span id="refreshStaticSecondsCurrent">300</span></label>
+									<div class="d-flex gap-3">
+										<span>15</span>
+										<input type="range" class="form-range" min="0" max="300" step="15" id="refreshStaticSeconds" onInput="BSKY.showCurrent( this )">
+										<span>300</span>
+									</div>
+
+									<!-- El Dynamic data -->
+									<label for="refreshDynamicSeconds" class="form-label">Refresh Dynamic data: <span id="refreshDynamicSecondsCurrent">15</span></label>
+									<div class="d-flex gap-3">
+										<span>0</span>
+										<input type="range" class="form-range" min="0" max="60" step="1" id="refreshDynamicSeconds" onInput="BSKY.showCurrent( this )">
+										<span>60</span>
+									</div>
+								</div>
+							</fieldset>
+							<fieldset class="px-2">
+								<legend class="fw-medium">Logging Options</legend>
+								<div class="m-2 px-4">
+									<!-- El debug global -->
+									<div class="form-check form-switch">
+										<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDebug" onClick="BSKY.updateDebug(this.form);">
+										<label class="form-check-label" for="flexSwitchCheckDebug">Debug</label>
+									</div>
+
+									<!-- El debug agrupado -->
+									<div class="form-check form-switch">
+										<input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckGroupedDebug" onClick="BSKY.updateDebug(this.form);">
+										<label class="form-check-label" for="flexSwitchCheckGroupedDebug">Grouped Debug</label>
+									</div>
+								</div>
+							</fieldset>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-sm btn-success" data-bs-dismiss="modal">Cerrar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal: Search User -->
+		<div class="modal fade" id="modal-search-user" tabindex="-1" aria-labelledby="modal-search-user-label" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-5" id="modal-search-user-label">Search User</h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<form onSubmit="return false;">
+							<!-- El input -->
+							<div class="input-group input-group-sm mb-3">
+								<span class="input-group-text">Bluesky user @</span>
+								<div class="form-floating">
+									<input id="search-profile-pattern" name="search-profile-pattern" type="text" size="40" class="form-control" placeholder="User Handle to Search" aria-label="User Handle to Search" aria-describedby="search-profile-pattern-help" onInput="BSKY.searchUser(this);" required>
+									<label for="search-profile-pattern" class="form-label">User Handle to Search</label>
+								</div>
+							</div>
+							<!-- El helper -->
+							<div id="search-profile-pattern-help" name="search-profile-pattern-help" class="form-text mb-3">
+								Bluesky user handle without the initial "@" (<i>example: "safety.bsky.app"</i>)
+							</div>
+
+							<!-- Los encontrados -->
+							Perfiles encontrados:
+							<ul id="search-profile-results" class="list-group">
+								<li class="list-group-item">An item</li>
+							</ul>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-sm btn-success" data-bs-dismiss="modal">Cerrar</button>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -2,20 +2,20 @@
  * El panel de los errores.
  * ********************************************************/
 .theme-error {
-  border: var(--panel-border-size) solid var(--panel-border-color);
+  border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color);
   background-color: lightgoldenrodyellow;
 }
 .theme-error span#errorLabel {
   color: navy;
   font-weight: bolder;
   padding: 1px 16px;
-  border: var(--panel-border-size) solid var(--panel-border-color);
+  border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color);
   font-size: inherit;
 }
 .theme-error span#error {
   color: red;
   padding: 1px 16px;
-  border: var(--panel-border-size) solid var(--panel-border-color);
+  border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color);
   background-color: yellow;
   font-size: inherit;
 }
@@ -34,7 +34,7 @@
   color: white;
   background-color: red;
   padding: 1px 16px;
-  border: var(--panel-border-size) solid var(--panel-border-color);
+  border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color);
 }
 
 

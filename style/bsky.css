@@ -16,18 +16,22 @@
  * El :root pseudo-element, para las variables.
  * ********************************************************/
 :root {
+  /* Fonts. */
+  --bsky-font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --bsky-font-size: 16px/1.5;
 
   /* Heights. */
-  --page-height: 640px;
-  --table-height: 600px;
+  --bsky-page-height: 640px;
+  --bsky-table-height: 600px;
+  --bsky-menu-button-margin: 4px;
 
   /* Normal panels. */
-  --panel-border-size: 1px;
-  --panel-border-color: navy;
+  --bsky-panel-border-size: 1px;
+  --bsky-panel-border-color: navy;
 
   /* OffCanvas panel. */
-  --panel-offcanvas-border-color: black;
-  --panel-notification-border-color: green;
+  --bsky-panel-offcanvas-border-color: black;
+  --bsky-panel-notification-border-color: green;
 }
 
 
@@ -36,7 +40,8 @@
  * ********************************************************/
 /* html { */
 body {
-  font: 16px/1.5; Verdana, Arial, sans-serif;
+  font: var(--bsky-font-size);
+  font-family: var(--bsky-font-family);
   margin: auto;
   background-color: white;
 }
@@ -47,7 +52,7 @@ body {
  * ********************************************************/
 .theme-info {
   font-size: smaller;
-  border: var(--panel-border-size) solid var(--panel-border-color);
+  border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color);
   color: black;
   background-color: skyblue;
 }
@@ -57,7 +62,7 @@ body {
  * El panel de los datos del callback.
  * ********************************************************/
 .theme-callback input.form-control-plaintext {
-  border: var(--panel-border-size) solid var(--panel-border-color);
+  border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color);
   color: white;
   background-color: lightslategray;
   padding: 1px 8px;
@@ -68,7 +73,7 @@ body {
  * El panel de la redirección.
  * ********************************************************/
 .theme-redirect {
-  border: var(--panel-border-size) solid var(--panel-border-color);
+  border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color);
   color: navy;
   background-color: lightgoldenrodyellow;
   padding: 4px 24px;

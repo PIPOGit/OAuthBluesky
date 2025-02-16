@@ -24,12 +24,6 @@ import * as JWT							from "./OAuth2/JWT.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION					= "1.0.0";
-const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
-
-// Logging constants
-const DEBUG								= CONFIGURATION.global.debug;
-const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
 const API								= CONFIGURATION.api;
@@ -38,6 +32,9 @@ const CLIENT_APP						= CONFIGURATION.clientApp;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
+
+// IMG constants
+const BLANK_IMAGE						= "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
 
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
@@ -110,7 +107,6 @@ const DIV_JQ_TRENDING_TOPICS			= `#${DIV_TRENDING_TOPICS}`;
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 let momentReceivedToken					= null;
 let expiration							= 0;
 
@@ -145,12 +141,12 @@ export function updateHighlight() {
 export function updateHTMLError(error, renderHTMLErrors=true) {
 	const STEP_NAME						= "makeAPICall";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}]` );
 
 	let isInstanceOfAccessTokenError	= error instanceof TYPES.AccessTokenError;
 	let isInstanceOfAPICallError		= error instanceof TYPES.APICallError;
 
-	if (DEBUG) console.warn( PREFIX + "ERROR:", error.toString() );
+	if (window.BSKY.DEBUG) console.warn( PREFIX + "ERROR:", error.toString() );
 
 	// HTML L&F
 	if ( renderHTMLErrors ) {
@@ -159,8 +155,8 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 	}
 
 	if ( isInstanceOfAccessTokenError ) {
-		if (DEBUG) console.debug(PREFIX + "+ code........:", error.code);
-		if (DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -168,21 +164,21 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
 		}
 	} else if ( isInstanceOfAPICallError ) {
-		if (DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
-		if (DEBUG) console.debug(PREFIX + "+ step........:", error.step);
-		if (DEBUG) console.debug(PREFIX + "+ status......:", error.status);
-		if (DEBUG) console.debug(PREFIX + "+ statusText..:", error.statusText);
-		if (DEBUG) console.debug(PREFIX + "+ contentType.:", error.contentType);
-		if (DEBUG) console.debug(PREFIX + "+ ok..........:", error.ok);
-		if (DEBUG) console.debug(PREFIX + "+ bodyUsed....:", error.bodyUsed);
-		if (DEBUG) console.debug(PREFIX + "+ redirected..:", error.redirected);
-		if (DEBUG) console.debug(PREFIX + "+ body........:", error.body);
-		if (DEBUG) console.debug(PREFIX + "+ type........:", error.type);
-		if (DEBUG) console.debug(PREFIX + "+ url.........:", error.url);
-		if (DEBUG) console.debug(PREFIX + "+ isJson......:", error.isJson);
-		if (DEBUG) console.debug(PREFIX + "+ json........:", error.json);
-		if (DEBUG) console.debug(PREFIX + "+ text........:", error.text);
-		if (DEBUG) console.debug(PREFIX + "+ stack.......:", error.stack);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ step........:", error.step);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ status......:", error.status);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ statusText..:", error.statusText);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ contentType.:", error.contentType);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ ok..........:", error.ok);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bodyUsed....:", error.bodyUsed);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ redirected..:", error.redirected);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ body........:", error.body);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ type........:", error.type);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ url.........:", error.url);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ isJson......:", error.isJson);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ json........:", error.json);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ text........:", error.text);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ stack.......:", error.stack);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -199,8 +195,8 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		}
 	} else if ( error.error && error.message ) {
 		// Puede venir también un: "{"error":"InternalServerError","message":"Internal Server Error"}"
-		if (DEBUG) console.debug(PREFIX + "+ error.......:", error.error);
-		if (DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error.......:", error.error);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -214,11 +210,11 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
 		}
 	}
-	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
-	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
-	if (DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
 
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
 }
 
 export function clearHTMLError() {
@@ -231,13 +227,13 @@ export function clearHTMLError() {
 export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
 	const STEP_NAME						= "processAPICallErrorResponse";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors=${renderHTMLErrors}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors=${renderHTMLErrors}]` );
 
-	if (DEBUG) console.debug( PREFIX + "ERROR:", error.message );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR:", error.message );
 	updateHTMLError(error, renderHTMLErrors);
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Finally, throw the error
 	throw( error );
@@ -249,14 +245,14 @@ export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
 export function updateHTMLFields(parsedSearch) {
 	const STEP_NAME						= "updateHTMLFields";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Recibido.
 	let isInstanceOfCallbackData		= parsedSearch instanceof TYPES.CallbackData;
 	let isInstanceOfURLSearchParams		= parsedSearch instanceof URLSearchParams;
-	if (DEBUG) console.debug(PREFIX + "Tipo de parsedSearch:", COMMON.getTypeOf( parsedSearch ) );
-	if (DEBUG) console.debug(PREFIX + "Instancia de TYPES.CallbackData:", isInstanceOfCallbackData );
-	if (DEBUG) console.debug(PREFIX + "Instancia de URLSearchParams:", isInstanceOfURLSearchParams );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Tipo de parsedSearch:", COMMON.getTypeOf( parsedSearch ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Instancia de TYPES.CallbackData:", isInstanceOfCallbackData );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Instancia de URLSearchParams:", isInstanceOfURLSearchParams );
 
 	let iss								= null;
 	let state							= null;
@@ -277,11 +273,11 @@ export function updateHTMLFields(parsedSearch) {
 	}
 	dpopNonce							= BSKY.data.dpopNonce;
 
-	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
-	if (DEBUG) console.debug(PREFIX + "+ iss:", iss);
-	if (DEBUG) console.debug(PREFIX + "+ state:", state);
-	if (DEBUG) console.debug(PREFIX + "+ code:", code);
-	if (DEBUG) console.debug(PREFIX + "+ dpopNonce:", dpopNonce);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ iss:", iss);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ state:", state);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code:", code);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ dpopNonce:", dpopNonce);
 
 	// Update HTML page element values.
 	// CSS Classes.
@@ -290,7 +286,7 @@ export function updateHTMLFields(parsedSearch) {
 	$( DIV_JQ_CODE ).val(code);
 	$( DIV_JQ_DPOP_NONCE ).val(dpopNonce);
 
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
 	return response;
 }
 
@@ -352,28 +348,32 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 	let authorAvatar					= author.avatar;
 	let authorURL						= "https://bsky.app/profile/" + authorHandle;
 
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+notiReason+"] ["+authorName+"] ["+when.toLocaleString()+"]" );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+notiReason+"] ["+authorName+"] ["+when.toLocaleString()+"]" );
 
 	// Actualizamos el HTML con el autor.
 	let html							= jqRoot.html() + `<div id="notification-${cid}" name="notification${cid}" class="notification">`;
 	html								+= `<div class="header">`;
-	html								+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
+	if (authorAvatar) {
+		html							+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
+	} else {
+		html							+= `  <a href="${authorURL}"><i class="bi bi-person-slash" height="24"></i></a> `;
+	}
 	html								+= `  <a href="${authorURL}"><strong>${authorName}</strong></a>`;
 	html								+= `</div>`;
 	html								+= `<ul style="margin: 0px 0px 8px 0px">`;
 	html								+= `  <li class="notificacion-data">Handle: <strong>${authorHandle}</strong> (<i>Did: <strong>${authorDid}</strong></i>)</li>`;
 	// html								+= `  <li class="notificacion-data">Description: <strong>${authorDescription}</strong></li>`;
 
-	if (DEBUG) console.debug(PREFIX + "Updating Notification:");
-	if (DEBUG) console.debug(PREFIX + "+ notification:", notification);
-	if (DEBUG) console.debug(PREFIX + "+ isRead:", isRead);
-	if (DEBUG) console.debug(PREFIX + "+ when:", when.toLocaleString() );
-	if (DEBUG) console.debug(PREFIX + "+ Author:", authorName);
-	if (DEBUG) console.debug(PREFIX + "  > handle:", authorHandle);
-	if (DEBUG) console.debug(PREFIX + "  > did:", authorDid);
-	if (DEBUG) console.debug(PREFIX + "  > description:", authorDescription);
-	if (DEBUG) console.debug(PREFIX + "  > avatar:", authorAvatar);
-	if (DEBUG) console.debug(PREFIX + "  > URL:", authorURL);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating Notification:");
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ notification:", notification);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ isRead:", isRead);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ when:", when.toLocaleString() );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Author:", authorName);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "  > handle:", authorHandle);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "  > did:", authorDid);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "  > description:", authorDescription);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "  > avatar:", authorAvatar);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "  > URL:", authorURL);
 
 	/*
 	 * Possible reasons:
@@ -383,7 +383,7 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 		"reason": "repost",
 		// like, repost, follow, mention, reply, quote, starterpack-joined
 	*/
-	if (DEBUG) console.debug(PREFIX + "+ Reason:", notiReason);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Reason:", notiReason);
 
 	if ( COMMON.areEquals( notiReason, "follow" ) ) {
 		// It's a "follow" notification.
@@ -402,7 +402,7 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 		let notiDID						= notiURISplitted[0];
 		let notiBluitID					= notiURISplitted[2];
 		let userProfileURL				= "https://bsky.app/profile/" + notiDID + "/post/" + notiBluitID;
-		if (DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
 		
 		// TEST: Get post
 		let bluitUrl					= API.bluesky.XRPC.public + API.bluesky.XRPC.api.public.getPosts + "?uris=" + encodeURIComponent( notiURI );
@@ -410,12 +410,12 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 		let fetchOptions				= null;
 		let withAuthentication			= false;
 		if (withAuthentication) {
-			if (DEBUG) console.debug(PREFIX + "Testing to retrieve the bluit:");
-			if (DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
+			if (window.BSKY.DEBUG) console.debug(PREFIX + "Testing to retrieve the bluit:");
+			if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
 
 			let dpopRequest				= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, clientId, userAccessToken, accessTokenHash, bluitUrl, BSKY.data.dpopNonce, APICall.HTML_GET);
 			let dpopProof				= await DPOP.createDPoPProof(dpopRequest)
-			if (DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
 			headers						= {
 				'Authorization': `DPoP ${userAccessToken}`,
@@ -436,17 +436,17 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 				headers: headers
 			}
 		}
-		if (DEBUG) console.debug(PREFIX + "+ withAuthentication:", withAuthentication);
-		if (DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
-		if (DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
-		if (DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ withAuthentication:", withAuthentication);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
 		let callResponse				= await APICall.makeAPICall( STEP_NAME, bluitUrl, fetchOptions )
-		if (DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
 		let bluits						= callResponse.body.posts;
-		if (DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
 		let bluit						= bluits[0];
-		if (DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
 
 		// Agregamos la info al html...
 		let referredText				= `Not detected yet for ${notiReason}!`;
@@ -463,7 +463,7 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 			default:
 				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
 		}
-		if (DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
 		html							+= `  <li class="notificacion-data">${notiReason} <a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
 		if (replyText) {
 			html						+= `<br/><i class="text-primary">${replyText}</i>`;
@@ -476,7 +476,7 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 	html								+= '</div>';
 	jqRoot.html( html );
 
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
 }
 
 export function htmlRenderNoNotifications() {
@@ -491,12 +491,12 @@ export function htmlRenderNoNotifications() {
 export async function htmlRenderNotifications( notifications, userAccessToken, clientId, accessTokenHash ) {
 	const STEP_NAME						= "htmlRenderNotifications";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + "[Response data]" );
-	if (DEBUG) console.debug( PREFIX + "Current notifications:", notifications );
-	if (DEBUG) console.debug( PREFIX + "Current notifications:", COMMON.prettyJson( notifications ) );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + "[Response data]" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current notifications:", notifications );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current notifications:", COMMON.prettyJson( notifications ) );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Clear and hide error fields and panel
 	clearHTMLError();
@@ -522,8 +522,8 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 	let totalUnread						= unreadNotifications.length;
 	let currentUnread					= 0;
 	if ( totalUnread > 0) {
-		if (DEBUG) console.debug( PREFIX + "%cCurrently, " + totalUnread + " UNREAD notifications:", COMMON.CONSOLE_STYLE );
-		if (DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "%cCurrently, " + totalUnread + " UNREAD notifications:", COMMON.CONSOLE_STYLE );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
 
 		// Actualizamos el badge y lo mostramos
 		$( DIV_JQ_TAB_NOTIS_BADGE ).html(totalUnread);
@@ -532,13 +532,13 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 		// Ponemos el badge a 0 y lo ocultamos
 		for ( let key in unreadNotifications ) {
 			currentUnread++;
-			if (DEBUG) console.groupCollapsed( PREFIX + `[Noti ${currentUnread}/${totalUnread}]` );
+			if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX + `[Noti ${currentUnread}/${totalUnread}]` );
 			await htmlRenderSingleNotification( unreadNotifications[key], userAccessToken, clientId, accessTokenHash );
-			if (DEBUG) console.groupEnd(PREFIX);
+			if (window.BSKY.DEBUG) console.groupEnd(PREFIX);
 		}
 	}
 
-	if (GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
 }
 
 
@@ -549,12 +549,17 @@ export function htmlRenderUserProfile( profile ) {
 	const STEP_NAME						= "htmlRenderUserProfile";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_COMPARE				= `${PREFIX}[Compare] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.debug( PREFIX + "User Profile:", profile );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "User Profile:", profile );
 
-	$( DIV_JQ_PROFILE_AVATAR ).attr( "src", profile.avatar );
-	$( DIV_JQ_PROFILE_AVATAR_TOP ).attr( "src", profile.avatar );
+	if (profile.avatar) {
+		$( DIV_JQ_PROFILE_AVATAR ).attr( "src", profile.avatar );
+		$( DIV_JQ_PROFILE_AVATAR_TOP ).attr( "src", profile.avatar );
+	} else {
+		$( DIV_JQ_PROFILE_AVATAR ).attr( "src", BLANK_IMAGE );
+		$( DIV_JQ_PROFILE_AVATAR_TOP ).attr( "src", BLANK_IMAGE );
+	}
 
 	$( DIV_JQ_PROFILE_NAME ).html( profile.displayName || profile.handle );
 	$( DIV_JQ_PROFILE_NAME_TOP ).html( profile.displayName || profile.handle );
@@ -581,8 +586,8 @@ export function htmlRenderUserProfile( profile ) {
 	// + Save the new one
 	localStorage.setItem(LSKEYS.user.profile, JSON.stringify( profile ));
 	if ( userProfilePREV ) {
-		// if (DEBUG) console.debug( PREFIX_COMPARE + "+ PREV userProfile:", COMMON.prettyJson( userProfilePREV ) );
-		// if (DEBUG) console.debug( PREFIX_COMPARE + "+ NEW  userProfile:", COMMON.prettyJson( profile ) );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_COMPARE + "+ PREV userProfile:", COMMON.prettyJson( userProfilePREV ) );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_COMPARE + "+ NEW  userProfile:", COMMON.prettyJson( profile ) );
 
 		let following					= profile.followsCount;
 		let followers					= profile.followersCount;
@@ -590,26 +595,30 @@ export function htmlRenderUserProfile( profile ) {
 		let diffFollowers				= followers - userProfilePREV.followersCount;
 
 		if ( (diffFollowing>0) || (diffFollowers>0)) {
-			if (GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 			// El toast.
 			let toastOptions			= {"animation": true, "autohide": true, "delay": 5000};
 			let $toast					= $( DIV_JQ_TOAST, toastOptions );
 			let $toastImg				= $( DIV_JQ_TOAST + " > .toast-header > img" );
 			let $toastBody				= $( DIV_JQ_TOAST + " > .toast-body" );
 			let html					= `Diferencia de ${diffFollowers} followers y de ${diffFollowing} following`;
-			let delay					= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
+			let delay					= ( window.BSKY.refreshDynamicSeconds - 1 ) * 1000;
 
-			$toastImg.attr( "src", profile.avatar );
+			if (profile.avatar) {
+				$toastImg.attr( "src", profile.avatar );
+			} else {
+				$toastImg.attr( "src", BLANK_IMAGE );
+			}
 			$toastBody.html( html );
 			$toast.show();
-			if (GROUP_DEBUG) console.groupEnd();
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		} else {
-			if (DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 		}
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -619,31 +628,36 @@ export function htmlRenderUserProfile( profile ) {
 function htmlRenderSingleFollow( idx, user ) {
 	const STEP_NAME						= "htmlRenderSingleFollow";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
 
-	if (DEBUG) console.debug( PREFIX + "USER:", user );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
 
 	let html							= "";
 	html								+= '<tr class="align-top">';
 	html								+= `<td>${idx}</td>`;
-	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
+	} else {
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
+	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
 	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
 	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return html;
 }
 
 export function htmlRenderUserFollows( data ) {
 	const STEP_NAME						= "htmlRenderUserFollows";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
-	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
-	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
 
 	let index							= 0;
 	let htmlContent						= null;
@@ -664,8 +678,8 @@ export function htmlRenderUserFollows( data ) {
 		});
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -675,12 +689,12 @@ export function htmlRenderUserFollows( data ) {
 export function htmlRenderUserFollowsFromRepo( data ) {
 	const STEP_NAME						= "htmlRenderUserFollowsFromRepo";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	if (DEBUG) console.warn( PREFIX + "Under development yet!" );
-	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
-	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
-	if (DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
+	if (window.BSKY.DEBUG) console.warn( PREFIX + "Under development yet!" );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
 
 	/*
 	 * Received an array of:
@@ -733,8 +747,8 @@ export function htmlRenderUserFollowsFromRepo( data ) {
 	}
 	 */
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -744,27 +758,32 @@ export function htmlRenderUserFollowsFromRepo( data ) {
 function htmlRenderSingleFollower( idx, user ) {
 	const STEP_NAME						= "htmlRenderSingleFollower";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
 
-	if (DEBUG) console.debug( PREFIX + "USER:", user );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
 
 	let html							= "";
 	html								+= '<tr class="align-top">';
 	html								+= `<td>${idx}</td>`;
-	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
+	} else {
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
+	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
 	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
 	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return html;
 }
 
 export function htmlRenderUserFollowers( data ) {
 	const STEP_NAME						= "htmlRenderUserFollowers";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let index							= 0;
 	let htmlContent						= null;
@@ -785,8 +804,8 @@ export function htmlRenderUserFollowers( data ) {
 		});
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -796,28 +815,33 @@ export function htmlRenderUserFollowers( data ) {
 function htmlRenderSingleBlock( idx, user ) {
 	const STEP_NAME						= "htmlRenderSingleBlock";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
 
-	if (DEBUG) console.debug( PREFIX + "USER:", user );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
 
 	let html							= "";
 	html								+= '<tr class="align-top">';
 	html								+= `<td>${idx}</td>`;
 	html								+= `<td>${user.viewer.muted}</td>`;
-	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
+	} else {
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
+	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
 	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
 	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return html;
 }
 
 export function htmlRenderUserBlocks( data ) {
 	const STEP_NAME						= "htmlRenderUserBlocks";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let index							= 0;
 	let htmlContent						= null;
@@ -838,8 +862,8 @@ export function htmlRenderUserBlocks( data ) {
 		});
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -849,28 +873,33 @@ export function htmlRenderUserBlocks( data ) {
 function htmlRenderSingleMute( idx, user ) {
 	const STEP_NAME						= "htmlRenderSingleMute";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
 
-	if (DEBUG) console.debug( PREFIX + "USER:", user );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
 
 	let html							= "";
 	html								+= '<tr class="align-top">';
 	html								+= `<td>${idx}</td>`;
 	html								+= `<td>${user.viewer.blockedBy}</td>`;
-	html								+= `<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
+	} else {
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
+	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
 	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
 	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return html;
 }
 
 export function htmlRenderUserMutes( data ) {
 	const STEP_NAME						= "htmlRenderUserMutes";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let index							= 0;
 	let htmlContent						= null;
@@ -891,8 +920,8 @@ export function htmlRenderUserMutes( data ) {
 		});
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -902,9 +931,9 @@ export function htmlRenderUserMutes( data ) {
 function htmlRenderSingleList( idx, list, id ) {
 	const STEP_NAME						= "htmlRenderSingleList";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${idx}] [id=${id}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${idx}] [id=${id}]` );
 
-	if (DEBUG) console.debug( PREFIX + "LIST:", list );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "LIST:", list );
 
 	let html							= "";
 	html								+= '<tr class="align-top">';
@@ -915,15 +944,15 @@ function htmlRenderSingleList( idx, list, id ) {
 	html								+= `<td>${new Date(list.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return html;
 }
 
 export function htmlRenderUserLists( data ) {
 	const STEP_NAME						= "htmlRenderUserLists";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let index							= 0;
 	let id								= null;
@@ -946,8 +975,8 @@ export function htmlRenderUserLists( data ) {
 		});
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -957,7 +986,7 @@ export function htmlRenderUserLists( data ) {
 export function htmlRenderTrendingTopics( data ) {
 	const STEP_NAME						= "htmlRenderTrendingTopics";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	let index							= 0;
 	let id								= null;
@@ -1099,7 +1128,7 @@ export function htmlRenderTrendingTopics( data ) {
 		$container.html( htmlContent );
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 

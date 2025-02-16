@@ -24,12 +24,8 @@ import * as JWT						from "./JWT.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME					= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION				= "1.0.0";
-const MODULE_PREFIX					= `[${MODULE_NAME}]: `;
 
 // Inner constants
-const DEBUG							= CONFIGURATION.global.debug;
-const DEBUG_FOLDED					= CONFIGURATION.global.debug_folded;
 
 // DPoP constants
 const DPoP_HEADER_TYPE				= "dpop+jwt";
@@ -38,7 +34,6 @@ const DPoP_HEADER_TYPE				= "dpop+jwt";
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
 
 
 /**********************************************************
@@ -46,7 +41,7 @@ let GROUP_DEBUG						= DEBUG && DEBUG_FOLDED;
  **********************************************************/
 async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenHash, url, dpopNonce=null, method="POST") {
 	const PREFIX = `[${MODULE_NAME}:createDPoPProofWithParams] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+url+"]");
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+url+"]");
 
     // Create the DPoP-Proof 'body' for this request.
     // ------------------------------------------
@@ -55,7 +50,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
         alg: CRYPT.KEY_ALGORITM,
         jwk: jwk
     };
-	if (DEBUG) console.debug( PREFIX + "dpopProofHeader:", COMMON.prettyJson( dpopProofHeader ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "dpopProofHeader:", COMMON.prettyJson( dpopProofHeader ) );
 
 	// Let's build up a new dpopProof Payload.
 	let dpopProofPayload = {};
@@ -72,7 +67,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
 	if ( accessTokenHash ) {
 		dpopProofPayload.ath = accessTokenHash;
 	}
-	if (DEBUG) console.debug( PREFIX + "dpopProofPayload:", COMMON.prettyJson( dpopProofPayload ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "dpopProofPayload:", COMMON.prettyJson( dpopProofPayload ) );
 
 
     // Crypt and sign the DPoP-Proof header+body
@@ -92,10 +87,10 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
     // The DPoP-Proof
     // ------------------------------------------
     let dpopProof = `${partialToken}.${signatureAsBase64}`;
-	if (DEBUG) console.debug( PREFIX + "dpopProof:", dpopProof );
-	if (DEBUG) console.debug( PREFIX + "dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "dpopProof:", dpopProof );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     return dpopProof;
 }
 
@@ -106,7 +101,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
  **********************************************************/
 export async function createDPoPProof(dpopRequest) {
 	const PREFIX = `[${MODULE_NAME}:createDPoPProof] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+dpopRequest.url+"]");
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+dpopRequest.url+"]");
 	
 	let dpopProof = await createDPoPProofWithParams(
 		dpopRequest.privateKey,
@@ -118,7 +113,7 @@ export async function createDPoPProof(dpopRequest) {
 		dpopRequest.method
 	);
 
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     return dpopProof;
 }
 

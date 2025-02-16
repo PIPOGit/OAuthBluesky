@@ -21,12 +21,6 @@ import * as JWT							from "./OAuth2/JWT.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION					= "1.0.0";
-const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
-
-// Logging constants
-const DEBUG								= CONFIGURATION.global.debug;
-const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
 export const ERROR_CODE_01				= { "code":  1, "message": "No Auth Server Discovery" };
@@ -48,7 +42,6 @@ const DIV_TOKEN_TIMEOUT					= "currentTokenTimeout";
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 
 
 /**********************************************************
@@ -69,7 +62,7 @@ let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 export function validateAccessToken( accessToken, userAuthServerDiscovery, userAuthentication, userDidDocument, userPDSMetadata ) {
 	const STEP_NAME						= "validateAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 	
 	let isValid							= false;
 	let needsToRefresh					= false;
@@ -77,39 +70,39 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	// Basic Checks
 	// ------------------------------------------
 	if ( COMMON.isNullOrEmpty( userAuthServerDiscovery ) ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_01 );
 	}
-	// if (DEBUG) console.debug( PREFIX + "Received User Authentication Server Discovery information:", COMMON.prettyJson( userAuthServerDiscovery ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User Authentication Server Discovery information:", COMMON.prettyJson( userAuthServerDiscovery ) );
 
 	if ( COMMON.isNullOrEmpty( userAuthentication ) ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_03 );
 	}
-	// if (DEBUG) console.debug( PREFIX + "Received User Access Authentication:", COMMON.prettyJson( userAuthentication ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User Access Authentication:", COMMON.prettyJson( userAuthentication ) );
 
 	if ( COMMON.isNullOrEmpty( accessToken ) ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_04 );
 	}
-	// if (DEBUG) console.debug( PREFIX + "Received User Access Token:", JWT.jwtToPrettyJSON( accessToken ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User Access Token:", JWT.jwtToPrettyJSON( accessToken ) );
 
 	if ( COMMON.isNullOrEmpty( userDidDocument ) ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_05 );
 	}
-	// if (DEBUG) console.debug( PREFIX + "Received User DID Document:", COMMON.prettyJson( userDidDocument ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User DID Document:", COMMON.prettyJson( userDidDocument ) );
 
 	if ( COMMON.isNullOrEmpty( userPDSMetadata ) ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_06 );
 	}
-	// if (DEBUG) console.debug( PREFIX + "Received User PDS Metadata:", COMMON.prettyJson( userPDSMetadata ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User PDS Metadata:", COMMON.prettyJson( userPDSMetadata ) );
 
 
 	// Other Checks
@@ -119,43 +112,43 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	let dataInLocalStorage				= JSON.parse( localStorage.getItem(LSKEYS.BSKYDATA) );
 
 	// Let's retrieve the payload
-	if (DEBUG) console.debug( PREFIX + "Let's analize the access token..." );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Let's analize the access token..." );
 	let jwt								= JWT.getJWTAsSemiJSON( accessToken );
 	let header							= JSON.parse( jwt.header );
 	let payload							= JSON.parse( jwt.payload );
-	// if (DEBUG) console.debug( PREFIX + "+ header:", COMMON.prettyJson( header ) );
-	// if (DEBUG) console.debug( PREFIX + "+ payload:", COMMON.prettyJson( payload ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "+ header:", COMMON.prettyJson( header ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "+ payload:", COMMON.prettyJson( payload ) );
 
 	// Let's see the ISS
 	if ( !COMMON.areEquals( payload.iss, userPDSMetadata.authorization_servers[0] ) ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_10 );
 	}
 
 	// Let's see the DID
 	if ( !COMMON.areEquals(payload.sub,dataInLocalStorage.userDid) ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_11 );
 	}
 
 	// Let's see the dates
-	if (DEBUG) console.debug( PREFIX + "Let's analize the dates..." );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Let's analize the dates..." );
 	const currentTime					= new Date();
 	const tokenIssuedAt					= new Date(payload.iat * 1000);
 	const tokenExpiresIn				= new Date(payload.exp * 1000);
 	const msCurrentTime					= currentTime.getTime();
 	const msTokenIssuedAt				= tokenIssuedAt.getTime();
 	const msTokenExpiresIn				= tokenExpiresIn.getTime();
-	// if (DEBUG) console.debug( PREFIX + `+ [${msCurrentTime}] Current time....:`, currentTime );
-	// if (DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] Token issued at.:`, tokenIssuedAt );
-	// if (DEBUG) console.debug( PREFIX + `+ [${msTokenExpiresIn}] Token expires in:`, tokenExpiresIn );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${msCurrentTime}] Current time....:`, currentTime );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] Token issued at.:`, tokenIssuedAt );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${msTokenExpiresIn}] Token expires in:`, tokenExpiresIn );
 	
 	// If the token expiration time is greater than current time, error.
 	if ( msTokenExpiresIn < msCurrentTime ) {
-		if (DEBUG) console.debug( PREFIX + "-- END" );
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw new TYPES.AccessTokenError( ERROR_CODE_12 );
 	}
 
@@ -170,9 +163,9 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	const diffToExpire					= msTokenExpiresIn - msCurrentTime;
 	const ellapsedTimeAsString			= msToTime(diffFromIssued);
 	const expiringTimeAsString			= msToTime(diffToExpire);
-	if (DEBUG) console.debug( PREFIX + `Differences:` );
-	if (DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] --> [${diffFromIssued}] --> [${msCurrentTime}] --> [${diffToExpire}] --> [${msTokenExpiresIn}]` );
-	if (DEBUG) console.debug( PREFIX + `+ [${msToTime(msTokenIssuedAt, true)}] --> [${ellapsedTimeAsString}] --> [${msToTime(msCurrentTime, true)}] --> [${expiringTimeAsString}] --> [${msToTime(msTokenExpiresIn, true)}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Differences:` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${msTokenIssuedAt}] --> [${diffFromIssued}] --> [${msCurrentTime}] --> [${diffToExpire}] --> [${msTokenExpiresIn}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${msToTime(msTokenIssuedAt, true)}] --> [${ellapsedTimeAsString}] --> [${msToTime(msCurrentTime, true)}] --> [${expiringTimeAsString}] --> [${msToTime(msTokenExpiresIn, true)}]` );
 
 	// Let's update the HTML field for the remaining time for the token to expire...
 	$( "#" + DIV_TOKEN_TIMEOUT ).val( expiringTimeAsString );
@@ -184,11 +177,11 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 		needsToRefresh					= true;
 
 		// BS Toast Test
-		if (GROUP_DEBUG) console.groupCollapsed( PREFIX + `BS Toast Test` );
+		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `BS Toast Test` );
 		// El toast.
 		let toastDivID					= "toast-followers-change";
 		let toastJQDivID				= `#${toastDivID}`;
-		let delay						= ( CONFIGURATION.global.refresh_dashboard - 1 ) * 1000;
+		let delay						= ( window.BSKY.refreshDynamicSeconds - 1 ) * 1000;
 		let toastOptions				= {"animation": true, "autohide": true, "delay": delay};
 		let $toast						= $( toastJQDivID, toastOptions );
 		let $toastBody					= $( toastJQDivID + ` > .toast-body` );
@@ -196,11 +189,11 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 		let html						= `Token about to expire! Less than ${msToTime(TOKEN_THRESHOLD*1000)} minutes: <span>${msToTime(diffToExpire)}</span> seconds`;
 		$toastBody.html( html );
 		$toast.show();
-		if (GROUP_DEBUG) console.groupEnd();
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	}
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return { isValid: isValid, needsToRefresh: needsToRefresh };
 }
 

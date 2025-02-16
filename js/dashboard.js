@@ -29,12 +29,6 @@ import * as HTML						from "./modules/HTML.js";
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
-const MODULE_VERSION					= "1.0.0";
-const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
-
-// Logging constants
-const DEBUG								= CONFIGURATION.global.debug;
-const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 
 // Inner constants
 const LSKEYS							= CONFIGURATION.localStorageKeys;
@@ -47,7 +41,6 @@ const APP_CLIENT_ID						= CLIENT_APP.client_id;
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
 
 
 /**********************************************************
@@ -79,19 +72,32 @@ async function startUp() {
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
-	if (DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+
+
+	// ================================================================
+	// Actualizamos el objeto raiz.
+	// + Logging Properties
+	window.BSKY.DEBUG					= CONFIGURATION.global.debug;
+	window.BSKY.DEBUG_FOLDED			= CONFIGURATION.global.debug_folded;
+	window.BSKY.refreshStaticSeconds	= CONFIGURATION.global.refresh_static;
+	window.BSKY.refreshDynamicSeconds	= CONFIGURATION.global.refresh_dynamic;
+	// + Functions
+	window.BSKY.searchUser				= fnSearchUser;
+	window.BSKY.updateDebug				= fnUpdateDebug;
+	window.BSKY.showCurrent				= fnUpdateCurrentRefreshTime;
 
 	// ================================================================
 	// Module info.
-	if (DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
 
 	// ================================================================
 	// Module END
-	console.info( `Loaded module ${MODULE_NAME}, version ${MODULE_VERSION}.` );
+	console.info( `Loaded module ${MODULE_NAME}.` );
 
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
-	if (DEBUG) console.groupCollapsed( PREFIX_INNER );
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_INNER );
 
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB();
@@ -102,12 +108,12 @@ async function startUp() {
 	// El reloj
 	// ------------------------------------
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
-	if (DEBUG) console.debug( PREFIX + "Clock started" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Clock started" );
 
 	// Geolocation Information
 	// ------------------------------------
 	let geolocationInfo					= await GEO.getGeolocationInformation();
-	if (DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
 
 	// Save the info
 	BSKY.user.geolocation				= geolocationInfo;
@@ -121,10 +127,149 @@ async function startUp() {
 	// ------------------------------------
 	BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);
 
-	if (DEBUG) console.groupEnd();
+	// Los eventos de los modales Bootstrap
+	// ------------------------------------
+	COMMON.fnGetById('modal-settings').addEventListener( 'show.bs.modal', modalEventForSettingsWhenInvoked );
+	COMMON.fnGetById('modal-settings').addEventListener( 'hidden.bs.modal', modalEventForSettingsWhenClosed );
+	COMMON.fnGetById('modal-search-user').addEventListener( 'show.bs.modal', modalEventForSearchUsersWhenInvoked );
 
-	if (DEBUG) console.debug( PREFIX + "-- END" );
-	if (DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.groupEnd();
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
 	BSKY.dashboard();
 }
 
+
+/**********************************************************
+ * MODAL Events Functions
+ **********************************************************/
+
+function modalEventForSearchUsersWhenInvoked( event ) {
+
+	// Clear "Search user" field
+	// ---------------------------------------------------------
+	$( '#search-profile-pattern' ).val( '' );
+	$( `#search-profile-results` ).empty();
+}
+
+function modalEventForSettingsWhenInvoked( event ) {
+
+	// Logging options
+	// ---------------------------------------------------------
+	$( '#flexSwitchCheckDebug' ).prop( 'checked', window.BSKY.DEBUG );
+	$( '#flexSwitchCheckGroupedDebug' ).prop( 'checked', window.BSKY.DEBUG_FOLDED );
+
+	// Refresh time options
+	// ---------------------------------------------------------
+	$( '#refreshStaticSeconds' ).val( window.BSKY.refreshStaticSeconds );
+	$( '#refreshDynamicSeconds' ).val( window.BSKY.refreshDynamicSeconds );
+}
+
+function modalEventForSettingsWhenClosed( event ) {
+	updateSettings( event.target.querySelectorAll( "input" ) );
+}
+
+
+/**********************************************************
+ * BUSINESS Functions
+ **********************************************************/
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Search an user"
+ *
+ *		/xrpc/app.bsky.actor.searchActorsTypeahead
+ *		endpoint: API.bluesky.XRPC.api.public.searchActorsTypeahead
+ *
+ *		https://bsky.social/xrpc/app.bsky.actor.searchActorsTypeahead?q=madri
+ *		https://public.api.bsky.app/xrpc/app.bsky.actor.searchActorsTypeahead?q=madri
+ *
+ *		https://bsky.social/xrpc/app.bsky.actor.searchActorsTypeahead?q=madri
+ *		https://public.api.bsky.app/xrpc/app.bsky.actor.searchActorsTypeahead?q=madri
+ *
+ * -------------------------------------------------------- */
+async function fnSearchUser( source ) {
+	const STEP_NAME						= "fnSearchUser";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.DEBUG) console.warn( PREFIX + "Under development yet!" );
+
+	// Veamos qué trae...
+	let searchString					= source.value;
+	if ( !COMMON.isNullOrEmpty( searchString ) && ( searchString.length>0 ) ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Searching for:", searchString );
+		let received					= await APIBluesky.tryAndCatch( "searchProfile", APIBluesky.searchProfile, searchString );
+		let actors						= received.actors;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received actors:", actors );
+
+		if ( actors ) {
+			// Borramos lo que hubiera
+			let $list					= $( `#search-profile-results` );
+			$list.empty();
+			// Agregamos los encontrados.
+			let html					= null;
+			actors.forEach( actor => {
+				html					= `<li class="list-group-item">`;
+				if (actor.avatar) {
+					html				+= `<a href="${API.bluesky.profile.url}${actor.handle || actor.did}" target="_blank">`;
+					html				+= `<img src="${actor.avatar}" height="24"></a>&nbsp;`;
+				}
+				html					+= `<a href="${API.bluesky.profile.url}${actor.handle || actor.did}" target="_blank">`;
+				html					+= `${actor.displayName || actor.handle || actor.did}</a> [${actor.handle}]`;
+				html					+= `</li>`;
+				$list.append( html );
+			});
+		}
+	}
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
+}
+
+function fnUpdateDebug( form ) {
+	updateSettings( form.querySelectorAll( "input" ) );
+}
+
+function updateSettings( inputs ) {
+	const STEP_NAME						= "updateSettings";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+
+	inputs.forEach( item => {
+		switch( item.id ) {
+			case "refreshStaticSeconds":
+				window.BSKY.refreshStaticSeconds	= item.value;
+				break;
+			case "refreshDynamicSeconds":
+				window.BSKY.refreshDynamicSeconds	= item.value;
+				break;
+			case "flexSwitchCheckDebug":
+				window.BSKY.DEBUG					= item.checked;
+				break;
+			case "flexSwitchCheckGroupedDebug":
+				window.BSKY.DEBUG_FOLDED			= item.checked;
+				break;
+		}
+	});
+
+	// Logging options
+	// ---------------------------------------------------------
+	window.BSKY.GROUP_DEBUG				= window.BSKY.DEBUG && window.BSKY.DEBUG_FOLDED;
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ DEBUG[${window.BSKY.DEBUG}]: [${window.BSKY.DEBUG}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ DEBUG_FOLDED[${window.BSKY.DEBUG_FOLDED}]: [${window.BSKY.DEBUG_FOLDED}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ GROUP_DEBUG[${window.BSKY.GROUP_DEBUG}]: [${window.BSKY.GROUP_DEBUG}]` );
+
+	// Refresh time options
+	// ---------------------------------------------------------
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ refreshStaticSeconds[${window.BSKY.refreshStaticSeconds}]: [${window.BSKY.refreshStaticSeconds}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ refreshDynamicSeconds[${window.BSKY.refreshDynamicSeconds}]: [${window.BSKY.refreshDynamicSeconds}]` );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
+}
+
+function fnUpdateCurrentRefreshTime( item ) {
+	$( `#${item.id}Current` ).html( item.value );
+}

@@ -31,13 +31,9 @@ export const getModuleName				= url => {
  **********************************************************/
 // Module SELF constants
 const MODULE_NAME						= getModuleName( import.meta.url );
-const MODULE_VERSION					= "1.0.0";
-const MODULE_PREFIX						= `[${MODULE_NAME}]: `;
 
 
 // Inner constants
-const DEBUG								= CONFIGURATION.global.debug;
-const DEBUG_FOLDED						= CONFIGURATION.global.debug_folded;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 
 // Toast IDs
@@ -48,8 +44,6 @@ const ID_TOAST_KO						= "myToastKO";
 /**********************************************************
  * Module Variables
  **********************************************************/
-let GROUP_DEBUG							= DEBUG && DEBUG_FOLDED;
-
 
 // Conversion objects.
 export const localeDefault				= 'es-ES';
@@ -135,7 +129,7 @@ export const showError					= message => {
 export function renderHTMLElements(parsedSearch) {
 	const STEP_NAME						= "renderHTMLElements";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (DEBUG) console.groupCollapsed(PREFIX);
+	if (window.BSKY.DEBUG) console.groupCollapsed(PREFIX);
 
 	// CSS Classes.
 	$("#rootPanel").removeClass("hidden");
@@ -148,12 +142,12 @@ export function renderHTMLElements(parsedSearch) {
 	let error							= parsedSearch.get("error");
 	let errorDescription				= parsedSearch.get("error_description");
 
-	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
-	if (DEBUG) console.debug(PREFIX + "+ iss:", iss);
-	if (DEBUG) console.debug(PREFIX + "+ state:", state);
-	if (DEBUG) console.debug(PREFIX + "+ code:", code);
-	if (DEBUG) console.debug(PREFIX + "+ error:", error);
-	if (DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ iss:", iss);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ state:", state);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code:", code);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error:", error);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
 
 	$("#iss").val(iss);
 	$("#state").val(state);
@@ -167,14 +161,14 @@ export function renderHTMLElements(parsedSearch) {
 	 *
 	 */
 
-	if (DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.groupEnd();
 }
 
 export function renderHTMLErrorElements(errorObject) {
 	const STEP_NAME						= "renderHTMLErrorElements";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (GROUP_DEBUG) console.groupCollapsed(PREFIX);
-	if (DEBUG) console.debug(PREFIX + "Received:", errorObject);
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Received:", errorObject);
 
 	// CSS Classes.
 	$(".container .center").removeClass("hidden");
@@ -183,7 +177,7 @@ export function renderHTMLErrorElements(errorObject) {
 	let error							= null;
 	let errorDescription				= null;
 	let isAnObject						= ( typeof errorObject === 'object' && !Array.isArray(errorObject) && errorObject !== null );
-	if (DEBUG) console.debug(PREFIX + "isAnObject:", isAnObject);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "isAnObject:", isAnObject);
 	if ( isAnObject ) {
 		error							= errorObject.error;
 		errorDescription				= errorObject.message;
@@ -192,13 +186,13 @@ export function renderHTMLErrorElements(errorObject) {
 		errorDescription				= errorObject;
 	}
 
-	if (DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
-	if (DEBUG) console.debug(PREFIX + "+ error:", error);
-	if (DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error:", error);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
 
 	$("#error").val(error);
 	$("#errorDescription").val(errorDescription);
 
-	if (GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
