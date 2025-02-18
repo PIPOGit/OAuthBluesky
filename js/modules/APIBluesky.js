@@ -67,11 +67,11 @@ const MAX_NOTIS_TO_RETRIEVE				= 50;
  * This module performs a "try-and-catch" call for a given
  * function.
  * -------------------------------------------------------- */
-export async function tryAndCatch( currentStep, callbackFunction, callbackOptions=null ) {
+export async function tryAndCatch( currentStep, callbackFunction, callbackOptions=null, show=true ) {
 	const STEP_NAME						= "tryAndCatch";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `Step: ${currentStep}` );
+	if (show && window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `Step: ${currentStep}` );
 
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();
@@ -81,12 +81,12 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 		// Let's retrieve first if there are unread user's notifications.
 		// ------------------------------------------
 		apiCallResponse					= await callbackFunction(callbackOptions);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+		if (show && window.BSKY.DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
 
 		// Clear and hide error fields and panel
 		HTML.clearHTMLError();
 	} catch (error) {
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 		
 		// Check if it's a "controlled error".
 		if ( error.hasOwnProperty("step") ) {
@@ -100,16 +100,16 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 				// Show the error and update the HTML fields
 				HTML.updateHTMLError(error, false);
 
-				if (window.BSKY.DEBUG) console.debug( PREFIX + "Let's retry..." );
-				if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX + "Let's retry..." );
+				if (show && window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_RETRY );
 				try {
 					apiCallResponse			= await callbackFunction(callbackOptions);
-					if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
+					if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + "Current apiCallResponse:", apiCallResponse );
 
 					// Clear and hide error fields and panel
 					HTML.clearHTMLError();
 				} catch (error) {
-					if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+					if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 					// TODO: Si el error es de expiración del token [401]
 					// vendrá algo así: {"error":"invalid_token","message":"\"exp\" claim timestamp check failed"}
@@ -117,56 +117,62 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 						&& ( error.isJson )											// json format
 						&& ( COMMON.areEquals( error.json.error, 'invalid_token' ) ) ) {	// 'invalid token'
 						// Redirigir a "logout".
-						if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-						if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+						if (show && window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+						if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 						await fnLogout();
 					} else if ( ( error.status==502 )								// Internal Server Error {error: 'InternalServerError', message: 'Internal Server Error'}
 						&& ( error.isJson )											// json format
 						&& ( COMMON.areEquals( error.json.error, 'InternalServerError' ) ) ) {	// 'invalid token'
 						// Do nothing
-						if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-						if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+						if (show && window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+						if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 					} else if ( ( error.status==400 )								// BAD Response {error: 'InternalServerError', message: 'Internal Server Error'}
 						&& ( error.isJson ) ) {										// json format
 						// Save the info in the "getProfiles " response.
-						apiCallResponse	= {
-							error				: error,
-							sameSteps			: sameSteps,
-							currentStep			: currentStep,
-							distinctDPoPNonce	: distinctDPoPNonce,
-							serverError			: serverError
-						}
-						if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-						if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+						apiCallResponse			= new TYPES.APICallResponseError(
+							error,
+							currentStep,
+							callbackOptions,
+							sameSteps,
+							currentStep,
+							distinctDPoPNonce,
+							serverError
+						);
+						if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + "New apiCallResponse:", apiCallResponse );
+						if (show && window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+						if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 					} else {
 						// Show the error and update the HTML fields
-						if (window.BSKY.DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
+						if (show && window.BSKY.DEBUG) console.debug( PREFIX + "Not an 'invalid token' error." );
 						HTML.updateHTMLError(error);
 						throw( error );
 					}
 				}
-				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+				if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 			} else {
-				if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `[sameSteps=${sameSteps}]` );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [error.step]`, error.step );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [currentStep]`, currentStep );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `[distinctDPoPNonce=${distinctDPoPNonce}]` );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceUsed]`, BSKY.data.dpopNonceUsed );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceReceived]`, BSKY.data.dpopNonceReceived );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `[serverError=${serverError}]` );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `[sameSteps=${sameSteps}]` );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [error.step]`, error.step );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [currentStep]`, currentStep );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `[distinctDPoPNonce=${distinctDPoPNonce}]` );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceUsed]`, BSKY.data.dpopNonceUsed );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `+ [BSKY.data.dpopNonceReceived]`, BSKY.data.dpopNonceReceived );
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + `[serverError=${serverError}]` );
 
 				// Save the info in the "getProfiles " response.
-				apiCallResponse			= {
-					error				: error,
-					sameSteps			: sameSteps,
-					currentStep			: currentStep,
-					distinctDPoPNonce	: distinctDPoPNonce,
-					serverError			: serverError
-				}
+				apiCallResponse			= new TYPES.APICallResponseError(
+					error,
+					currentStep,
+					callbackOptions,
+					sameSteps,
+					currentStep,
+					distinctDPoPNonce,
+					serverError
+				);
+				if (show && window.BSKY.DEBUG) console.debug( PREFIX_RETRY + "New apiCallResponse:", apiCallResponse );
 
 				// Show the error and update the HTML fields
 				HTML.updateHTMLError(error);
-				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+				if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 			}
 		} else {
 			// Show the error and update the HTML fields
@@ -174,8 +180,8 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 		}
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	if (show && window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 	
 	return apiCallResponse;
 }
@@ -470,10 +476,10 @@ export async function retrieveNotifications(renderHTMLErrors=true) {
 }
 
 // Atomic function to retrieve the user's profile
-export async function retrieveUserProfile() {
+export async function retrieveUserProfile( userProfile ) {
 	const STEP_NAME						= "retrieveUserProfile";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userProfile + "]" );
 
 	// Prepare the URL..
 	let endpoint						= API.bluesky.XRPC.api.public.getProfile;
@@ -481,7 +487,7 @@ export async function retrieveUserProfile() {
 
 	// The URL is OPEN, so... Public Server
 	let root							= API.bluesky.XRPC.public;
-	let url								= root + endpoint + "?actor=" + BSKY.user.userHandle;
+	let url								= root + endpoint + "?actor=" + userProfile;
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
@@ -511,11 +517,60 @@ export async function retrieveUserProfile() {
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
 	// Here, we gather the "access_token" item in the received json.
-	let userProfile						= responseFromServer.body;
+	let profile							= responseFromServer.body;
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return userProfile;
+	return profile;
+}
+
+// Atomic function to retrieve the user's profile
+export async function retrieveUserProfileFromPDS( userProfile ) {
+	const STEP_NAME						= "retrieveUserProfileFromPDS";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userProfile + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.public.getProfile;
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting the user's profile... Invoking endpoint:", endpoint );
+
+	// The URL is PDS, so... PDS Server
+	let root							= BSKY.auth.userPDSURL + "/xrpc";
+	let url								= root + endpoint + "?actor=" + userProfile;
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': APICall.CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let profile							= responseFromServer.body;
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return profile;
 }
 
 // Atomic function to retrieve who the user follows
@@ -572,24 +627,28 @@ export async function retrieveUserFollows(cursor) {
 	return userData;
 }
 
-// Atomic function to retrieve who the user follows
-export async function retrieveRepoListRecords(cursor) {
+// Atomic function to retrieve who (from the PDS) the user follows
+export async function retrieveRepoListRecords( data ) {
 	const STEP_NAME						= "retrieveRepoListRecords";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[userHandle ${BSKY.user.userHandle}] [nsid=${data.nsid}]` );
 
 	// Prepare the URL..
 	let endpoint						= API.bluesky.XRPC.api.pds.listRecords;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting who the user is following... Invoking endpoint:", endpoint );
 
-	// The URL is OPEN, so... Public Server
+	// The URL is PDS, so... PDS Server
 	let root							= BSKY.auth.userPDSURL + "/xrpc";
 	let url								= root + endpoint;
 	url									+= "?repo=" + encodeURIComponent( BSKY.user.userDid );
-	url									+= "&collection=app.bsky.graph.follow";
+	if ( data.nsid && !COMMON.isNullOrEmpty(data.nsid) ) {
+		url								+= "&collection=" + data.nsid;
+	} else {
+		url								+= "&collection=app.bsky.graph.follow";
+	}
 	url									+= "&limit=100";
-	if ( !COMMON.isNullOrEmpty(cursor) ) {
-		url								+= "&cursor=" + cursor;
+	if ( data.cursor && !COMMON.isNullOrEmpty(data.cursor) ) {
+		url								+= "&cursor=" + data.cursor;
 	}
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
@@ -637,8 +696,8 @@ export async function retrieveRepoBlockOfRecords(queryString) {
 	let endpoint						= API.bluesky.XRPC.api.public.getProfiles;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting a block of 25 profiles... Invoking endpoint:", endpoint );
 
-	// The URL is OPEN, so... Public Server
-	let root							= API.bluesky.XRPC.public;
+	// The URL is PDS, so... PDS Server
+	let root							= BSKY.auth.userPDSURL + "/xrpc";
 	let url								= root + endpoint;
 	url									+= queryString;
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
@@ -674,6 +733,7 @@ export async function retrieveRepoBlockOfRecords(queryString) {
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return userData;
 }
 
 // Atomic function to retrieve who are the user followers
@@ -687,7 +747,10 @@ export async function retrieveUserFollowers(cursor) {
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting who are the user's followers... Invoking endpoint:", endpoint );
 
 	// The URL is OPEN, so... Public Server
-	let root							= API.bluesky.XRPC.public;
+	// let root							= API.bluesky.XRPC.public;
+
+	// The URL is PDS, so... PDS Server
+	let root							= BSKY.auth.userPDSURL + "/xrpc";
 	let url								= root + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
@@ -943,7 +1006,6 @@ export async function retrieveTrendingTopics(cursor) {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return userData;
 }
-
 
 // Atomic function to create a "convo" for chats
 export async function searchProfile( searchedProfiles ) {

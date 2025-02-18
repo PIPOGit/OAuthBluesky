@@ -121,10 +121,10 @@
 					<div class="row px-1 d-flex border-2 border-top border-primary">
 						<div class="nav nav-pills flex-column align-items-end text-primary" id="pills-tab" role="tablist">
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modal-settings"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-gear"></i>&nbsp;Settings</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modal-search-user"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-people"></i>&nbsp;Search User</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-access-token"	name="pill-access-token"	data-bs-target="#panel-access-token"	aria-controls="panel-access-token"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><i class="bi bi-person-badge"></i>&nbsp;AccessToken</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex active"	id="pill-my-profile"	name="pill-my-profile"		data-bs-target="#panel-my-profile"		aria-controls="panel-my-profile"		type="button" data-bs-toggle="pill" role="tab" aria-selected="true" aria-current="page"><i class="bi bi-person-vcard"></i>&nbsp;User Profile</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modal-search-user"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-people"></i>&nbsp;Search User</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-notifications"	name="pill-notifications"	data-bs-target="#panel-notifications"	aria-controls="panel-notifications"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-notifications-badge" name="pill-notifications-badge" class="badge bg-warning"></span>&nbsp;<i class="bi bi-bell"></i>&nbsp;Notificaciones</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-notifications"	name="pill-notifications"	data-bs-target="#panel-notifications"	aria-controls="panel-notifications"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-notifications-badge" name="pill-notifications-badge" class="badge bg-success"></span>&nbsp;<i class="bi bi-bell"></i>&nbsp;Notificaciones</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-following"		name="pill-following"		data-bs-target="#panel-following"		aria-controls="panel-following"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-following-badge" name="pill-following-badge" class="badge bg-warning"></span>&nbsp;<i class="bi bi-person-standing"></i>&nbsp;Following</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-followers"		name="pill-followers"		data-bs-target="#panel-followers"		aria-controls="panel-followers"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-followers-badge" name="pill-followers-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-walking"></i>&nbsp;Followers</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-blocking"		name="pill-blocking"		data-bs-target="#panel-blocking"		aria-controls="panel-blocking"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-blocking-badge" name="pill-blocking-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-dash"></i>&nbsp;Blocking</button>
@@ -136,7 +136,7 @@
 					</div>
 
 					<!-- La versión. -->
-					<div id="version" name="version" class="sticky-bottom">&copy;&reg; Madrilenyer&trade;, 2025 | <span id="app_name">BlueSkyAPP</span>, v<span id="app_version">1.0</span></div>
+					<div id="version" name="version" class="sticky-bottom"><span id="app_name">BlueSkyAPP</span>, v<span id="app_version">1.0</span><br/>&copy;&reg; Madrilenyer&trade;, 2025</div>
 				</div>
 
 				<!-- Panel derecho -->
@@ -270,9 +270,9 @@
 										<thead class="table-header theme-table-header">
 											<tr>
 												<th scope="col" class="col-1">#</th>
+												<th scope="col" class="col-2">Status</th>
 												<th scope="col">User</th>
 												<th scope="col">Description</th>
-												<th scope="col" class="col-3">Since</th>
 											</tr>
 										</thead>
 										<tbody class="table-group-divider theme-table-body">
@@ -288,9 +288,9 @@
 										<thead class="table-header theme-table-header">
 											<tr>
 												<th scope="col" class="col-1">#</th>
+												<th scope="col" class="col-2">Status</th>
 												<th scope="col">User</th>
 												<th scope="col">Description</th>
-												<th scope="col" class="col-3">Since</th>
 											</tr>
 										</thead>
 										<tbody class="table-group-divider theme-table-body">
@@ -306,10 +306,9 @@
 										<thead class="table-header theme-table-header">
 											<tr>
 												<th scope="col" class="col-1">#</th>
-												<th scope="col" class="col-1">Muted</th>
+												<th scope="col" class="col-2">Status</th>
 												<th scope="col">User</th>
 												<th scope="col">Description</th>
-												<th scope="col">Since</th>
 											</tr>
 										</thead>
 										<tbody class="table-group-divider theme-table-body">
@@ -325,10 +324,9 @@
 										<thead class="table-header theme-table-header">
 											<tr>
 												<th scope="col" class="col-1">#</th>
-												<th scope="col" class="col-1">Blocked</th>
+												<th scope="col" class="col-2">Status</th>
 												<th scope="col">User</th>
 												<th scope="col">Description</th>
-												<th scope="col">Since</th>
 											</tr>
 										</thead>
 										<tbody class="table-group-divider theme-table-body">

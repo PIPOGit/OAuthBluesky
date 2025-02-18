@@ -18,6 +18,8 @@ import * as COMMON						from "./modules/common.functions.js";
 import * as TYPES						from "./modules/common.types.js";
 // Common APIBluesky functions
 import * as APIBluesky					from "./modules/APIBluesky.js";
+// To perform API calls
+import * as APICall						from "./modules/APICall.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/BrowserDB.js";
 // Common HTML functions
@@ -43,6 +45,9 @@ const CLIENT_APP						= CONFIGURATION.clientApp;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
+
+// Module constants
+const MAX_ITERATIONS					= 100;
 
 
 /**********************************************************
@@ -314,7 +319,7 @@ async function getTheUserProfile() {
 
 	// Now, the user's profile.
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
-	let userProfile						= await APIBluesky.tryAndCatch( "retrieveUserProfile", APIBluesky.retrieveUserProfile, null );
+	let userProfile						= await APIBluesky.tryAndCatch( "retrieveUserProfile", APIBluesky.retrieveUserProfile, BSKY.user.userHandle );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userProfile:", userProfile );
 
 	// Save it.
@@ -371,7 +376,7 @@ async function getWhoTheUserFollows() {
 		allData.push(...data);
 		acumulado						= allData.length;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allData );
-	} while ( hayCursor && (n<20) );
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} following`, allData );
@@ -380,7 +385,7 @@ async function getWhoTheUserFollows() {
 	BSKY.user.following					= allData;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserFollows( allData );
+	HTML.htmlRenderUserFollows( BSKY.user.following );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -391,18 +396,30 @@ async function getWhoTheUserFollows() {
  * LOGGED-IN PROCESS.
  *
  * "Business function": Retrieve who the user follows.
+ *
+ * This functions handles three steps:
+ * 1.- Retrieve a list of items (following users), with the id's
+ * 2.- Retrieve the profile of each "cid".
+ * 3.- Retrieve the info about "not found" profiles.
  * -------------------------------------------------------- */
 async function getWhoTheUserFollowsFromTheRepo() {
 	const STEP_NAME						= "getWhoTheUserFollowsFromTheRepo";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	const PREFIX_PDS_REPO				= `${PREFIX}[Step 1: PDS REPO] `;
+	const PREFIX_PDS_PROFILES			= `${PREFIX}[Step 2: PDS REPO Profiles] `;
+	const PREFIX_PDS_MISSING			= `${PREFIX}[Step 3: PDS REPO MISSING Profiles] `;
+	const PREFIX_MISSING				= `${PREFIX}[MISSING] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
 	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows...` );
-	BSKY.user.following_repo			= BSKY.user.following_repo || {};
+	BSKY.user.following					= BSKY.user.following || {};
 
-	// Now, the user's follows.
+
+	// Retrieve the list of following profiles from the repo.
+	// ------------------------------------------
+	const NSID							= "app.bsky.graph.follow";
+	// Who the user follows.
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user follows...` );
 	let apiCallResponse					= null;
 	let cursor							= null;
@@ -412,99 +429,243 @@ async function getWhoTheUserFollowsFromTheRepo() {
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PDS_REPO );
 	do {
 		n++;
 		// Retrieve user's follows (in the repo) to show
 		// ------------------------------------------
-		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveRepoListRecords", APIBluesky.retrieveRepoListRecords, cursor );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		// Received an array of objects of this type:
+		//
+		//		{
+		//		    "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lifiak24z423",
+		//		    "cid": "bafyreigg5f77n57bdm24ufu3xgeqex5wgnb4fruwufwoe54bb5uhvuemje",
+		//		    "value": {
+		//		        "$type": "app.bsky.graph.follow",
+		//		        "subject": "did:plc:rfdm4kde7l4uic6opx6bqcy2",
+		//		        "createdAt": "2025-02-17T19:30:03.108Z"
+		//		    }
+		//		}
+		//
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveRepoListRecords", APIBluesky.retrieveRepoListRecords, { cursor: cursor, nsid: NSID } );
+		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 
 		// Datos. Seguimos?
 		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
 
 		data							= apiCallResponse.records;
 		subTotal						= data.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} following`, data );
+		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `  Detected sub total: ${subTotal} following`, data );
 		allData.push(...data);
 		acumulado						= allData.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allData );
-	} while ( hayCursor && (n<20) );
+		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `  Detected acumulado: ${acumulado} following`, allData );
+
+		// Update the info panel
+		HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows (${acumulado})...` );
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} following`, allData );
-
 	// Save it.
-	BSKY.user.following_repo.raw		= allData;
+	BSKY.user.following.raw				= allData;
 
-	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserFollowsFromRepo( allData );
+	if ( COMMON.isNullOrEmpty( allData ) ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `No following detected.` );
 
-	// TEST
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		return;
+	}
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `Detected ${acumulado} following`, allData );
+
+
+	// Now, retrieve the profiles information for each cid.
 	// ------------------------------------------
-	/*
-	 * Vienen este tipo de objetos.
-	 *
-		{
-			"uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lifiak24z423",
-			"cid": "bafyreigg5f77n57bdm24ufu3xgeqex5wgnb4fruwufwoe54bb5uhvuemje",
-			"value": {
-				"$type": "app.bsky.graph.follow",
-				"subject": "did:plc:rfdm4kde7l4uic6opx6bqcy2",
-				"createdAt": "2025-02-17T19:30:03.108Z"
-			}
-		}
-
-	 */
+	// Prepare the responses with the profiles
+	BSKY.user.following.profiles		= [];
 	let search							= [];
+	let searched						= [];
+	let missing							= [];
+	let missingProfiles					= [];
+	let missed							= {};
 	let startAt							= 0;
 	let startCurrent					= 0;
 	let finishAt						= allData.length;
 	let blockOfProfiles					= null;
 	let bunch							= null;
+	let userDid							= null;
+	let profile							= null;
 	let allProfiles						= [];
+	const MAX_PROFILES					= 25;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PDS_PROFILES );
 	do {
 		// Prepare the bunch
 		search							= []
-		for ( let n=0; n<25; n++ ) {
-			startCurrent				= 25 * startAt + n;
+		searched						= []
+		for ( let n=0; n<MAX_PROFILES; n++ ) {
+			startCurrent				= MAX_PROFILES * startAt + n;
 			if ( allData[startCurrent]?.value?.subject ) {
-				search.push( "&actors[]=" + encodeURIComponent( allData[n].value.subject ) );
+				userDid					= allData[startCurrent].value.subject;
+				searched.push( userDid );
+				search.push( "&actors[]=" + encodeURIComponent( userDid ) );
 			}
 		}
 		startAt++;
 		let queryString					= "?" + search.join("").substring(1);
 
+		// Update the info panel
+		HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows (${MAX_PROFILES * startAt}/${finishAt})...` );
+
 		// Now, retrieve the block of profiles.
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
+		// ------------------------------------------
+		// Received an array of profiles of this type:
+		//
+		//		{
+		//		    "did": "did:plc:rfdm4kde7l4uic6opx6bqcy2",
+		//		    "handle": "fumatron.bsky.social",
+		//		    "displayName": "FUMATRÓN",
+		//		    "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:rfdm4kde7l4uic6opx6bqcy2/bafkreibi3hk7dstj5mg4o63a5ucjunl2zc2uf4udoy5d5aiitosu5dmsvu@jpeg",
+		//		    "associated": {
+		//		        "lists": 0,
+		//		        "feedgens": 0,
+		//		        "starterPacks": 0,
+		//		        "labeler": false
+		//		    },
+		//		    "viewer": {
+		//		        "muted": false,
+		//		        "blockedBy": false,
+		//		        "following": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lifiak24z423",
+		//		        "knownFollowers": {
+		//		            "count": 19,
+		//		            "followers": [...]
+		//		        }
+		//		    },
+		//		    "labels": [],
+		//		    "createdAt": "2025-02-14T18:42:47.014Z",
+		//		    "indexedAt": "2025-02-14T18:45:11.112Z",
+		//		    "followersCount": 456,
+		//		    "followsCount": 70,
+		//		    "postsCount": 4
+		//		}
+		//
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + `Let's retrieve the user's profile...` );
 		blockOfProfiles					= await APIBluesky.tryAndCatch( "retrieveRepoBlockOfRecords", APIBluesky.retrieveRepoBlockOfRecords, queryString );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Block of profiles:", blockOfProfiles );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + "Block of profiles:", blockOfProfiles );
 		
 		// Add to global var
-		bunch							= blockOfProfiles.profiles;
-		allProfiles.push(...bunch);
-	}
-	while ( startCurrent <= finishAt );
+		if ( blockOfProfiles && blockOfProfiles.profiles ) {
+			bunch						= blockOfProfiles.profiles;
+			allProfiles.push(...bunch);
+			
+			// Sanity check: Detect which profiles have not been retrieved...
+			let position				= 0;
+			for ( let idx=0; idx<bunch.length; idx++ ) {
+				profile					= bunch[idx];
+				userDid					= profile.did;
+				position				= searched.indexOf( userDid );
+				if (position>=0) {
+					searched.splice( position, 1 );
+				}
+				if (profile.labels && profile.labels.length>0) {
+					profile.labels.forEach( label => {
+						if (label.val && !COMMON.areEquals( label.val, "!no-unauthenticated" ) ) {
+							if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + `Profile[${profile.displayName}/${profile.handle}/${profile.did}] | label(s)[${profile.labels.length}] | label:`, label.val );
+						}
+					});
+				}
+			}
+			if (searched.length>0) {
+				if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + `Missed ${searched.length} profile(s)...`, searched );
+				missing.push(...searched);
+			}
+		}
+	} while ( startCurrent <= finishAt );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Save it.
-	BSKY.user.following_repo.profiles	= allProfiles;
+	BSKY.user.following.profiles		= allProfiles;
 
-	// Show something
-	allProfiles.forEach( profile => {
-		if (profile?.viewer ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `+ ${profile.handle}:`, profile );
+
+	// Now, retrieve the missed profiles information.
+	// ------------------------------------------
+	if ( missing.length>=0 ) {
+		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PDS_MISSING + `[Missing: ${missing.length}]` );
+		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_MISSING + `Missed profiles...`, missing );
+		// Para ver el didDoc(JSON) de cada uno de ellos: https://plc.directory/[did]
+		// Para ver el profile de cada uno de ellos: https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=[did]
+
+		let urlOfMissing					= "";
+		let didDocForMissing				= "";
+		let profileForMissing				= "";
+		for ( let idx=0; idx<missing.length; idx++ ) {
+			userDid							= missing[ idx ];
+
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_MISSING + `Missed profile[${idx}] with did:`, userDid );
+			missingProfiles[userDid]		= {};
+			missed							= {};
+			missed.did						= userDid;
+			missed.missed					= true;
+
+			// The didDoc of the missing account
+			try {
+				missed.didDoc				= {};
+				urlOfMissing				= `https://plc.directory/${userDid}`;
+				didDocForMissing			= await fetch( urlOfMissing ).then( response => {
+					let head				= APICall.showResponseHeaders( response, false );
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ Response headers:`, head );
+					missed.didDoc.head	= head;
+					return response.json();
+				}).then( data => {
+					missed.didDoc.body	= data;
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ Response body...:`, data );
+				}).catch( error => {
+					missed.didDoc.error	= error;
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ Response error..:`, error );
+				});
+			} catch ( error ) {
+				missed.didDoc.fetchError	= error;
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ FETCH error..:`, error );
+			}
+
+			// The public profile of the missing account
+			try {
+				missed.profile				= {};
+				urlOfMissing				= `https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=${userDid}`;
+				profileForMissing			= await fetch( urlOfMissing ).then( response => {
+					let head				= APICall.showResponseHeaders( response, false );
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ Response headers:`, head );
+					missed.profile.head	= head;
+					return response.json();
+				}).then( data => {
+					missed.profile.body	= data;
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ Response body...:`, data );
+				}).catch( error => {
+					missed.profile.error	= error;
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ Response error..:`, error );
+				});
+			} catch ( error ) {
+				missed.profile.fetchError	= error;
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ FETCH error..:`, error );
+			}
+
+			// Recap
+			missingProfiles.push( missed );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + `+ Info for missed profile[${idx}]:`, missingProfiles[userDid] );
+
+			if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
-	});
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	} else {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `No missed profiles found.` );
+	}
 
-	// Con "getProfile":
-	// DEACTIVATED: Puede dar un error '400 Bad Request': {"error":"AccountDeactivated","message":"Account is deactivated"}
-	// DELETED: Puede dar un error '400 Bad Request': {"error":"InvalidRequest","message":"Profile not found"}
-	// MUTED: viewer.muted
-	// BLOCKED: viewer.blockedBy
-	// MODERATION MUTE: Puede estar muteado por una lista de moderación: viewer.mutedByList...
-	// MODERATION BLOCK: Puede estar bloqueado por una lista de moderación: viewer.blockingByList...
+	// Save it.
+	BSKY.user.following.missingProfiles	= missingProfiles;
+
+	// Lo pintamos todo en su sitio.
+	HTML.htmlRenderUserFollows( BSKY.user.following );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -516,8 +677,8 @@ async function getWhoTheUserFollowsFromTheRepo() {
  *
  * "Business function": Retrieve who the user is following.
  * -------------------------------------------------------- */
-async function getTheUserFollowers() {
-	const STEP_NAME						= "getTheUserFollowers";
+async function getWhoAreTheUserFollowers() {
+	const STEP_NAME						= "getWhoAreTheUserFollowers";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
@@ -555,7 +716,7 @@ async function getTheUserFollowers() {
 		acumulado						= allData.length;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} followers`, allData );
 		
-	} while ( hayCursor && (n<20) );
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} followers`, allData );
@@ -615,7 +776,7 @@ async function getWhoTheUserIsBlocking() {
 		acumulado						= allData.length;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} blocks`, allData );
 		
-	} while ( hayCursor && (n<20) );
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} blocks`, allData );
@@ -675,7 +836,7 @@ async function getWhoTheUserIsMuting() {
 		acumulado						= allData.length;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} mutes`, allData );
 		
-	} while ( hayCursor && (n<20) );
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} mutes`, allData );
@@ -735,7 +896,7 @@ async function getTheUserLists() {
 		acumulado						= allData.length;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} lists`, allData );
 		
-	} while ( hayCursor && (n<20) );
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
@@ -782,7 +943,8 @@ async function getTheTrendingTopics() {
 	data								= await APIBluesky.tryAndCatch( "retrieveTrendingTopics", APIBluesky.retrieveTrendingTopics, cursor );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Current data:`, data );
 
-	if ( data ) {
+	// if ( !COMMON.isNullOrEmpty( data ) ) {
+	if ( data && ( data?.topics || data?.suggested ) ) {
 		// Topics
 		subTotal						= data.topics.length;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Topics`, data.topics );
@@ -1223,13 +1385,17 @@ async function updateStaticInfo() {
 		apiCallResponse					= await getTheUserProfile();
 
 		// Retrieve who the user is following
-		apiCallResponse					= await getWhoTheUserFollows();
+		// TODO: Esta sobraría
+		// apiCallResponse					= await getWhoTheUserFollows();
 
 		// Retrieve who the user is following FROM THE PDS Repository
 		apiCallResponse					= await getWhoTheUserFollowsFromTheRepo();
 
 		// Retrieve the user's followers
-		apiCallResponse					= await getTheUserFollowers();
+		apiCallResponse					= await getWhoAreTheUserFollowers();
+
+		// Retrieve who are the user followers FROM THE PDS Repository
+		// apiCallResponse					= await getWhoAreTheUserFollowersFromTheRepo();
 
 		// Retrieve who the user is blocking
 		apiCallResponse					= await getWhoTheUserIsBlocking();

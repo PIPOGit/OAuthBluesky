@@ -49,11 +49,11 @@ let responseError						= null;
  **********************************************************/
 
 // HTML Helper functions
-function showResponseHeaders(data) {
+export function showResponseHeaders(data, show=true ) {
 	const STEP_NAME						= "showResponseHeaders";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX + "[RESPONSE=="+(data.ok?"OK":"ERROR")+" ("+data.status+")]");
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Received response:", COMMON.prettyJson(data));
+	if (show && window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX + "[RESPONSE=="+(data.ok?"OK":"ERROR")+" ("+data.status+")]");
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "Received response:", COMMON.prettyJson(data));
 
 	let response = {};
 	response.bodyUsed					= data.bodyUsed;
@@ -64,22 +64,22 @@ function showResponseHeaders(data) {
 	response.type						= data.type;
 	response.url						= data.url;
 	response.headers					= {};
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[bodyUsed]:", data.bodyUsed);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[ok]:", data.ok);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[redirected]:", data.redirected);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[status]:", data.status);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[statusText]:", data.statusText);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[type]:", data.type);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[url]:", data.url);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Response Headers:");
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[bodyUsed]:", data.bodyUsed);
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[ok]:", data.ok);
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[redirected]:", data.redirected);
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[status]:", data.status);
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[statusText]:", data.statusText);
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[type]:", data.type);
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response[url]:", data.url);
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "+ Response Headers:");
 	for (var pair of data.headers.entries()) {
 		response.headers[pair[0]]		= pair[1];
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "  + Header["+pair[0]+"]:", pair[1]);
+		if (show && window.BSKY.DEBUG) console.debug(PREFIX + "  + Header["+pair[0]+"]:", pair[1]);
 	}
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Returning response:", COMMON.prettyJson(response));
+	if (show && window.BSKY.DEBUG) console.debug(PREFIX + "Returning response:", COMMON.prettyJson(response));
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	if (show && window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 	
 	return response;
 }
