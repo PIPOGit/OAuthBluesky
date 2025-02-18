@@ -674,7 +674,6 @@ export async function retrieveRepoBlockOfRecords(queryString) {
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return userData;
 }
 
 // Atomic function to retrieve who are the user followers

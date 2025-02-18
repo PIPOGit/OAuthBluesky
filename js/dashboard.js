@@ -74,7 +74,6 @@ async function startUp() {
 	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
 	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
 
-
 	// ================================================================
 	// Actualizamos el objeto raiz.
 	// + Logging Properties

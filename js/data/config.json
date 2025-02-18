@@ -76,7 +76,10 @@
 						"getFollows": "/app.bsky.graph.getFollows",
 						"getPosts": "/app.bsky.feed.getPosts",
 						"getProfile": "/app.bsky.actor.getProfile",
+<<<<<<< HEAD
 						"getProfiles": "/app.bsky.actor.getProfiles",
+=======
+>>>>>>> 6f18cb5dd02c2b49d82670ff1a8afde6bf8717b5
 						"searchActorsTypeahead": "/app.bsky.actor.searchActorsTypeahead"
 					},
 					"unused": {
