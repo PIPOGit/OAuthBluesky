@@ -483,8 +483,10 @@ async function getWhoTheUserFollowsFromTheRepo() {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Block of profiles:", blockOfProfiles );
 		
 		// Add to global var
-		bunch							= blockOfProfiles.profiles;
-		allProfiles.push(...bunch);
+		if ( blockOfProfiles && blockOfProfiles.profiles ) {
+			bunch						= blockOfProfiles.profiles;
+			allProfiles.push(...bunch);
+		}
 	}
 	while ( startCurrent <= finishAt );
 
