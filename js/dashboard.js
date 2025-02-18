@@ -20,6 +20,8 @@ import * as APICall						from "./modules/APICall.js";
 import * as DB							from "./modules/BrowserDB.js";
 // Common GEO functions
 import * as GEO							from "./modules/GEO.js";
+// Common GitHub functions
+import * as GitHub						from "./modules/GitHub.js";
 // Common HTML functions
 import * as HTML						from "./modules/HTML.js";
 
@@ -74,7 +76,6 @@ async function startUp() {
 	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
 	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
 
-
 	// ================================================================
 	// Actualizamos el objeto raiz.
 	// + Logging Properties
@@ -109,6 +110,11 @@ async function startUp() {
 	// ------------------------------------
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Clock started" );
+
+	// GitHub Information
+	// ------------------------------------
+	let githubInfo						= await GitHub.getRepositoryInformation();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received githubInfo:", githubInfo );
 
 	// Geolocation Information
 	// ------------------------------------

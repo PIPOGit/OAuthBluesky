@@ -497,7 +497,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `+ ${profile.handle}:`, profile );
 		}
 	});
-	
+
 	// Con "getProfile":
 	// DEACTIVATED: Puede dar un error '400 Bad Request': {"error":"AccountDeactivated","message":"Account is deactivated"}
 	// DELETED: Puede dar un error '400 Bad Request': {"error":"InvalidRequest","message":"Profile not found"}
@@ -505,7 +505,6 @@ async function getWhoTheUserFollowsFromTheRepo() {
 	// BLOCKED: viewer.blockedBy
 	// MODERATION MUTE: Puede estar muteado por una lista de moderación: viewer.mutedByList...
 	// MODERATION BLOCK: Puede estar bloqueado por una lista de moderación: viewer.blockingByList...
-
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
