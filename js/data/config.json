@@ -3,7 +3,7 @@
 		"debug": false,
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
-		"appVersion": "1.4.0",
+		"appVersion": "1.5.0",
 		"refresh_dynamic": 15,
 		"refresh_static": 300
 	},
@@ -11,7 +11,8 @@
 		"token_expiration_threshold": 10
 	},
 	"github": {
-		"repo": "https://github.com/PIPOGit/OAuthBluesky"
+		"repo": "https://api.github.com/repos/PIPOGit/OAuthBluesky",
+		"root": "https://github.com/PIPOGit/OAuthBluesky"
 	},
 	"dev_to": {
 		"post": "https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h"
