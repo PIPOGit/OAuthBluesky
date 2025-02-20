@@ -19,7 +19,12 @@
 .nav button:hover {
   /* color: var(--bs-white) !important; */
   /* color: var(--bs-success) !important; */
-  background-color: greenyellow;
+  /* background-color: greenyellow; */
+
+  border-color: var(--bs-success);
+  background-color: transparent;
+  border-width: thin;
+  border-style: solid;
 }
 
 /* Toda la sección. */

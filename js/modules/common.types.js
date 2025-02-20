@@ -69,6 +69,7 @@ export class APICallError extends Error {
 		message: "",
 	};
 */
+
 export class AccessTokenError extends Error {
 	title								= "Access Token Error";
 	message								= null;
@@ -118,7 +119,25 @@ export class DPoPRequest {
 	}
 }
 
-
+export class APICallResponseError extends Error {
+	error								= null;
+	step								= null;
+	callbackOptions						= null;
+	sameSteps							= null;
+	currentStep							= null;
+	distinctDPoPNonce					= null;
+	serverError							= null;
+	constructor( error, step, callbackOptions, sameSteps, currentStep, distinctDPoPNonce, serverError ) {
+		super( "Error @ " + step );
+		this.error						= error;
+		this.step						= step;
+		this.callbackOptions			= callbackOptions;
+		this.sameSteps					= sameSteps;
+		this.currentStep				= currentStep;
+		this.distinctDPoPNonce			= distinctDPoPNonce;
+		this.serverError				= serverError;
+	};
+}
 /**********************************************************
  * Module Variables
  **********************************************************/
