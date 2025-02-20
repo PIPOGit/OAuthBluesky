@@ -116,9 +116,6 @@ async function startUp() {
 	let githubInfo						= await GitHub.getRepositoryInformation();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received githubInfo:", githubInfo );
 
-	// Save the info
-	BSKY.git							= githubInfo;
-
 	// Geolocation Information
 	// ------------------------------------
 	let geolocationInfo					= await GEO.getGeolocationInformation();

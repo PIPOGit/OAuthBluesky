@@ -58,7 +58,7 @@ export const isFunction					= obj => ( getTypeOf( obj ).trim().toUpperCase().loc
 export const isEmpty					= str => (typeof str === "string" && str.length === 0);
 export const isNull						= str => (str === null);
 export const isUndefined				= str => (str === undefined);
-export const isNullOrEmpty				= str => ( isUndefined(str) || isNull(str) || isEmpty(str) || ( Array.isArray( str ) && str.length===0 ) );
+export const isNullOrEmpty				= str => ( isUndefined(str) || isNull(str) || isEmpty(str) );
 
 // String functions
 export const removeTrailingSlash		= str => ( str.endsWith('/') ? str.slice(0, -1) : str );

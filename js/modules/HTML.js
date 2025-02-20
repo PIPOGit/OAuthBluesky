@@ -39,7 +39,7 @@ const BLANK_IMAGE						= "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAA
 // HTML constants
 const LOCALE_SPAIN						= 'es-ES';
 const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true };
-const DESC_MAX_CHARS					= 60;
+const DESC_MAX_CHARS					= 40;
 
 // HTML normal DIVs/Placeholders constants
 const DIV_DATE_TIME						= "currentDateTime";
@@ -625,172 +625,25 @@ export function htmlRenderUserProfile( profile ) {
 /* --------------------------------------------------------
  * HTML Render: User Follows.
  * -------------------------------------------------------- */
-function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: false, muted: false } ) {
-	const STEP_NAME						= "htmlRenderSingleProfile";
+function htmlRenderSingleFollow( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleFollow";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${idx}]` );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
 
-	let missed							= data?.missed || false;
-	let profile							= missed ? data.profile : data;
-	let did								= missed ? data.did : data.did;
-	let didDoc							= missed ? data.didDoc : data.didDoc;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `PROFILE${missed}:`, profile );
-
-	/*
-	 * Con el "profile":
-	 * + En caso de errores de perfil:
-	 *   + DEACTIVATED: Puede dar un error '400 Bad Request': {"error":"AccountDeactivated","message":"Account is deactivated"}
-	 *   + DELETED: Puede dar un error '400 Bad Request': {"error":"InvalidRequest","message":"Profile not found"}
-	 * + En caso de datos correctos:
-	 *   + FOLLOWING: viewer.following
-	 *   + FOLLOWEDBY: viewer.followedBy
-	 *   + MUTED: viewer.muted
-	 *   + MODERATION MUTE: Puede estar muteado por una lista de moderación: viewer.mutedByList...
-	 *   + BLOCKING: viewer.blocking
-	 *   + BLOCKED: viewer.blockedBy
-	 *   + MODERATION BLOCK: Puede estar bloqueado por una lista de moderación: viewer.blockingByList...
-	 *
-	 * Iconos a usar, según info:
-	 *
-	 *   <i class="bi bi-person-vcard"></i>&nbsp;User Profile</button>
-	 *   <i class="bi bi-person-standing"></i>&nbsp;Following</button>
-	 *   <i class="bi bi-person-walking"></i>&nbsp;Followers</button>
-	 *   <i class="bi bi-person-dash"></i>&nbsp;Blocking</button>
-	 *   <i class="bi bi-person-slash"></i>&nbsp;Muting</button>
-	 *   <i class="bi bi-list-ul"></i>&nbsp;My Lists</button>
-	 *
-	 */
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
 
 	let html							= "";
-	let handle							= "";
-	if ( missed ) {
-		/*
-		 * did: "did:plc:6dtf7qrsx4msq6wmp7h7q2xu", Un string
-		 * didDoc: Un objeto de este tipo
-		 *	{
-		 *	    "head": {
-		 *	        "bodyUsed": false,
-		 *	        "ok": true,
-		 *	        "redirected": false,
-		 *	        "status": 200,
-		 *	        "statusText": "",
-		 *	        "type": "cors",
-		 *	        "url": "https://plc.directory/did:plc:6dtf7qrsx4msq6wmp7h7q2xu",
-		 *	        "headers": {
-		 *	            "content-length": "574",
-		 *	            "content-type": "application/did+ld+json; charset=utf-8"
-		 *	        }
-		 *	    },
-		 *	    "body": {
-		 *	        "@context": [
-		 *	            "https://www.w3.org/ns/did/v1",
-		 *	            "https://w3id.org/security/multikey/v1",
-		 *	            "https://w3id.org/security/suites/secp256k1-2019/v1"
-		 *	        ],
-		 *	        "id": "did:plc:6dtf7qrsx4msq6wmp7h7q2xu",
-		 *	        "alsoKnownAs": [
-		 *	            "at://cgtaragonlarioja.bsky.social"
-		 *	        ],
-		 *	        "verificationMethod": [
-		 *	            {
-		 *	                "id": "did:plc:6dtf7qrsx4msq6wmp7h7q2xu#atproto",
-		 *	                "type": "Multikey",
-		 *	                "controller": "did:plc:6dtf7qrsx4msq6wmp7h7q2xu",
-		 *	                "publicKeyMultibase": "zQ3shgRgACPVTXBbXGTFWfQRYyjyMuim7v47hkSv8JufEpH21"
-		 *	            }
-		 *	        ],
-		 *	        "service": [
-		 *	            {
-		 *	                "id": "#atproto_pds",
-		 *	                "type": "AtprotoPersonalDataServer",
-		 *	                "serviceEndpoint": "https://polypore.us-west.host.bsky.network"
-		 *	            }
-		 *	        ]
-		 *	    }
-		 *	}
-		 * PROFILE: Un objeto de este tipo
-		 *	{
-		 *		"head": {
-		 *			"bodyUsed": false,
-		 *			"ok": false,
-		 *			"redirected": false,
-		 *			"status": 400,
-		 *			"statusText": "",
-		 *			"type": "cors",
-		 *			"url": "https://public.api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=did:plc:6dtf7qrsx4msq6wmp7h7q2xu",
-		 *			"headers": {
-		 *				"cache-control": "public, max-age=5",
-		 *				"content-length": "56",
-		 *				"content-type": "application/json; charset=utf-8"
-		 *			}
-		 *		},
-		 *		"body": {
-		 *			"error": "InvalidRequest",
-		 *			"message": "Profile not found"
-		 *		}
-		 *	}
-		 */
-		handle							= didDoc.body.alsoKnownAs[0].substring(5);
-		html							+= '<tr class="align-top">';
-		html							+= `<td>&nbsp;</td>`;
-		html							+= `<td><i class="bi bi-ban-fill text-danger" title="Profile not found"></i></td>`;
-		html							+= `<td><a href="https://bsky.app/profile/${handle}" target="_blank" title="${handle}">${handle}</a></td>`;
-		html							+= `<td class="text-danger fw-medium theme-smaller">${profile.body.error}: ${profile.body.message}</td>`;
-		html							+= '</tr>';
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
 	} else {
-		handle							= profile.handle;
-		let defaultColor				= "text-body-tertiary";
-		let viewer						= profile.viewer;
-		let labels						= profile.labels;
-		let labelsAsStr					= "";
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Viewer:`, viewer );
-		if (!COMMON.isNullOrEmpty(labels)) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Labels:`, labels );
-			labelsAsStr					= labels.map(lbl => lbl.val);
-		}
-		html							+= '<tr class="align-top">';
-		html							+= `<td>${idx}</td>`;
-		// Icons: Following
-		html							+= `<td>`;
-		if ( flags.block || flags.muted ) {
-			html						+= `<i class="bi bi-person-standing ${!COMMON.isNullOrEmpty(viewer.following) ? "text-white bg-success" : defaultColor}" title="you are ${!COMMON.isNullOrEmpty(viewer.following) ? "" : "NOT "}following this profile"></i>`;
-			html						+= `&nbsp;<i class="bi bi-person-walking ${!COMMON.isNullOrEmpty(viewer.followedBy) ? "text-white bg-success" : defaultColor}" title="you are ${!COMMON.isNullOrEmpty(viewer.followedBy) ? "" : "NOT "}followed by this profile"></i>`;
-		} else if ( flags.follower ) {
-			html						+= `<i class="bi bi-person-standing ${!COMMON.isNullOrEmpty(viewer.following) ? "text-white bg-success" : defaultColor}" title="you are ${!COMMON.isNullOrEmpty(viewer.following) ? "" : "NOT "}following this profile"></i>`;
-		} else {
-			html						+= `<i class="bi bi-person-walking ${!COMMON.isNullOrEmpty(viewer.followedBy) ? "text-white bg-success" : defaultColor}" title="you are ${!COMMON.isNullOrEmpty(viewer.followedBy) ? "" : "NOT "}followed by this profile"></i>`;
-		}
-		html							+= `&nbsp;<i class="bi bi-person-dash ${viewer.blocking ? "text-white bg-dark" : defaultColor}" title="you are ${viewer.blocking ? "" : "NOT "}blocking this profile"></i>`;
-		html							+= `&nbsp;<i class="bi bi-person-dash ${viewer.blockedBy ? "text-white bg-danger" : defaultColor}" title="you are ${viewer.blockedBy ? "" : "NOT "}blocked by this profile"></i>`;
-		html							+= `&nbsp;<i class="bi bi-person-slash ${viewer.muted ? "text-white bg-primary" : defaultColor}" title="you are ${viewer.muted ? "" : "NOT "}muting this profile"></i>`;
-		html							+= `&nbsp;<i class="bi bi-list-ul ${viewer?.blockingByList ? "text-white bg-dark" : defaultColor}" title="you are ${viewer?.blockingByList ? "" : "NOT "}blocking this profile thru list${viewer?.blockingByList ? ": " + viewer?.blockingByList?.name : ""}"></i>`;
-		html							+= `&nbsp;<i class="bi bi-list-stars ${viewer?.mutedByList ? "text-white bg-primary" : defaultColor}" title="you are ${viewer?.mutedByList ? "" : "NOT "}muting this profile thru list${viewer?.mutedByList ? ": " + viewer?.mutedByList?.name : ""}"></i>`;
-
-		html							+= `</td><td>`;
-		if (profile.avatar) {
-			html						+= `<img src="${profile.avatar}"`;
-		} else {
-			html						+= `<img src="${BLANK_IMAGE}"`;
-		}
-		html							+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${handle}" target="_blank" title="${handle}">${profile.displayName || handle}</a></td>`;
-		html							+= `<td class="theme-smaller">${(profile.description) ? profile.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
-		// html							+= `<td>${new Date(profile.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
-		html							+= '</tr>';
-		
-		// TEST
-		delete viewer.following;
-		delete viewer.followedBy;
-		delete viewer.blocking;
-		delete viewer.blockedBy;
-		delete viewer.muted;
-		delete viewer.knownFollowers;
-		delete viewer.blockingByList;
-		let keys						= Object.keys(viewer);
-		if ( keys.length>0 ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Viewer:`, viewer );
-		}
-
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
 	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -802,41 +655,129 @@ export function htmlRenderUserFollows( data ) {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	let total							= 0;
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
+
 	let index							= 0;
 	let htmlContent						= null;
 	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWING + " tbody" );
 
 	// Clear the current content.
 	$tableBody.empty();
-	$( DIV_JQ_TAB_FOLLOWING_BADGE ).html(data.missingProfiles.length + data.profiles.length);
 
-	// Missed
-	total								= data.missingProfiles.length;
-	index								= 0;
+	// Total
+	let total							= data.length;
+	$( DIV_JQ_TAB_FOLLOWING_BADGE ).html(total);
 	if ( total>0 ) {
 		// Add data.
-		data.missingProfiles.forEach( profile => {
+		data.forEach( user => {
 			index++;
-			htmlContent					= htmlRenderSingleProfile( index, profile );
-			$tableBody.append( htmlContent );
-		});
-	}
-
-	// Following
-	total								= data.profiles.length;
-	index								= 0;
-	if ( total>0 ) {
-		// Add data.
-		data.profiles.forEach( profile => {
-			index++;
-			htmlContent					= htmlRenderSingleProfile( index, profile );
+			htmlContent					= htmlRenderSingleFollow( index, user );
 			$tableBody.append( htmlContent );
 		});
 	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * HTML Render: User Follows (from repository).
+ * -------------------------------------------------------- */
+export function htmlRenderUserFollowsFromRepo( data ) {
+	const STEP_NAME						= "htmlRenderUserFollowsFromRepo";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (window.BSKY.DEBUG) console.warn( PREFIX + "Under development yet!" );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[0] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[1] ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Received:", COMMON.prettyJson( data[2] ) );
+
+	/*
+	 * Received an array of:
+		{
+		  "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3li2xzgdvwo22",
+		  "cid": "bafyreicrmjb4jabxmjglsjsbtabfft6a33c6dtvi6ampbojg2pwarhknci",
+		  "value": {
+			"$type": "app.bsky.graph.follow",
+			"subject": "did:plc:yusufixihqclq3mb2o5o6iif",
+			"createdAt": "2025-02-13T15:13:06.647Z"
+		  }
+		}
+		{
+		  "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3li2unj7njk2h",
+		  "cid": "bafyreieky52bekgu7hwcbd4f5j6kifl2dpdafngoxwgspfkrq7emhy55je",
+		  "value": {
+			"$type": "app.bsky.graph.follow",
+			"subject": "did:plc:lnwaez6y2snt7jh2tbmktgkg",
+			"createdAt": "2025-02-13T14:12:45.664Z"
+		  }
+		}
+		{
+		  "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lhvhkp7cjz2t",
+		  "cid": "bafyreic34rqons4t6m5ljmjb2menrj7ovcxf5ybocmzpjicw62yigx5i4m",
+		  "value": {
+			"$type": "app.bsky.graph.follow",
+			"subject": "did:plc:apkhfnhhbxsei3ni7dkvyvan",
+			"createdAt": "2025-02-11T10:35:14.576Z"
+		  }
+		}
+	 *
+	 */
+
+	/*
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWING + " tbody" );
+	const content						= ( idx, user ) => `<tr class="align-top">
+											<td>${idx}</td>
+											<td><img src="${user.avatar}" height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>
+											<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>
+											<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>
+											</tr>`;
+	// Clear the current content.
+	$tableBody.empty();
+	// Add data.
+	for ( index in data ) {
+		htmlContent						= content( Number(index)+1, data[index] );
+		$tableBody.append( htmlContent );
+	}
+	 */
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * HTML Render: User Followers.
+ * -------------------------------------------------------- */
+function htmlRenderSingleFollower( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleFollower";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
+	} else {
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
+	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return html;
 }
 
 export function htmlRenderUserFollowers( data ) {
@@ -858,7 +799,7 @@ export function htmlRenderUserFollowers( data ) {
 		// Add data.
 		data.forEach( user => {
 			index++;
-			htmlContent					= htmlRenderSingleProfile( index, user, { follower: true } );
+			htmlContent					= htmlRenderSingleFollower( index, user );
 			$tableBody.append( htmlContent );
 		});
 	}
@@ -871,6 +812,32 @@ export function htmlRenderUserFollowers( data ) {
 /* --------------------------------------------------------
  * HTML Render: User Blocks.
  * -------------------------------------------------------- */
+function htmlRenderSingleBlock( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleBlock";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td>${user.viewer.muted}</td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
+	} else {
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
+	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return html;
+}
+
 export function htmlRenderUserBlocks( data ) {
 	const STEP_NAME						= "htmlRenderUserBlocks";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -890,7 +857,7 @@ export function htmlRenderUserBlocks( data ) {
 		// Add data.
 		data.forEach( user => {
 			index++;
-			htmlContent					= htmlRenderSingleProfile( index, user, { block: true } );
+			htmlContent					= htmlRenderSingleBlock( index, user );
 			$tableBody.append( htmlContent );
 		});
 	}
@@ -903,6 +870,32 @@ export function htmlRenderUserBlocks( data ) {
 /* --------------------------------------------------------
  * HTML Render: User Mutes.
  * -------------------------------------------------------- */
+function htmlRenderSingleMute( idx, user ) {
+	const STEP_NAME						= "htmlRenderSingleMute";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${user.handle}]` );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "USER:", user );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td>${user.viewer.blockedBy}</td>`;
+	if (user.avatar) {
+		html							+= `<td><img src="${user.avatar}"`;
+	} else {
+		html							+= `<td><img src="${BLANK_IMAGE}"`;
+	}
+	html								+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${user.handle}" target="_blank" title="${user.handle}">${user.displayName || user.handle}</a></td>`;
+	html								+= `<td>${(user.description) ? user.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(user.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return html;
+}
+
 export function htmlRenderUserMutes( data ) {
 	const STEP_NAME						= "htmlRenderUserMutes";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -922,7 +915,7 @@ export function htmlRenderUserMutes( data ) {
 		// Add data.
 		data.forEach( user => {
 			index++;
-			htmlContent					= htmlRenderSingleProfile( index, user, user, { muted: true } );
+			htmlContent					= htmlRenderSingleMute( index, user );
 			$tableBody.append( htmlContent );
 		});
 	}
@@ -947,8 +940,8 @@ function htmlRenderSingleList( idx, list, id ) {
 	html								+= `<td>${idx}</td>`;
 	html								+= `<td>${list.listItemCount}</td>`;
 	html								+= `<td><a href="https://bsky.app/profile/${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}">${list.name}</a></td>`;
-	html								+= `<td class="theme-smaller">${(list.description) ? list.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
-	html								+= `<td class="theme-smaller">${new Date(list.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= `<td>${(list.description) ? list.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(list.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );

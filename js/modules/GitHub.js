@@ -55,22 +55,7 @@ export async function getRepositoryInformation() {
 	let lastTagCommitAuthor				= null;
 	let lastTagCommitCommitter			= null;
 	let lastCommit						= null;
-
-	let user							= "Ov23liYZfIhg5Sifx63W";
-	let pass							= "300d1459aad2ec52d88ab270baf9d44651a5fcb0";
-	let basicAuthToken					= `${user}:${pass}`;
-	let basicAuth						= btoa( basicAuthToken );
-	let fetchOptions					= {
-		'mode': 'no-cors',
-		'credentials': 'include',
-		'method': 'GET',
-		'headers': {
-			'Content-Type' : 'application/json',
-			'Authorization': `Basic ${basicAuth}`
-		}
-	};
 	let response						= {};
-	// no-cors
 
 	try {
 		// Repository Metadata
@@ -80,7 +65,7 @@ export async function getRepositoryInformation() {
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
 		repositoryMetadata				= await APICall.makeAPICall( STEP_NAME, url );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received repositoryMetadata:", repositoryMetadata );
-		response.repositoryMetadata		= repositoryMetadata.body;
+		response.repositoryMetadata		= repositoryMetadata;
 
 		// Last tag info
 		/*
@@ -103,7 +88,7 @@ export async function getRepositoryInformation() {
 		allTags							= await APICall.makeAPICall( STEP_NAME, url );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received allTags:", allTags );
 		if ( allTags ) {
-			lastTag						= allTags.body[0];
+			lastTag						= allTags[0];
 			response.lastTag			= lastTag;
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Received lastTag:", lastTag );
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "+ lastTag.name:", lastTag.name );
@@ -111,9 +96,8 @@ export async function getRepositoryInformation() {
 
 			// Retrieve commit information
 			lastTagCommit				= await APICall.makeAPICall( STEP_NAME, lastTag.commit.url );
-			response.lastTagCommit		= lastTagCommit.body;
-			lastTagCommitAuthor			= lastTagCommit.body.commit.author;
-			lastTagCommitCommitter		= lastTagCommit.body.commit.committer;
+			lastTagCommitAuthor			= lastTagCommit.commit.author;
+			lastTagCommitCommitter		= lastTagCommit.commit.committer;
 		}
 
 		// Last commit info
@@ -123,7 +107,7 @@ export async function getRepositoryInformation() {
 		allCommits						= await APICall.makeAPICall( STEP_NAME, url );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received allCommits:", allCommits );
 		if ( allCommits ) {
-			lastCommit					= allCommits.body[0];
+			lastCommit					= allCommits[0];
 			response.lastCommit			= lastCommit;
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Received lastCommit:", lastCommit );
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "+ lastCommit.commit:", lastCommit.commit );
@@ -133,32 +117,6 @@ export async function getRepositoryInformation() {
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "ERROR fetching data from:", url);
 		// Show the error and update the HTML fields
 		// HTML.updateHTMLError(error);
-		/*
-			{
-				"message": "Error: 0",
-				"step": "getRepositoryInformation",
-				"status": 0,
-				"statusText": "",
-				"ok": false,
-				"bodyUsed": false,
-				"redirected": false,
-				"type": "opaque",
-				"url": "",
-				"isJson": false,
-				"headers": {
-					"bodyUsed": false,
-					"ok": false,
-					"redirected": false,
-					"status": 0,
-					"statusText": "",
-					"type": "opaque",
-					"url": "",
-					"headers": {}
-				},
-				"json": null,
-				"text": ""
-			}
-		 */
 	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
