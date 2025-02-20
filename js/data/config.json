@@ -1,6 +1,6 @@
 {
 	"global": {
-		"debug": true,
+		"debug": false,
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
 		"appVersion": "1.6.0",
