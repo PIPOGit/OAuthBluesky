@@ -156,9 +156,9 @@ async function startUp() {
 
 	// La versión.
 	// ------------------------------------
-	$( "#appName" ).html( CONFIGURATION.global.appName );
-	$( "#version > #app_name" ).html( CONFIGURATION.global.appName );
-	$( "#version > #app_version" ).html( CONFIGURATION.global.appVersion );
+	$( `#${HTML.APP_NAME}` ).html( CONFIGURATION.global.appName );
+	$( `#${HTML.DIV_VERSION} > #${HTML.APP_NAME}` ).html( CONFIGURATION.global.appName );
+	$( `#${HTML.DIV_VERSION} > #${HTML.APP_VERSION}` ).html( CONFIGURATION.global.appVersion );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.DEBUG) console.groupEnd();
@@ -715,6 +715,9 @@ async function getWhoAreTheUserFollowers() {
 		allData.push(...data);
 		acumulado						= allData.length;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} followers`, allData );
+
+		// Info step
+		HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user(${BSKY.user.userHandle}) (${acumulado})...` );
 		
 	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();

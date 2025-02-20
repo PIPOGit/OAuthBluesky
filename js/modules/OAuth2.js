@@ -36,7 +36,6 @@ export const ERROR_CODE_12				= { "code": 12, "message": "Expired token!" };
 
 // Inner constants
 const LSKEYS							= CONFIGURATION.localStorageKeys;
-const DIV_TOKEN_TIMEOUT					= "currentTokenTimeout";
 
 
 /**********************************************************
@@ -168,7 +167,7 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${msToTime(msTokenIssuedAt, true)}] --> [${ellapsedTimeAsString}] --> [${msToTime(msCurrentTime, true)}] --> [${expiringTimeAsString}] --> [${msToTime(msTokenExpiresIn, true)}]` );
 
 	// Let's update the HTML field for the remaining time for the token to expire...
-	$( "#" + DIV_TOKEN_TIMEOUT ).val( expiringTimeAsString );
+	$( "#" + HTML.DIV_TOKEN_TIMEOUT ).val( expiringTimeAsString );
 
 	// If the expiration time is close to end ("threshold", in minutes, in the config file)
 	const TOKEN_THRESHOLD				= CONFIGURATION.bluesky.token_expiration_threshold;
@@ -179,7 +178,7 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 		// BS Toast Test
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `BS Toast Test` );
 		// El toast.
-		let toastDivID					= "toast-followers-change";
+		let toastDivID					= HTML.DIV_TOAST_FOLLOWERS;
 		let toastJQDivID				= `#${toastDivID}`;
 		let delay						= ( window.BSKY.refreshDynamicSeconds - 1 ) * 1000;
 		let toastOptions				= {"animation": true, "autohide": true, "delay": delay};

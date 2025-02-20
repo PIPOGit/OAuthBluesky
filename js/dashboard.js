@@ -14,6 +14,8 @@
 import CONFIGURATION					from "./data/config.json" with { type: "json" };
 // Common functions
 import * as COMMON						from "./modules/common.functions.js";
+// Common APIBluesky functions
+import * as APIBluesky					from "./modules/APIBluesky.js";
 // To perform API calls
 import * as APICall						from "./modules/APICall.js";
 // Common BrowserDB functions
@@ -24,6 +26,8 @@ import * as GEO							from "./modules/GEO.js";
 import * as GitHub						from "./modules/GitHub.js";
 // Common HTML functions
 import * as HTML						from "./modules/HTML.js";
+// Common Settings functions
+import * as SETTINGS					from "./modules/Settings.js";
 
 
 /**********************************************************
@@ -33,6 +37,7 @@ import * as HTML						from "./modules/HTML.js";
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 
 // Inner constants
+const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
 
@@ -85,8 +90,10 @@ async function startUp() {
 	window.BSKY.refreshDynamicSeconds	= CONFIGURATION.global.refresh_dynamic;
 	// + Functions
 	window.BSKY.searchUser				= fnSearchUser;
-	window.BSKY.updateDebug				= fnUpdateDebug;
-	window.BSKY.showCurrent				= fnUpdateCurrentRefreshTime;
+	window.BSKY.updateDebug				= SETTINGS.fnUpdateDebug;
+	window.BSKY.updateCurrentRefresh	= SETTINGS.fnUpdateCurrentRefreshTime;
+	window.BSKY.filterFollowing			= HTML.fnFilterTable;
+	window.BSKY.filterFollowers			= HTML.fnFilterTable;
 
 	// ================================================================
 	// Module info.
@@ -130,7 +137,7 @@ async function startUp() {
 	// Geolocation Update
 	let where							= BSKY.user.geolocation.bdc.localityInfo.administrative;
 	let place							= where[where.length-1];
-	$( "#currentGeolocation" ).val( place.name );
+	$( `#${HTML.DIV_GEOLOCATION}` ).val( place.name );
 
 	// The "context".
 	// ------------------------------------
@@ -138,9 +145,9 @@ async function startUp() {
 
 	// Los eventos de los modales Bootstrap
 	// ------------------------------------
-	COMMON.fnGetById('modal-settings').addEventListener( 'show.bs.modal', modalEventForSettingsWhenInvoked );
-	COMMON.fnGetById('modal-settings').addEventListener( 'hidden.bs.modal', modalEventForSettingsWhenClosed );
-	COMMON.fnGetById('modal-search-user').addEventListener( 'show.bs.modal', modalEventForSearchUsersWhenInvoked );
+	COMMON.fnGetById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'show.bs.modal', modalEventForSettingsWhenInvoked );
+	COMMON.fnGetById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'hidden.bs.modal', modalEventForSettingsWhenClosed );
+	COMMON.fnGetById(HTML.DIV_MODAL_SEARCH_USER).addEventListener( 'show.bs.modal', modalEventForSearchUsersWhenInvoked );
 
 	if (window.BSKY.DEBUG) console.groupEnd();
 
@@ -154,14 +161,20 @@ async function startUp() {
  * MODAL Events Functions
  **********************************************************/
 
+/* --------------------------------------------------------
+ * Invoked when modal for "User Search" pops-up.
+ * -------------------------------------------------------- */
 function modalEventForSearchUsersWhenInvoked( event ) {
 
 	// Clear "Search user" field
 	// ---------------------------------------------------------
-	$( '#search-profile-pattern' ).val( '' );
-	$( `#search-profile-results` ).empty();
+	$( `#${HTML.DIV_MODAL_SEARCH_PATTERN}` ).val( '' );
+	$( `#${HTML.DIV_MODAL_SEARCH_OUTPUT}` ).empty();
 }
 
+/* --------------------------------------------------------
+ * Invoked when modal for "Settings" pops-up.
+ * -------------------------------------------------------- */
 function modalEventForSettingsWhenInvoked( event ) {
 
 	// Logging options
@@ -175,8 +188,11 @@ function modalEventForSettingsWhenInvoked( event ) {
 	$( '#refreshDynamicSeconds' ).val( window.BSKY.refreshDynamicSeconds );
 }
 
+/* --------------------------------------------------------
+ * Invoked when dismissing modal for "Settings".
+ * -------------------------------------------------------- */
 function modalEventForSettingsWhenClosed( event ) {
-	updateSettings( event.target.querySelectorAll( "input" ) );
+	SETTINGS.fnUpdateDebug( event.target );
 }
 
 
@@ -215,7 +231,7 @@ async function fnSearchUser( source ) {
 
 		if ( actors ) {
 			// Borramos lo que hubiera
-			let $list					= $( `#search-profile-results` );
+			let $list					= $( `#${HTML.DIV_MODAL_SEARCH_OUTPUT}` );
 			$list.empty();
 			// Agregamos los encontrados.
 			let html					= null;
@@ -237,48 +253,3 @@ async function fnSearchUser( source ) {
 	if (window.BSKY.DEBUG) console.groupEnd();
 }
 
-function fnUpdateDebug( form ) {
-	updateSettings( form.querySelectorAll( "input" ) );
-}
-
-function updateSettings( inputs ) {
-	const STEP_NAME						= "updateSettings";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
-
-	inputs.forEach( item => {
-		switch( item.id ) {
-			case "refreshStaticSeconds":
-				window.BSKY.refreshStaticSeconds	= item.value;
-				break;
-			case "refreshDynamicSeconds":
-				window.BSKY.refreshDynamicSeconds	= item.value;
-				break;
-			case "flexSwitchCheckDebug":
-				window.BSKY.DEBUG					= item.checked;
-				break;
-			case "flexSwitchCheckGroupedDebug":
-				window.BSKY.DEBUG_FOLDED			= item.checked;
-				break;
-		}
-	});
-
-	// Logging options
-	// ---------------------------------------------------------
-	window.BSKY.GROUP_DEBUG				= window.BSKY.DEBUG && window.BSKY.DEBUG_FOLDED;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ DEBUG[${window.BSKY.DEBUG}]: [${window.BSKY.DEBUG}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ DEBUG_FOLDED[${window.BSKY.DEBUG_FOLDED}]: [${window.BSKY.DEBUG_FOLDED}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ GROUP_DEBUG[${window.BSKY.GROUP_DEBUG}]: [${window.BSKY.GROUP_DEBUG}]` );
-
-	// Refresh time options
-	// ---------------------------------------------------------
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ refreshStaticSeconds[${window.BSKY.refreshStaticSeconds}]: [${window.BSKY.refreshStaticSeconds}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ refreshDynamicSeconds[${window.BSKY.refreshDynamicSeconds}]: [${window.BSKY.refreshDynamicSeconds}]` );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.DEBUG) console.groupEnd();
-}
-
-function fnUpdateCurrentRefreshTime( item ) {
-	$( `#${item.id}Current` ).html( item.value );
-}

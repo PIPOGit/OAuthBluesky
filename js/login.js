@@ -35,9 +35,6 @@ const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
 
-// Bootstrap Toast constants
-const TOAST_WELCOME						= "toast-welcome";
-
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
 const APP_CALLBACK_URL					= CLIENT_APP.redirect_uri;
@@ -117,12 +114,12 @@ async function startUp() {
 	// La clave criptográfica en la base de datos
 	await DB.checkCryptoKeyInDB(comeFromLogout);
 
-	// Update the "user_handle" field
+	// Update the "userHandle" field
 	let gotUserHandle					= checkUserHandle();
 
 	// BS Toast Test
 	if (gotUserHandle && !comeFromLogout) {
-		let id							= TOAST_WELCOME;
+		let id							= HTML.DIV_TOAST_WELCOME;
 		let jqID						= "#" + id;
 		let toastOptions				= null;
 		$( `${jqID} > .toast-body` ).html( `Welcome back, ${BSKY.user.userHandle}!` );
@@ -433,7 +430,7 @@ function checkUserHandle() {
 	let previous						= false;
 	BSKY.user.userHandle				= localStorage.getItem(LSKEYS.user.handle) || null;
 	if ( BSKY.user.userHandle && !COMMON.isNullOrEmpty(BSKY.user.userHandle) && !COMMON.areEquals(BSKY.user.userHandle.toLowerCase(), "null") ) {
-		let $input						= $( "#user_handle" );
+		let $input						= $( `#${HTML.USER_HANDLE}` );
 		if ( $input.length ) {
 			$input.val( BSKY.user.userHandle );
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${BSKY.user.userHandle}"` );
@@ -457,9 +454,8 @@ function fnLaunchToast( obj ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "OBJ.dataset.toastId:", obj.dataset.toastId );
 
 	if (obj.dataset.toastId) {
-		let id							= obj.dataset.toastId;
-		let jqID						= "#" + id;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "GOT OBJ.dataset.toastId:", `[id==${id}] [jqID==${jqID}]` );
+		let jqID						= "#" + obj.dataset.toastId;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "GOT OBJ.dataset.toastId:", `[jqID==${jqID}]` );
 		
 		let toastOptions				= null;
 		// let toastOptions				= {"animation": true, "autohide": true, "delay": 5000};
@@ -488,34 +484,34 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 	// Avoid form to be submitted.
 	event.preventDefault();
 
-	// Disable login button. // button-login
-	$( "#button-login" ).attr( "disabled", "" );
+	// Disable login button.
+	$( HTML.BTN_LOGIN ).attr( "disabled", "" );
 
 	// Hide error panel and show the info one.
-	COMMON.hide( "panel-error" );
-	COMMON.show( "panel-info" );
+	COMMON.hide( HTML.DIV_PANEL_ERROR );
+	COMMON.show( HTML.DIV_PANEL_INFO );
 
 	let variable						= null;
 	
 	try {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current handle:", handle );
-		BSKY.user.userHandle				= handle;
+		BSKY.user.userHandle			= handle;
 
-		variable							= await step01RetrieveUserDID();
+		variable						= await step01RetrieveUserDID();
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDid:", BSKY.user.userDid );
 
-		variable							= await stop02RetrieveUserDIDDocument();
+		variable						= await stop02RetrieveUserDIDDocument();
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDidDocument:", COMMON.prettyJson( BSKY.auth.userDidDocument ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSURL:", BSKY.auth.userPDSURL );
 
-		variable							= await step03RetrievePDSServerMetadata();
+		variable						= await step03RetrievePDSServerMetadata();
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", COMMON.prettyJson( BSKY.auth.userPDSMetadata ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerURL:", BSKY.auth.userAuthServerURL );
 
-		variable							= await step04RetrieveAuthServerDiscoveryMetadata();
+		variable						= await step04RetrieveAuthServerDiscoveryMetadata();
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerDiscovery:", COMMON.prettyJson( BSKY.auth.userAuthServerDiscovery ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthorizationEndPoint:", BSKY.auth.userAuthorizationEndPoint );
@@ -523,13 +519,12 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPAREndPoint:", BSKY.auth.userPAREndPoint );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userRevocationEndPoint:", BSKY.auth.userRevocationEndPoint );
 
-		variable							= await step05PARRequest();
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
+		variable						= await step05PARRequest();
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerRequestURI:", BSKY.auth.userAuthServerRequestURI );
 
-		// Enable login button. // button-login
-		COMMON.hide( "panel-info" );
-		$( "#button-login" ).removeAttr( "disabled" );
+		// Enable login button.
+		COMMON.hide( HTML.DIV_PANEL_INFO );
+		$( HTML.BTN_LOGIN ).removeAttr( "disabled" );
 
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Redirecting user to the Bluesky Authorization Server page..." );
 		step06RedirectUserToBlueskyAuthPage();
@@ -540,13 +535,13 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 
 		// Clear info panel
 		HTML.clearStepInfo();
-		COMMON.hide( "panel-info" );
+		COMMON.hide( HTML.DIV_PANEL_INFO );
 
 		// Hide error panel and show the info one.
-		COMMON.show( "panel-error" );
+		COMMON.show( HTML.DIV_PANEL_ERROR );
 
-		// Enable login button. // button-login
-		$( "#button-login" ).removeAttr( "disabled" );
+		// Enable login button.
+		$( HTML.BTN_LOGIN ).removeAttr( "disabled" );
 	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );

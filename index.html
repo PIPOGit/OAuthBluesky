@@ -67,14 +67,14 @@
 					</div>
 
 					<!-- La versión. -->
-					<div id="version" name="version" class="sticky-bottom"><span id="app_name">BlueSkyAPP</span>, v<span id="app_version">1.0</span><br/>&copy;&reg; Madrilenyer&trade;, 2025</div>
+					<div id="panelVersion" name="panelVersion" class="sticky-bottom"><span id="appName">BlueSkyAPP</span>, v<span id="appVersion">1.0</span><br/>&copy;&reg; Madrilenyer&trade;, 2025</div>
 				</div>
 
 				<!-- Panel derecho -->
 				<div class="col p-4 py-2 align-content-center right-panel">
 
 					<!-- El formulario de acceso -->
-					<form id="user_handle_form" name="user_handle_form" class="row" onSubmit="BSKY.authenticateWithBluesky( this.form, user_handle_form.user_handle.value )">
+					<form id="userHandleForm" name="userHandleForm" class="row" onSubmit="BSKY.authenticateWithBluesky( this.form, userHandleForm.userHandle.value )">
 
 						<!-- El encabezado -->
 						<h4>User Identification</h4>
@@ -83,19 +83,19 @@
 						<div class="input-group input-group-sm mb-3">
 							<span class="input-group-text">@</span>
 							<div class="form-floating">
-								<input id="user_handle" name="user_handle" type="text" size="40" class="form-control" placeholder="user handle" aria-label="user handle" aria-describedby="user_handler_help" required>
-								<label for="user_handle" class="form-label">User Handler</label>
+								<input id="userHandle" name="userHandle" type="text" size="40" class="form-control" placeholder="user handle" aria-label="user handle" aria-describedby="userHandleHelp" required>
+								<label for="userHandle" class="form-label">User Handler</label>
 							</div>
 						</div>
 
 						<!-- El helper -->
-						<div id="user_handler_help" name="user_handler_help" class="form-text mb-3">
+						<div id="userHandleHelp" name="userHandleHelp" class="form-text mb-3">
 							Type your Bluesky user handle without the initial "@" (<i>example: "safety.bsky.app"</i>)
 						</div>
 
 						<!-- El botón -->
 						<div class="text-end">
-							<button id="button-login" name="button-login" type="submit" title="Log-in the application" class="btn btn-sm btn-success">Login with Bluesky</button>
+							<button id="buttonLogin" name="buttonLogin" type="submit" title="Log-in the application" class="btn btn-sm btn-success">Login with Bluesky</button>
 						</div>
 
 					</form>
@@ -108,12 +108,12 @@
 			<div class="row d-flex">
 
 				<!-- El panel de información -->
-				<div id="panel-info" name="panel-info" class="justify-content-between align-items-start p-1 px-2 theme-info hidden">
-					<span id="panel-info-step" name="panel-info-step" placeholder="Paso" aria-label="Paso">Paso:</span>
+				<div id="panelInfo" name="panelInfo" class="justify-content-between align-items-start p-1 px-2 theme-info hidden">
+					<span id="panelInfoStep" name="panelInfoStep" placeholder="Paso" aria-label="Paso">Paso:</span>
 				</div>
 
 				<!-- El panel de errores -->
-				<div id="panel-error" name="panel-error" class="justify-content-between align-items-start p-1 px-2 theme-error hidden">
+				<div id="panelError" name="panelError" class="justify-content-between align-items-start p-1 px-2 theme-error hidden">
 					<div class="col-12 input-group input-group-sm">
 
 						<!-- Título. -->
@@ -133,7 +133,7 @@
 		<div class="toast-container position-fixed top-0 start-0 p-3">
 
 			<!-- Toast for user wellcome back. -->
-			<div id="toast-welcome" name="toast-welcome" class="toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="3000">
+			<div id="toastWelcome" name="toastWelcome" class="toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="3000">
 				<div class="toast-header">
 					<i class="bi bi-info-square-fill text-success me-2"></i>
 					<strong class="me-auto">Profile Stats</strong>

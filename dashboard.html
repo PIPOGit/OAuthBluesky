@@ -61,12 +61,12 @@
 					<div class="card bg-transparent border-0">
 						<div class="row g-0">
 							<div class="col-2">
-								<img id="profile-avatar-top" name="profile-avatar-top" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
+								<img id="profileAvatarTop" name="profileAvatarTop" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
 							</div>
 							<div class="col-10">
 								<div class="card-body p-1">
-									<h5 class="card-title mb-0"><span id="profile-name-top" name="profile-name-top">Account Display Name</span></h5>
-									<div class="card-text"><span id="profile-handle-top" name="profile-handle-top">@handle</span></div>
+									<h5 class="card-title mb-0"><span id="profileNameTop" name="profileNameTop">Account Display Name</span></h5>
+									<div class="card-text"><span id="profileHandleTop" name="profileHandleTop">@handle</span></div>
 								</div>
 							</div>
 						</div>
@@ -103,31 +103,28 @@
 							<a class="btn btn-sm btn-outline-secondary" target="github" title="GitHub" href="https://github.com/PIPOGit/OAuthBluesky"><i class="bi bi-github"></i></a>
 						</div>
 						<div class="col-auto ps-2">
-							<button id="button-show-docs" name="button-show-docs" class="btn btn-sm btn-info" type="button" title="Show Docs" data-bs-toggle="offcanvas" data-bs-target="#offCanvasDocuments" aria-controls="#offCanvasDocuments">View Docs</button>
-							<button id="button-logout" name="button-logout" class="btn btn-sm btn-danger" type="button" title="Log-out the application" onClick="BSKY.logout()">Logout</button>
+							<button id="buttonShowDocs" name="buttonShowDocs" class="btn btn-sm btn-info" type="button" title="Show Docs" data-bs-toggle="offcanvas" data-bs-target="#offCanvasDocuments" aria-controls="#offCanvasDocuments">View Docs</button>
+							<button id="buttonLogout" name="buttonLogout" class="btn btn-sm btn-danger" type="button" title="Log-out the application" onClick="BSKY.logout()">Logout</button>
 						</div>
 					</div>
 
 					<!-- Los Trending Topics -->
-					<!--
-					<div id="trending-topics" class="d-flex justify-content-around align-items-start mt-2">
-					-->
-					<div id="trending-topics" class="border-2 border-primary border-top mt-2 p-2">
+					<div id="trendingTopics" class="border-2 border-primary border-top mt-2 p-2">
 						Trending Topics
 					</div>
 
 					<!-- El menú lateral. -->
 					<!-- TODO: See: https://getbootstrap.com/docs/5.3/components/list-group/#javascript-behavior -->
 					<div class="row px-1 d-flex border-2 border-top border-primary">
-						<div class="nav nav-pills flex-column align-items-end text-primary" id="pills-tab" role="tablist">
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modal-settings"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-gear"></i>&nbsp;Settings</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modal-search-user"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-people"></i>&nbsp;Search User</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-access-token"	name="pill-access-token"	data-bs-target="#panel-access-token"	aria-controls="panel-access-token"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><i class="bi bi-person-badge"></i>&nbsp;AccessToken</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex active"	id="pill-my-profile"	name="pill-my-profile"		data-bs-target="#panel-my-profile"		aria-controls="panel-my-profile"		type="button" data-bs-toggle="pill" role="tab" aria-selected="true" aria-current="page"><i class="bi bi-person-vcard"></i>&nbsp;User Profile</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-notifications"	name="pill-notifications"	data-bs-target="#panel-notifications"	aria-controls="panel-notifications"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-notifications-badge" name="pill-notifications-badge" class="badge bg-success"></span>&nbsp;<i class="bi bi-bell"></i>&nbsp;Notificaciones</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-following"		name="pill-following"		data-bs-target="#panel-following"		aria-controls="panel-following"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-following-badge" name="pill-following-badge" class="badge bg-warning"></span>&nbsp;<i class="bi bi-person-standing"></i>&nbsp;Following</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-followers"		name="pill-followers"		data-bs-target="#panel-followers"		aria-controls="panel-followers"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-followers-badge" name="pill-followers-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-walking"></i>&nbsp;Followers</button>
-							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-blocking"		name="pill-blocking"		data-bs-target="#panel-blocking"		aria-controls="panel-blocking"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-blocking-badge" name="pill-blocking-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-dash"></i>&nbsp;Blocking</button>
+						<div class="nav nav-pills flex-column align-items-end text-primary" id="pillsTab" role="tablist">
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modalSettings"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-gear"></i>&nbsp;Settings</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"																data-bs-target="#modalSearchUser"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-people"></i>&nbsp;Search User</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-access-token"	name="pill-access-token"	data-bs-target="#panelAccessToken"		aria-controls="panelAccessToken"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><i class="bi bi-person-badge"></i>&nbsp;AccessToken</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex active"	id="pill-my-profile"	name="pill-my-profile"		data-bs-target="#panelMyProfile"		aria-controls="panelMyProfile"			type="button" data-bs-toggle="pill" role="tab" aria-selected="true" aria-current="page"><i class="bi bi-person-vcard"></i>&nbsp;User Profile</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-notifications"	name="pill-notifications"	data-bs-target="#panelNotifications"	aria-controls="panelNotifications"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-notifications-badge" name="pill-notifications-badge" class="badge bg-success"></span>&nbsp;<i class="bi bi-bell"></i>&nbsp;Notificaciones</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-following"		name="pill-following"		data-bs-target="#panelFollowing"		aria-controls="panelFollowing"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-following-badge" name="pill-following-badge" class="badge bg-warning"></span>&nbsp;<i class="bi bi-person-standing"></i>&nbsp;Following</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-followers"		name="pill-followers"		data-bs-target="#panelFollowers"		aria-controls="panelFollowers"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-followers-badge" name="pill-followers-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-walking"></i>&nbsp;Followers</button>
+							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-blocking"		name="pill-blocking"		data-bs-target="#panelBlocking"			aria-controls="panelBlocking"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-blocking-badge" name="pill-blocking-badge" class="badge bg-success-subtle"></span>&nbsp;<i class="bi bi-person-dash"></i>&nbsp;Blocking</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-muting"		name="pill-muting"			data-bs-target="#panel-muting"			aria-controls="panel-muting"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-muting-badge" name="pill-muting-badge" class="badge bg-danger"></span>&nbsp;<i class="bi bi-person-slash"></i>&nbsp;Muting</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-my-lists"		name="pill-my-lists"		data-bs-target="#panel-my-lists"		aria-controls="panel-my-lists"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-my-lists-badge" name="pill-my-lists-badge" class="badge bg-info"></span>&nbsp;<i class="bi bi-list-ul"></i>&nbsp;My Lists</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-my-feeds"		name="pill-my-feeds"		data-bs-target="#panel-my-feeds"		aria-controls="panel-my-feeds"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-my-feeds-badge" name="pill-my-feeds-badge" class="badge bg-info"></span>&nbsp;My Feeds</button>
@@ -136,7 +133,7 @@
 					</div>
 
 					<!-- La versión. -->
-					<div id="version" name="version" class="sticky-bottom"><span id="app_name">BlueSkyAPP</span>, v<span id="app_version">1.0</span><br/>&copy;&reg; Madrilenyer&trade;, 2025</div>
+					<div id="panelVersion" name="panelVersion" class="sticky-bottom"><span id="appName">BlueSkyAPP</span>, v<span id="appVersion">1.0</span><br/>&copy;&reg; Madrilenyer&trade;, 2025</div>
 				</div>
 
 				<!-- Panel derecho -->
@@ -146,12 +143,12 @@
 					<div class="row d-flex m-0">
 
 						<!-- El panel de información -->
-						<div id="panel-info" name="panel-info" class="justify-content-between align-items-start p-1 px-2 theme-info">
-							<span id="panel-info-step" name="panel-info-step" placeholder="Paso" aria-label="Paso">Paso:</span>
+						<div id="panelInfo" name="panelInfo" class="justify-content-between align-items-start p-1 px-2 theme-info">
+							<span id="panelInfoStep" name="panelInfoStep" placeholder="Paso" aria-label="Paso">Paso:</span>
 						</div>
 
 						<!-- El panel de errores -->
-						<div id="panel-error" name="panel-error" class="justify-content-between align-items-start p-1 px-2 theme-error hidden">
+						<div id="panelError" name="panelError" class="justify-content-between align-items-start p-1 px-2 theme-error hidden">
 							<div class="col-12 input-group input-group-sm">
 
 								<!-- Título. -->
@@ -173,15 +170,15 @@
 						<div class="tab-content p-2" id="myTabContent" name="myTabContent">
 
 							<!-- El panel del access_token -->
-							<div id="panel-access-token" name="panel-access-token" class="tab-pane fade theme-access-token" role="tabpanel" aria-labelledby="pill-access-token" tabindex="0">
+							<div id="panelAccessToken" name="panelAccessToken" class="tab-pane fade theme-access-token" role="tabpanel" aria-labelledby="pill-access-token" tabindex="0">
 
 								<!-- El formulario con los datos de acceso -->
-								<form id="user_handle_form" name="user_handle_form" class="row align-items-center theme-callback mb-2">
+								<form id="userHandleForm" name="userHandleForm" class="row align-items-center theme-callback mb-2">
 
 									<div class="d-flex justify-content-start">
-										<button id="button-refresh-token" name="button-refresh-token" class="btn btn-sm btn-success mx-3 my-1" type="button" onClick="BSKY.refreshAccessToken()">Refresh</button>
-										<a id="button-client-id"     name="button-client-id"     class="btn btn-sm btn-outline-success mx-3 my-1" target="client-id" title="Client ID Metatada" href="javascript:void(0); return false;">Client ID Metatada</a>
-										<a id="button-did-document"  name="button-did-document"  class="btn btn-sm btn-outline-success mx-3 my-1" target="did-document" title="User DID Document" href="javascript:void(0); return false;">User DID Document</a>
+										<button id="buttonRefreshToken" name="buttonRefreshToken" class="btn btn-sm btn-success mx-3 my-1" type="button" onClick="BSKY.refreshAccessToken()">Refresh</button>
+										<a id="buttonClientId"     name="buttonClientId"     class="btn btn-sm btn-outline-success mx-3 my-1" target="client-id" title="Client ID Metatada" href="javascript:void(0); return false;">Client ID Metatada</a>
+										<a id="buttonDIDDocument"  name="buttonDIDDocument"  class="btn btn-sm btn-outline-success mx-3 my-1" target="did-document" title="User DID Document" href="javascript:void(0); return false;">User DID Document</a>
 									</div>
 
 									<div class="row">
@@ -220,33 +217,33 @@
 									</div>
 								</form>
 
-								<pre><code id="access_token_jwt"  name="access_token_jwt"  class="language-json mb-2"></code></pre>
-								<pre><code id="access_token_json" name="access_token_json" class="language-json"></code></pre><hr/>
+								<pre><code id="accessTokenJwt"  name="accessTokenJwt"  class="language-json mb-2"></code></pre>
+								<pre><code id="accessTokenJson" name="accessTokenJson" class="language-json"></code></pre><hr/>
 							</div>
 
 							<!-- El panel de My Profile -->
-							<div id="panel-my-profile" name="panel-my-profile" class="tab-pane fade show active theme-my-profile" role="tabpanel" aria-labelledby="pill-my-profile" tabindex="0">
+							<div id="panelMyProfile" name="panelMyProfile" class="tab-pane fade show active theme-my-profile" role="tabpanel" aria-labelledby="pill-my-profile" tabindex="0">
 								<div class="row">
 									<div class="col-4">
 										<!-- La tarjeta. -->
 										<div class="card bg-transparent border-0 justify-content-between align-items-center">
 											<div class="row g-0">
 												<div class="col-2">
-													<img id="profile-avatar" name="profile-avatar" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
+													<img id="profileAvatar" name="profileAvatar" class="img-fluid rounded-circle" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
 												</div>
 												<div class="col-10">
 													<div class="card-body p-1">
-														<h5 class="card-title mb-0"><span id="profile-name" name="profile-name">Account Display Name</span></h5>
-														<div class="card-text"><a href="javascript:void(0);" id="profile-handle-link" name="profile-handle-link" class="link-primary" target="_blank">@<span id="profile-handle" name="profile-handle">handle</span></a></div>
+														<h5 class="card-title mb-0"><span id="profileName" name="profileName">Account Display Name</span></h5>
+														<div class="card-text"><a href="javascript:void(0);" id="profileHandleLink" name="profileHandleLink" class="link-primary" target="_blank">@<span id="profileHandle" name="profileHandle">handle</span></a></div>
 														<div class="card-text">
 															<small class="text-body-secondary">
-																<span id="profile-followers" name="profile-followers" class="fw-semibold">----</span> followers,
-																<span id="profile-following" name="profile-following" class="fw-semibold">----</span> following,
-																<span id="profile-posts"     name="profile-posts"     class="fw-semibold">----</span> posts
+																<span id="profileFollowers" name="profileFollowers" class="fw-semibold">----</span> followers,
+																<span id="profileFollowing" name="profileFollowing" class="fw-semibold">----</span> following,
+																<span id="profilePosts"     name="profilePosts"     class="fw-semibold">----</span> posts
 															</small>
 														</div>
 														<div class="card-text border-top border-2 bg-body-secondary">
-															<span id="profile-description" name="profile-description" class="px-2">Description of the Bluesky account</span>
+															<span id="profileDescription" name="profileDescription" class="px-2">Description of the Bluesky account</span>
 														</div>
 													</div>
 												</div>
@@ -259,14 +256,178 @@
 							</div>
 
 							<!-- El panel de las notificaciones -->
-							<div id="panel-notifications" name="panel-notifications" class="tab-pane fade theme-notifications" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+							<div id="panelNotifications" name="panelNotifications" class="tab-pane fade theme-notifications" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
 								<div id="notifications" name="notifications" class="notifications"></div>
 							</div>
 
 							<!-- El panel de los following -->
-							<div id="panel-following" name="panel-following" class="tab-pane fade theme-following" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+							<div id="panelFollowing" name="panelFollowing" class="tab-pane fade theme-following" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+
+								<!-- Los filtros -->
+								<form id="formFollowing" class="d-flex justify-content-start align-items-start mb-2 gap-2 theme-smaller" data-bsky-target="tableFollowing" onInput="BSKY.filterFollowing(this)" onSubmit="return false;">
+
+									<!-- El filtro de los followedBy -->
+									<div id="formFollowingRadioFollowedBy" class="dropdown">
+										<button id="formFollowingBtnRadioFollowedBy" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-walking text-white"></i>&nbsp;Followed By</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioFollowedByAll" name="formFollowingRadioFollowedBy" data-bsky-target="followed-by" value="all" checked>
+												<label class="form-check-label" for="formFollowingRadioFollowedByAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioFollowedByTrue" name="formFollowingRadioFollowedBy" data-bsky-target="followed-by" value="true">
+												<label class="form-check-label" for="formFollowingRadioFollowedByTrue">
+													Users that also follow You
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioFollowedByFalse" name="formFollowingRadioFollowedBy" data-bsky-target="followed-by" value="false">
+												<label class="form-check-label" for="formFollowingRadioFollowedByFalse">
+													Users that don't follow You
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los blocked -->
+									<div id="formFollowingRadioBlocked" class="dropdown">
+										<button id="formFollowingBtnRadioBlocked" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-dash text-white"></i>&nbsp;Blocked</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedAll" name="formFollowingRadioBlocked" value="all" data-bsky-target="blocked" checked>
+												<label class="form-check-label" for="formFollowingRadioBlockedAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedTrue" name="formFollowingRadioBlocked" value="true" data-bsky-target="blocked">
+												<label class="form-check-label" for="formFollowingRadioBlockedTrue">
+													Users You block
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedFalse" name="formFollowingRadioBlocked" value="false" data-bsky-target="blocked">
+												<label class="form-check-label" for="formFollowingRadioBlockedFalse">
+													Users You don't block
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los blockedBy -->
+									<div id="formFollowingRadioBlockedBy" class="dropdown">
+										<button id="formFollowingBtnRadioBlockedBy" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-fill-dash text-white"></i>&nbsp;Blocked By</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedByAll" name="formFollowingRadioBlockedBy" data-bsky-target="blocked-by" value="all" checked>
+												<label class="form-check-label" for="formFollowingRadioBlockedByAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedByTrue" name="formFollowingRadioBlockedBy" data-bsky-target="blocked-by" value="true">
+												<label class="form-check-label" for="formFollowingRadioBlockedByTrue">
+													Users that block You
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedByFalse" name="formFollowingRadioBlockedBy" data-bsky-target="blocked-by" value="false">
+												<label class="form-check-label" for="formFollowingRadioBlockedByFalse">
+													Users that don't block You
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los muted -->
+									<div id="formFollowingRadioMuted" class="dropdown">
+										<button id="formFollowingBtnRadioMuted" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-slash text-white"></i>&nbsp;Muted</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioMutedAll" name="formFollowingRadioMuted" value="all" data-bsky-target="muted" checked>
+												<label class="form-check-label" for="formFollowingRadioMutedAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioMutedTrue" name="formFollowingRadioMuted" value="true" data-bsky-target="muted">
+												<label class="form-check-label" for="formFollowingRadioMutedTrue">
+													Users You mute
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioMutedFalse" name="formFollowingRadioMuted" value="false" data-bsky-target="muted">
+												<label class="form-check-label" for="formFollowingRadioMutedFalse">
+													Users You don't mute
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los blockedByList -->
+									<div id="formFollowingRadioBlockedByList" class="dropdown">
+										<button id="formFollowingBtnRadioBlockedByList" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-list-ul text-white"></i>&nbsp;Blocked By Mod List</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedByListAll" name="formFollowingRadioBlockedByList" data-bsky-target="blocked-by-list" value="all" checked>
+												<label class="form-check-label" for="formFollowingRadioBlockedByListAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedByListTrue" name="formFollowingRadioBlockedByList" data-bsky-target="blocked-by-list" value="true">
+												<label class="form-check-label" for="formFollowingRadioBlockedByListTrue">
+													Users in Block Mod Lists
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioBlockedByListFalse" name="formFollowingRadioBlockedByList" data-bsky-target="blocked-by-list" value="false">
+												<label class="form-check-label" for="formFollowingRadioBlockedByListFalse">
+													Users not in Block Mod Lists
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los mutedByList -->
+									<div id="formFollowingRadioMutedByList" class="dropdown">
+										<button id="formFollowingBtnRadioMutedByList" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-list-stars text-white"></i>&nbsp;Muted By Mod List</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioMutedByListAll" name="formFollowingRadioMutedByList" value="all" data-bsky-target="muted-by-list" checked>
+												<label class="form-check-label" for="formFollowingRadioMutedByListAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioMutedByListTrue" name="formFollowingRadioMutedByList" value="true" data-bsky-target="muted-by-list">
+												<label class="form-check-label" for="formFollowingRadioMutedByListTrue">
+													Users in Mute Mod Lists
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowingRadioMutedByListFalse" name="formFollowingRadioMutedByList" value="false" data-bsky-target="muted-by-list">
+												<label class="form-check-label" for="formFollowingRadioMutedByListFalse">
+													Users not in Mute Mod Lists
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El total -->
+									<div class="align-self-center"><span id="formFollowingTotal">0</span> record(s)</div>
+								</form>
+
 								<div class="theme-table">
-									<table id="table-following" name="table-following" class="table table-sm table-striped table-hover">
+									<table id="tableFollowing" name="tableFollowing" class="table table-sm table-striped table-hover">
 										<thead class="table-header theme-table-header">
 											<tr>
 												<th scope="col" class="col-1">#</th>
@@ -282,9 +443,173 @@
 							</div>
 
 							<!-- El panel de los followers -->
-							<div id="panel-followers" name="panel-followers" class="tab-pane fade theme-followers" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+							<div id="panelFollowers" name="panelFollowers" class="tab-pane fade theme-followers" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+
+								<!-- Los filtros -->
+								<form id="formFollowers" class="d-flex justify-content-start align-items-start mb-2 gap-2 theme-smaller" data-bsky-target="tableFollowers" onInput="BSKY.filterFollowers(this)" onSubmit="return false;">
+
+									<!-- El filtro de los following -->
+									<div id="formFollowersRadioFollowing" class="dropdown">
+										<button id="formFollowersBtnRadioFollowing" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-standing text-white"></i>&nbsp;Following</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioFollowingAll" name="formFollowersRadioFollowing" data-bsky-target="following" value="all" checked>
+												<label class="form-check-label" for="formFollowersRadioFollowingAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioFollowingTrue" name="formFollowersRadioFollowing" data-bsky-target="following" value="true">
+												<label class="form-check-label" for="formFollowersRadioFollowingTrue">
+													Users that You also follow
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioFollowingFalse" name="formFollowersRadioFollowing" data-bsky-target="following" value="false">
+												<label class="form-check-label" for="formFollowersRadioFollowingFalse">
+													Users that You don't follow
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los blocked -->
+									<div id="formFollowersRadioBlocked" class="dropdown">
+										<button id="formFollowersBtnRadioBlocked" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-dash text-white"></i>&nbsp;Blocked</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedAll" name="formFollowersRadioBlocked" value="all" data-bsky-target="blocked" checked>
+												<label class="form-check-label" for="formFollowersRadioBlockedAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedTrue" name="formFollowersRadioBlocked" value="true" data-bsky-target="blocked">
+												<label class="form-check-label" for="formFollowersRadioBlockedTrue">
+													Users You block
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedFalse" name="formFollowersRadioBlocked" value="false" data-bsky-target="blocked">
+												<label class="form-check-label" for="formFollowersRadioBlockedFalse">
+													Users You don't block
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los blockedBy -->
+									<div id="formFollowersRadioBlockedBy" class="dropdown">
+										<button id="formFollowersBtnRadioBlockedBy" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-fill-dash text-white"></i>&nbsp;Blocked By</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedByAll" name="formFollowersRadioBlockedBy" data-bsky-target="blocked-by" value="all" checked>
+												<label class="form-check-label" for="formFollowersRadioBlockedByAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedByTrue" name="formFollowersRadioBlockedBy" data-bsky-target="blocked-by" value="true">
+												<label class="form-check-label" for="formFollowersRadioBlockedByTrue">
+													Users that block You
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedByFalse" name="formFollowersRadioBlockedBy" data-bsky-target="blocked-by" value="false">
+												<label class="form-check-label" for="formFollowersRadioBlockedByFalse">
+													Users that don't block You
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los muted -->
+									<div id="formFollowersRadioMuted" class="dropdown">
+										<button id="formFollowersBtnRadioMuted" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-slash text-white"></i>&nbsp;Muted</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioMutedAll" name="formFollowersRadioMuted" value="all" data-bsky-target="muted" checked>
+												<label class="form-check-label" for="formFollowersRadioMutedAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioMutedTrue" name="formFollowersRadioMuted" value="true" data-bsky-target="muted">
+												<label class="form-check-label" for="formFollowersRadioMutedTrue">
+													Users You mute
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioMutedFalse" name="formFollowersRadioMuted" value="false" data-bsky-target="muted">
+												<label class="form-check-label" for="formFollowersRadioMutedFalse">
+													Users You don't mute
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los blockedByList -->
+									<div id="formFollowersRadioBlockedByList" class="dropdown">
+										<button id="formFollowersBtnRadioBlockedByList" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-list-ul text-white"></i>&nbsp;Blocked By Mod List</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedByListAll" name="formFollowersRadioBlockedByList" data-bsky-target="blocked-by-list" value="all" checked>
+												<label class="form-check-label" for="formFollowersRadioBlockedByListAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedByListTrue" name="formFollowersRadioBlockedByList" data-bsky-target="blocked-by-list" value="true">
+												<label class="form-check-label" for="formFollowersRadioBlockedByListTrue">
+													Users in Block Mod Lists
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioBlockedByListFalse" name="formFollowersRadioBlockedByList" data-bsky-target="blocked-by-list" value="false">
+												<label class="form-check-label" for="formFollowersRadioBlockedByListFalse">
+													Users not in Block Mod Lists
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El filtro de los mutedByList -->
+									<div id="formFollowersRadioMutedByList" data-bsky-target="mutedByList" class="dropdown">
+										<button id="formFollowersBtnRadioMutedByList" class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-list-stars text-white"></i>&nbsp;Muted By Mod List</button>
+										<div class="dropdown-menu p-2 theme-filter">
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioMutedByListAll" name="formFollowersRadioMutedByList" value="all" data-bsky-target="muted-by-list" checked>
+												<label class="form-check-label" for="formFollowersRadioMutedByListAll" checked>
+													All Users
+												</label>
+											</div>
+											<div class="dropdown-divider"></div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioMutedByListTrue" name="formFollowersRadioMutedByList" value="true" data-bsky-target="muted-by-list">
+												<label class="form-check-label" for="formFollowersRadioMutedByListTrue">
+													Users in Mute Mod Lists
+												</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio" id="formFollowersRadioMutedByListFalse" name="formFollowersRadioMutedByList" value="false" data-bsky-target="muted-by-list">
+												<label class="form-check-label" for="formFollowersRadioMutedByListFalse">
+													Users not in Mute Mod Lists
+												</label>
+											</div>
+										</div>
+									</div>
+
+									<!-- El total -->
+									<div class="align-self-center"><span id="formFollowersTotal">0</span> record(s)</div>
+								</form>
+
 								<div class="theme-table">
-									<table id="table-followers" name="table-followers" class="table table-sm table-striped table-hover">
+									<table id="tableFollowers" name="tableFollowers" class="table table-sm table-striped table-hover">
 										<thead class="table-header theme-table-header">
 											<tr>
 												<th scope="col" class="col-1">#</th>
@@ -300,9 +625,9 @@
 							</div>
 
 							<!-- El panel de los blocking -->
-							<div id="panel-blocking" name="panel-blocking" class="tab-pane fade theme-blocking" role="tabpanel" aria-labelledby="pill-blocking" tabindex="0">
+							<div id="panelBlocking" name="panelBlocking" class="tab-pane fade theme-blocking" role="tabpanel" aria-labelledby="pill-blocking" tabindex="0">
 								<div class="theme-table">
-									<table id="table-blocking" name="table-blocking" class="table table-sm table-striped table-hover">
+									<table id="tableBlocking" name="tableBlocking" class="table table-sm table-striped table-hover">
 										<thead class="table-header theme-table-header">
 											<tr>
 												<th scope="col" class="col-1">#</th>
@@ -373,7 +698,7 @@
 
 		<!-- Los toasts -->
 		<div class="toast-container position-fixed top-0 start-0 p-3">
-			<div id="toast-followers-change" name="toast-followers-change" class="toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="3000">
+			<div id="toastFollowersChange" name="toastFollowersChange" class="toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="3000">
 				<div class="toast-header">
 					<i class="bi bi-info-square-fill text-success me-2"></i>
 					<strong class="me-auto">Profile Stats</strong>
@@ -388,11 +713,11 @@
 
 		<!-- Los modales -->
 		<!-- Modal: Settings -->
-		<div class="modal fade" id="modal-settings" tabindex="-1" aria-labelledby="modal-settings-label" aria-hidden="true">
+		<div class="modal fade" id="modalSettings" tabindex="-1" aria-labelledby="modalSettingsLabel" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h1 class="modal-title fs-5" id="modal-settings-label">Settings</h1>
+						<h1 class="modal-title fs-5" id="modalSettingsLabel">Settings</h1>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
@@ -404,7 +729,7 @@
 									<label for="refreshStaticSeconds" class="form-label">Refresh Static data: <span id="refreshStaticSecondsCurrent">300</span></label>
 									<div class="d-flex gap-3">
 										<span>15</span>
-										<input type="range" class="form-range" min="0" max="300" step="15" id="refreshStaticSeconds" onInput="BSKY.showCurrent( this )">
+										<input type="range" class="form-range" min="0" max="300" step="15" id="refreshStaticSeconds" onInput="BSKY.updateCurrentRefresh( this )">
 										<span>300</span>
 									</div>
 
@@ -412,7 +737,7 @@
 									<label for="refreshDynamicSeconds" class="form-label">Refresh Dynamic data: <span id="refreshDynamicSecondsCurrent">15</span></label>
 									<div class="d-flex gap-3">
 										<span>0</span>
-										<input type="range" class="form-range" min="0" max="60" step="1" id="refreshDynamicSeconds" onInput="BSKY.showCurrent( this )">
+										<input type="range" class="form-range" min="0" max="60" step="1" id="refreshDynamicSeconds" onInput="BSKY.updateCurrentRefresh( this )">
 										<span>60</span>
 									</div>
 								</div>
@@ -443,11 +768,11 @@
 		</div>
 
 		<!-- Modal: Search User -->
-		<div class="modal fade" id="modal-search-user" tabindex="-1" aria-labelledby="modal-search-user-label" aria-hidden="true">
+		<div class="modal fade" id="modalSearchUser" tabindex="-1" aria-labelledby="modalSearchUserLabel" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h1 class="modal-title fs-5" id="modal-search-user-label">Search User</h1>
+						<h1 class="modal-title fs-5" id="modalSearchUserLabel">Search User</h1>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
@@ -456,18 +781,18 @@
 							<div class="input-group input-group-sm mb-3">
 								<span class="input-group-text">Bluesky user @</span>
 								<div class="form-floating">
-									<input id="search-profile-pattern" name="search-profile-pattern" type="text" size="40" class="form-control" placeholder="User Handle to Search" aria-label="User Handle to Search" aria-describedby="search-profile-pattern-help" onInput="BSKY.searchUser(this);" required>
-									<label for="search-profile-pattern" class="form-label">User Handle to Search</label>
+									<input id="modalSearchProfilePattern" name="modalSearchProfilePattern" type="text" size="40" class="form-control" placeholder="User Handle to Search" aria-label="User Handle to Search" aria-describedby="modalSearchProfilePatternHelp" onInput="BSKY.searchUser(this);" required>
+									<label for="modalSearchProfilePattern" class="form-label">User Handle to Search</label>
 								</div>
 							</div>
 							<!-- El helper -->
-							<div id="search-profile-pattern-help" name="search-profile-pattern-help" class="form-text mb-3">
+							<div id="modalSearchProfilePatternHelp" name="modalSearchProfilePatternHelp" class="form-text mb-3">
 								Bluesky user handle without the initial "@" (<i>example: "safety.bsky.app"</i>)
 							</div>
 
 							<!-- Los encontrados -->
 							Perfiles encontrados:
-							<ul id="search-profile-results" class="list-group">
+							<ul id="modalSearchProfileResults" class="list-group">
 								<li class="list-group-item">An item</li>
 							</ul>
 						</form>

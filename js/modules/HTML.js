@@ -11,12 +11,16 @@ import CONFIGURATION					from "../data/config.json" with { type: "json" };
 import * as COMMON						from "./common.functions.js";
 // Common Classes and Exceptions ("Types")
 import * as TYPES						from "./common.types.js";
+// Common HTML Constants
+import * as HTMLConstants				from "./HTML.Constants.js";
+export * from "./HTML.Constants.js";
 // To perform API calls
 import * as APICall						from "./APICall.js";
 // Common DPOP functions
 import * as DPOP						from "./OAuth2/dpopProof.js";
 // Common JWT functions
 import * as JWT							from "./OAuth2/JWT.js";
+
 
 
 /**********************************************************
@@ -31,78 +35,7 @@ const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
 
 // Bluesky constants
-const APP_CLIENT_ID						= CLIENT_APP.client_id;
 
-// IMG constants
-const BLANK_IMAGE						= "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-
-// HTML constants
-const LOCALE_SPAIN						= 'es-ES';
-const LOCALE_OPTIONS					= { year: "2-digit", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true };
-const DESC_MAX_CHARS					= 60;
-
-// HTML normal DIVs/Placeholders constants
-const DIV_DATE_TIME						= "currentDateTime";
-const DIV_TAB_NOTIS_BADGE				= "pill-notifications-badge";
-const DIV_TAB_BLOCKS_BADGE				= "pill-blocking-badge";
-const DIV_TAB_FOLLOWERS_BADGE			= "pill-followers-badge";
-const DIV_TAB_FOLLOWING_BADGE			= "pill-following-badge";
-const DIV_TAB_MUTED_BADGE				= "pill-muting-badge";
-const DIV_TAB_MY_LISTS_BADGE			= "pill-my-lists-badge";
-const DIV_TOAST							= "toast-followers-change";
-const DIV_PANEL_ERROR					= "panel-error";
-const DIV_PANEL_INFO					= "panel-info";
-const DIV_PANEL_INFO_STEP				= `${DIV_PANEL_INFO}-step`;
-const DIV_BTN_CLIENT_ID					= "button-client-id";
-const DIV_BTN_DID_DOCUMENT				= "button-did-document";
-const DIV_TABLE_MY_LISTS				= "table-my-lists";
-const DIV_TABLE_MUTING					= "table-muting";
-const DIV_TABLE_BLOCKING				= "table-blocking";
-const DIV_TABLE_FOLLOWING				= "table-following";
-const DIV_TABLE_FOLLOWERS				= "table-followers";
-const DIV_TRENDING_TOPICS				= "trending-topics";
-
-
-// HTML jQuery DIVs/Placeholders constants
-const DIV_JQ_ERROR						= "#error";
-const DIV_JQ_ERROR_DESCRIPTION			= "#errorDescription";
-const DIV_JQ_CLIENTID					= "#clientId";
-const DIV_JQ_ISS						= "#iss";
-const DIV_JQ_STATE						= "#state";
-const DIV_JQ_CODE						= "#code";
-const DIV_JQ_DPOP_NONCE					= "#dpopNonce";
-const DIV_JQ_DATE_TIME					= `#${DIV_DATE_TIME}`;
-const DIV_JQ_NOTIFICATIONS				= "#notifications";
-const DIV_JQ_TAB_NOTIS_BADGE			= `#${DIV_TAB_NOTIS_BADGE}`;
-const DIV_JQ_TAB_BLOCKS_BADGE			= `#${DIV_TAB_BLOCKS_BADGE}`;
-const DIV_JQ_TAB_FOLLOWERS_BADGE		= `#${DIV_TAB_FOLLOWERS_BADGE}`;
-const DIV_JQ_TAB_FOLLOWING_BADGE		= `#${DIV_TAB_FOLLOWING_BADGE}`;
-const DIV_JQ_TAB_MUTED_BADGE			= `#${DIV_TAB_MUTED_BADGE}`;
-const DIV_JQ_TAB_MY_LISTS_BADGE			= `#${DIV_TAB_MY_LISTS_BADGE}`;
-const DIV_JQ_ACCESS_TOKEN_JWT			= "#access_token_jwt";
-const DIV_JQ_ACCESS_TOKEN_JSON			= "#access_token_json";
-const DIV_JQ_PROFILE_AVATAR				= "#profile-avatar";
-const DIV_JQ_PROFILE_AVATAR_TOP			= "#profile-avatar-top";
-const DIV_JQ_PROFILE_NAME				= "#profile-name";
-const DIV_JQ_PROFILE_NAME_TOP			= "#profile-name-top";
-const DIV_JQ_PROFILE_HANDLE				= "#profile-handle";
-const DIV_JQ_PROFILE_HANDLE_TOP			= "#profile-handle-top";
-const DIV_JQ_PROFILE_HANDLE_LINK		= "#profile-handle-link";
-const DIV_JQ_PROFILE_FOLLOWERS			= "#profile-followers";
-const DIV_JQ_PROFILE_FOLLOWING			= "#profile-following";
-const DIV_JQ_PROFILE_POSTS				= "#profile-posts";
-const DIV_JQ_PROFILE_DESCRIPTION		= "#profile-description";
-const DIV_JQ_TOAST						= `#${DIV_TOAST}`;
-const DIV_JQ_PANEL_INFO					= `#${DIV_PANEL_INFO}`;
-const DIV_JQ_PANEL_INFO_STEP			= `#${DIV_PANEL_INFO_STEP}`;
-const DIV_JQ_BTN_CLIENT_ID				= `#${DIV_BTN_CLIENT_ID}`;
-const DIV_JQ_BTN_DID_DOCUMENT			= `#${DIV_BTN_DID_DOCUMENT}`;
-const DIV_JQ_TABLE_MY_LISTS				= `#${DIV_TABLE_MY_LISTS}`;
-const DIV_JQ_TABLE_MUTING				= `#${DIV_TABLE_MUTING}`;
-const DIV_JQ_TABLE_BLOCKING				= `#${DIV_TABLE_BLOCKING}`;
-const DIV_JQ_TABLE_FOLLOWING			= `#${DIV_TABLE_FOLLOWING}`;
-const DIV_JQ_TABLE_FOLLOWERS			= `#${DIV_TABLE_FOLLOWERS}`;
-const DIV_JQ_TRENDING_TOPICS			= `#${DIV_TRENDING_TOPICS}`;
 
 /**********************************************************
  * Module Variables
@@ -126,12 +59,12 @@ let expiration							= 0;
 export function clock() {
 	// La fecha y hora actual
 	const now							= new Date();
-	$( DIV_JQ_DATE_TIME ).val( now.toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS ) );
+	$( '#'+HTMLConstants.DIV_DATE_TIME ).val( now.toLocaleString( HTMLConstants.LOCALE_SPAIN, HTMLConstants.LOCALE_OPTIONS ) );
 }
 
 export function updateHighlight() {
-	$( DIV_JQ_ACCESS_TOKEN_JSON ).removeAttr('data-highlighted');
-	$( DIV_JQ_ACCESS_TOKEN_JWT ).removeAttr('data-highlighted');
+	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JSON ).removeAttr('data-highlighted');
+	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JWT ).removeAttr('data-highlighted');
 	hljs.highlightAll();
 }
 
@@ -150,8 +83,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 	// HTML L&F
 	if ( renderHTMLErrors ) {
-		// COMMON.hide( DIV_PANEL_INFO );
-		COMMON.show( DIV_PANEL_ERROR );
+		COMMON.show( HTMLConstants.DIV_PANEL_ERROR );
 	}
 
 	if ( isInstanceOfAccessTokenError ) {
@@ -160,8 +92,8 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
-			$( DIV_JQ_ERROR ).html(error.title);
-			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
+			$( '#'+HTMLConstants.DIV_ERROR ).html(error.title);
+			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.message);
 		}
 	} else if ( isInstanceOfAPICallError ) {
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
@@ -182,15 +114,15 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
-			$( DIV_JQ_ERROR ).html(error.message);
+			$( '#'+HTMLConstants.DIV_ERROR ).html(error.message);
 			if ( error.isJson ) {
 				let msg					= ( error.json.error ) ? error.json.error + ": " : "";
 				msg						+= ( error.json.message ) ? error.json.message : "";
 				msg						+= ( error.json.error_description ) ? error.json.error_description : "";
-				$( DIV_JQ_ERROR_DESCRIPTION ).val(msg);
+				$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(msg);
 			} else {
 				let msg					= `[${error.step}] Error [${error.statusText}] invocando a: [${error.url}]`;
-				$( DIV_JQ_ERROR_DESCRIPTION ).val(msg);
+				$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(msg);
 			}
 		}
 	} else if ( error.error && error.message ) {
@@ -200,28 +132,29 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
-			$( DIV_JQ_ERROR ).html(error.error);
-			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
+			$( '#'+HTMLConstants.DIV_ERROR ).html(error.error);
+			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.message);
 		}
 	} else {
 		// Unknown error type. Update the error fields
 		if ( renderHTMLErrors ) {
-			$( DIV_JQ_ERROR ).html("ERROR");
-			$( DIV_JQ_ERROR_DESCRIPTION ).val(error.message);
+			$( '#'+HTMLConstants.DIV_ERROR ).html("ERROR");
+			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.message);
 		}
 	}
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
 
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 export function clearHTMLError() {
 	// Clear and hide error fields and panel
-	$( DIV_JQ_ERROR ).html("");
-	$( DIV_JQ_ERROR_DESCRIPTION ).val("");
-	COMMON.hide( DIV_PANEL_ERROR );
+	$( '#'+HTMLConstants.DIV_ERROR ).html("");
+	$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val("");
+	COMMON.hide( HTMLConstants.DIV_PANEL_ERROR );
 }
 
 export function processAPICallErrorResponse( error, renderHTMLErrors=true ) {
@@ -281,25 +214,26 @@ export function updateHTMLFields(parsedSearch) {
 
 	// Update HTML page element values.
 	// CSS Classes.
-	$( DIV_JQ_ISS ).val(iss);
-	$( DIV_JQ_STATE ).val(state);
-	$( DIV_JQ_CODE ).val(code);
-	$( DIV_JQ_DPOP_NONCE ).val(dpopNonce);
+	$( '#'+HTMLConstants.DIV_ISS ).val(iss);
+	$( '#'+HTMLConstants.DIV_STATE ).val(state);
+	$( '#'+HTMLConstants.DIV_CODE ).val(code);
+	$( '#'+HTMLConstants.DIV_DPOP_NONCE ).val(dpopNonce);
 
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return response;
 }
 
 export function updateUserAccessToken(clientId, userAccessToken) {
-	$( DIV_JQ_CLIENTID ).val( clientId );
-	$( DIV_JQ_ACCESS_TOKEN_JWT ).text( userAccessToken );
-	$( DIV_JQ_ACCESS_TOKEN_JSON ).text( JWT.jwtToPrettyJSON( userAccessToken ) );
+	$( '#'+HTMLConstants.DIV_CLIENT_ID ).val( clientId );
+	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JWT ).text( userAccessToken );
+	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JSON ).text( JWT.jwtToPrettyJSON( userAccessToken ) );
 }
 
 export function updateUserDIDInfo() {
-	let $linkClientID					= $( DIV_JQ_BTN_CLIENT_ID );
-	let $linkDIDDocument				= $( DIV_JQ_BTN_DID_DOCUMENT );
-	$linkClientID.attr("href",  APP_CLIENT_ID);
+	let $linkClientID					= $( '#'+HTMLConstants.DIV_BTN_CLIENT_ID );
+	let $linkDIDDocument				= $( '#'+HTMLConstants.DIV_BTN_DID_DOCUMENT );
+	$linkClientID.attr("href",  CLIENT_APP.client_id);
 	$linkDIDDocument.attr("href",  API.bluesky.profile.pld + BSKY.user.userDid);
 }
 
@@ -314,12 +248,12 @@ export function clearStepInfo() {
 export function showStepInfo( step=null, message=null ) {
 	if ( !COMMON.isNullOrEmpty( message ) ) {
 		if ( !COMMON.isNullOrEmpty( step ) ) {
-			$( DIV_JQ_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
+			$( '#'+HTMLConstants.DIV_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
 		} else {
-			$( DIV_JQ_PANEL_INFO_STEP ).html( `${message}` );
+			$( '#'+HTMLConstants.DIV_PANEL_INFO_STEP ).html( `${message}` );
 		}
 	} else {
-		$( DIV_JQ_PANEL_INFO_STEP ).html( "&nbsp;" );
+		$( '#'+HTMLConstants.DIV_PANEL_INFO_STEP ).html( "&nbsp;" );
 	}
 }
 
@@ -327,12 +261,42 @@ export function showStepInfo( step=null, message=null ) {
 /* --------------------------------------------------------
  * HTML Render: Notification.
  * -------------------------------------------------------- */
-async function htmlRenderSingleNotification( notification, userAccessToken, clientId, accessTokenHash ) {
-	const STEP_NAME						= "htmlRenderSingleNotification";
+async function getReferredBluit( notiURI ) {
+	const STEP_NAME						= "getReferredBluit";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	let bluitUrl						= API.bluesky.XRPC.public + API.bluesky.XRPC.api.public.getPosts + "?uris=" + encodeURIComponent( notiURI );
+	let headers							= {
+		'Accept': APICall.CONTENT_TYPE_JSON,
+	}
+	let fetchOptions					= {
+		method: APICall.HTML_GET,
+		headers: headers
+	}
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ withAuthentication:", withAuthentication);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+	let callResponse					= await APICall.makeAPICall( STEP_NAME, bluitUrl, fetchOptions )
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
+	let bluits							= callResponse.body.posts;
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
+	let bluit							= bluits[0];
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return bluit;
+}
+
+async function htmlRenderNotification( idx, notification, userAccessToken, clientId, accessTokenHash ) {
+	const STEP_NAME						= "htmlRenderNotification";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 
 	// Vamos preparando el HTML para la notificación.
-	let jqRoot							= $( DIV_JQ_NOTIFICATIONS );
+	let jqRoot							= $( '#'+HTMLConstants.DIV_NOTIFICATIONS );
 
 	let cid								= notification.cid;
 	let uri								= notification.uri;
@@ -346,23 +310,25 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 	let authorDid						= author.did;
 	let authorDescription				= author.description;
 	let authorAvatar					= author.avatar;
-	let authorURL						= "https://bsky.app/profile/" + authorHandle;
+	let authorURL						= API.bluesky.profile.url + authorHandle;
 
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+notiReason+"] ["+authorName+"] ["+when.toLocaleString()+"]" );
 
-	// Actualizamos el HTML con el autor.
-	let html							= jqRoot.html() + `<div id="notification-${cid}" name="notification${cid}" class="notification">`;
-	html								+= `<div class="header">`;
+	// Actualizamos el Header HTML con la info de la notificación.
+	let htmlHeader						= `<h2  class="accordion-header notificacion-header">`;
+	htmlHeader							+= `  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#notification-body-${cid}" aria-expanded="${idx===1 ? "true" : "false"}" aria-controls="notification-body-${cid}"> `;
 	if (authorAvatar) {
-		html							+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
+		htmlHeader						+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
 	} else {
-		html							+= `  <a href="${authorURL}"><i class="bi bi-person-slash" height="24"></i></a> `;
+		htmlHeader						+= `  <a href="${authorURL}"><i class="bi bi-person-slash" height="24"></i></a> `;
 	}
-	html								+= `  <a href="${authorURL}"><strong>${authorName}</strong></a>`;
-	html								+= `</div>`;
-	html								+= `<ul style="margin: 0px 0px 8px 0px">`;
-	html								+= `  <li class="notificacion-data">Handle: <strong>${authorHandle}</strong> (<i>Did: <strong>${authorDid}</strong></i>)</li>`;
-	// html								+= `  <li class="notificacion-data">Description: <strong>${authorDescription}</strong></li>`;
+	htmlHeader							+= `  <a href="${authorURL}" class="ps-2" title="Handle: ${authorHandle}, DID: ${authorDid}"><strong>${authorName}</strong></a>`;
+	htmlHeader							+= `</h2 >`;
+
+	// Actualizamos el Body HTML con la info de la notificación.
+	let htmlBody						= `<div id="notification-body-${cid}" class="accordion-body accordion-collapse collapse ${idx===1 ? "show " : ""}notificacion-body" data-bs-parent="#notifications">`;
+	// let htmlBody						= `<div class="accordion-body notificacion-body">`;
+	htmlBody							+= `  <ul style="margin: 0px 0px 8px 0px">`;
 
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating Notification:");
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ notification:", notification);
@@ -375,19 +341,11 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "  > avatar:", authorAvatar);
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "  > URL:", authorURL);
 
-	/*
-	 * Possible reasons:
-		"reason": "follow",
-		"reason": "like",
-		"reason": "reply",
-		"reason": "repost",
-		// like, repost, follow, mention, reply, quote, starterpack-joined
-	*/
+	/* Possible reasons: like, repost, follow, mention, reply, quote, starterpack-joined */
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ Reason:", notiReason);
-
 	if ( COMMON.areEquals( notiReason, "follow" ) ) {
 		// It's a "follow" notification.
-		html							+= `  <li class="notificacion-data"><strong>${notiReason} you</strong></li>`;
+			htmlBody					+= `    <li class="notificacion-data"><strong>${notiReason} you</strong></li>`;
 	} else {
 		// It's about an action on a post.
 		let notiURI						= "";
@@ -401,91 +359,101 @@ async function htmlRenderSingleNotification( notification, userAccessToken, clie
 		let notiURISplitted				= notiURI.substring(5).split("/")
 		let notiDID						= notiURISplitted[0];
 		let notiBluitID					= notiURISplitted[2];
-		let userProfileURL				= "https://bsky.app/profile/" + notiDID + "/post/" + notiBluitID;
+		let userProfileURL				= API.bluesky.profile.url + notiDID + "/post/" + notiBluitID;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
 		
-		// TEST: Get post
-		let bluitUrl					= API.bluesky.XRPC.public + API.bluesky.XRPC.api.public.getPosts + "?uris=" + encodeURIComponent( notiURI );
-		let headers						= null;
-		let fetchOptions				= null;
-		let withAuthentication			= false;
-		if (withAuthentication) {
-			if (window.BSKY.DEBUG) console.debug(PREFIX + "Testing to retrieve the bluit:");
-			if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
-
-			let dpopRequest				= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, clientId, userAccessToken, accessTokenHash, bluitUrl, BSKY.data.dpopNonce, APICall.HTML_GET);
-			let dpopProof				= await DPOP.createDPoPProof(dpopRequest)
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
-
-			headers						= {
-				'Authorization': `DPoP ${userAccessToken}`,
-				'DPoP': dpopProof,
-				'Accept': APICall.CONTENT_TYPE_JSON,
-				'DPoP-Nonce': dpopNonce
-			}
-			fetchOptions				= {
-				method: APICall.HTML_GET,
-				headers: headers
-			}
-		} else {
-			headers						= {
-				'Accept': APICall.CONTENT_TYPE_JSON,
-			}
-			fetchOptions				= {
-				method: APICall.HTML_GET,
-				headers: headers
-			}
-		}
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ withAuthentication:", withAuthentication);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
-
-		let callResponse				= await APICall.makeAPICall( STEP_NAME, bluitUrl, fetchOptions )
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
-		let bluits						= callResponse.body.posts;
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
-		let bluit						= bluits[0];
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
+		// Get the referred bluit
+		let bluit						= await getReferredBluit( notiURI );
 
 		// Agregamos la info al html...
 		let referredText				= `Not detected yet for ${notiReason}!`;
-		switch ( notiReason.toLowerCase() ) {
-			case "like":
-				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
-				break;
-			case "reply":
-				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
-				break;
-			case "repost":
-				referredText			= `Not detected yet for ${notiReason}!`;
-				break;
-			default:
-				referredText			= ( bluit.embed && bluit.embed.record && bluit.embed.record.value && bluit.embed.record.value.text ) || bluit.record.text;
-		}
+		let referredTextExtra			= "";
+
+		/* Builts samples
+			{
+				"record": {
+					"text": "En breve pondré filtros y todo.\n\nBuenos días, mundo.\nY feliz viernes."
+				},
+				"embed": {
+					"record": {
+						"value": {
+							"text": "Versión 1.6.0.\n\nAhora pinta más bonito. 😍\n\n#atproto\n#atdev\n\noauthbluesky.onrender.com"
+						},
+					}
+				},
+			}
+			{
+				"record": {
+					"text": "¡Qué grande, Jose Mari Erausquin!\n\n#IRPH \n#TJUE \n\nwww.youtube.com/watch?v=mIOL..."
+					"embed": {
+						"external": {
+							"title": "EL TJUE CONTRADICE LA DOCTRINA IRPH DEL TRIBUNAL SUPREMO.",
+						}
+					},
+				},
+				"embed": {
+					"external": {
+						"title": "EL TJUE CONTRADICE LA DOCTRINA IRPH DEL TRIBUNAL SUPREMO.",
+					}
+				},
+			}
+
+			bluit.record.text
+			bluit.embed.record.value.text
+			bluit.record.embed.external.title
+			bluit.embed.external.title
+		 */
+
+		// The "proper" text.
+		referredText					= "<blockquote>";
+		referredText					+= bluit?.record?.text ? bluit.record.text : "nothing in <code>bluit.record.text</code>";
+		referredText					+= "</blockquote>";
+
+		// The "related" text.
+		referredTextExtra				= bluit?.embed?.record?.value?.text ? `<em>${bluit.embed.record.value.text}</em>`
+										: bluit?.record?.embed?.external?.title ? `<em>${bluit.record.embed.external.title}</em>`
+										: bluit?.embed?.external?.title ? `<em>${bluit.embed.external.title}</em>`
+										: bluit?.embed?.record?.text ? `<em>${bluit.embed.record.text}</em>`
+										: "";
+										 // : "<strong>no referred bluit in <code>bluit.embed.record.value.text</code> or <code>bluit.record.embed.external.title</code> or <code>bluit.embed.external.title</code> or <code>bluit.embed.record.text</code></strong>";
+		referredText					+= ( referredTextExtra.trim().length>0 ) ? `Referred to bluit: <blockquote>${referredTextExtra}</blockquote>` : "";
+
+		// HTML Tune-up
+		referredText					= referredText.replaceAll( '\n', '<br/>' );
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
-		html							+= `  <li class="notificacion-data">${notiReason} <a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
+
+		// Add the text to the "body"
+		htmlBody						+= `    <li class="notificacion-data">${notiReason}`;
 		if (replyText) {
-			html						+= `<br/><i class="text-primary">${replyText}</i>`;
+			htmlBody					+= `:<blockquote><i class="text-primary">${replyText}</i></blockquote>to `;
+		} else {
+		htmlBody						+= ` `;
 		}
-		html							+= `</li>`;
+		htmlBody						+= `<a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
+		htmlBody						+= `    </li>`;
 	}
-	html								+= `</ul>`;
+	htmlBody							+= `  </ul>`;
+	htmlBody							+= `</div>`;
 
-	// Pintamos el HTML.
+	// Pintamos el HTML final.
+	let html							= `<div id="notification-${cid}" name="notification-${cid}" class="accordion-item notification">`;
+	html								+= htmlHeader;
+	html								+= htmlBody;
 	html								+= '</div>';
-	jqRoot.html( html );
+	jqRoot.html( jqRoot.html() + html );
 
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 export function htmlRenderNoNotifications() {
 	// Ponemos el badge a 0 y lo ocultamos
-	$( DIV_JQ_TAB_NOTIS_BADGE ).html(0);
-	COMMON.hide( DIV_TAB_NOTIS_BADGE );
+	$( '#'+HTMLConstants.DIV_TAB_NOTIS_BADGE ).html(0);
+	COMMON.hide( HTMLConstants.DIV_TAB_NOTIS_BADGE );
 
 	// Limpiamos el "DIV" de las notis.
-	$( DIV_JQ_NOTIFICATIONS ).html( "No notifications found" );
+	$( '#'+HTMLConstants.DIV_NOTIFICATIONS ).removeClass( "accordion" );
+	$( '#'+HTMLConstants.DIV_NOTIFICATIONS ).html( "No notifications found" );
 }
 
 export async function htmlRenderNotifications( notifications, userAccessToken, clientId, accessTokenHash ) {
@@ -516,7 +484,7 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 
 	// Show only info about the "unread"...
 	// Vaciamos el panel, previamente.
-	let jqRoot							= $( DIV_JQ_NOTIFICATIONS );
+	let jqRoot							= $( '#'+DIV_NOTIFICATIONS );
 	jqRoot.html( "" );
 
 	let totalUnread						= unreadNotifications.length;
@@ -526,19 +494,21 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
 
 		// Actualizamos el badge y lo mostramos
-		$( DIV_JQ_TAB_NOTIS_BADGE ).html(totalUnread);
+		$( '#'+DIV_TAB_NOTIS_BADGE ).html(totalUnread);
 		COMMON.show( DIV_TAB_NOTIS_BADGE );
+		$( '#'+DIV_NOTIFICATIONS ).addClass( "accordion" );
 
 		// Ponemos el badge a 0 y lo ocultamos
 		for ( let key in unreadNotifications ) {
 			currentUnread++;
 			if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX + `[Noti ${currentUnread}/${totalUnread}]` );
-			await htmlRenderSingleNotification( unreadNotifications[key], userAccessToken, clientId, accessTokenHash );
+			await htmlRenderNotification( currentUnread, unreadNotifications[key], userAccessToken, clientId, accessTokenHash );
 			if (window.BSKY.DEBUG) console.groupEnd(PREFIX);
 		}
 	}
 
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd(PREFIX);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -554,26 +524,26 @@ export function htmlRenderUserProfile( profile ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "User Profile:", profile );
 
 	if (profile.avatar) {
-		$( DIV_JQ_PROFILE_AVATAR ).attr( "src", profile.avatar );
-		$( DIV_JQ_PROFILE_AVATAR_TOP ).attr( "src", profile.avatar );
+		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR ).attr( "src", profile.avatar );
+		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR_TOP ).attr( "src", profile.avatar );
 	} else {
-		$( DIV_JQ_PROFILE_AVATAR ).attr( "src", BLANK_IMAGE );
-		$( DIV_JQ_PROFILE_AVATAR_TOP ).attr( "src", BLANK_IMAGE );
+		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR ).attr( "src", HTMLConstants.BLANK_IMAGE );
+		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR_TOP ).attr( "src", HTMLConstants.BLANK_IMAGE );
 	}
 
-	$( DIV_JQ_PROFILE_NAME ).html( profile.displayName || profile.handle );
-	$( DIV_JQ_PROFILE_NAME_TOP ).html( profile.displayName || profile.handle );
+	$( '#'+HTMLConstants.DIV_PROFILE_NAME ).html( profile.displayName || profile.handle );
+	$( '#'+HTMLConstants.DIV_PROFILE_NAME_TOP ).html( profile.displayName || profile.handle );
 
-	$( DIV_JQ_PROFILE_HANDLE ).html( profile.handle );
-	$( DIV_JQ_PROFILE_HANDLE_TOP ).html( profile.handle );
+	$( '#'+HTMLConstants.DIV_PROFILE_HANDLE ).html( profile.handle );
+	$( '#'+HTMLConstants.DIV_PROFILE_HANDLE_TOP ).html( profile.handle );
 
-	$( DIV_JQ_PROFILE_FOLLOWERS ).html( profile.followersCount );
-	$( DIV_JQ_PROFILE_FOLLOWING ).html( profile.followsCount );
-	$( DIV_JQ_PROFILE_POSTS ).html( profile.postsCount );
-	$( DIV_JQ_PROFILE_DESCRIPTION ).html( profile.description );
+	$( '#'+HTMLConstants.DIV_PROFILE_FOLLOWERS ).html( profile.followersCount );
+	$( '#'+HTMLConstants.DIV_PROFILE_FOLLOWING ).html( profile.followsCount );
+	$( '#'+HTMLConstants.DIV_PROFILE_POSTS ).html( profile.postsCount );
+	$( '#'+HTMLConstants.DIV_PROFILE_DESCRIPTION ).html( profile.description );
 
 	// El enlace
-	let $link							= $( DIV_JQ_PROFILE_HANDLE_LINK );
+	let $link							= $( '#'+HTMLConstants.DIV_PROFILE_HANDLE_LINK );
 	let href							= API.bluesky.profile.url + profile.handle;
 	$link.attr("href",  href);
 	$link.attr("alt",   `ALT: ${profile.description}`);
@@ -598,19 +568,21 @@ export function htmlRenderUserProfile( profile ) {
 			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 			// El toast.
 			let toastOptions			= {"animation": true, "autohide": true, "delay": 5000};
-			let $toast					= $( DIV_JQ_TOAST, toastOptions );
-			let $toastImg				= $( DIV_JQ_TOAST + " > .toast-header > img" );
-			let $toastBody				= $( DIV_JQ_TOAST + " > .toast-body" );
+			let $toast					= $( '#'+HTMLConstants.DIV_TOAST_FOLLOWERS, toastOptions );
+			let $toastImg				= $( '#'+HTMLConstants.DIV_TOAST_FOLLOWERS + " > .toast-header > img" );
+			let $toastBody				= $( '#'+HTMLConstants.DIV_TOAST_FOLLOWERS + " > .toast-body" );
 			let html					= `Diferencia de ${diffFollowers} followers y de ${diffFollowing} following`;
 			let delay					= ( window.BSKY.refreshDynamicSeconds - 1 ) * 1000;
 
 			if (profile.avatar) {
 				$toastImg.attr( "src", profile.avatar );
 			} else {
-				$toastImg.attr( "src", BLANK_IMAGE );
+				$toastImg.attr( "src", HTMLConstants.BLANK_IMAGE );
 			}
 			$toastBody.html( html );
 			$toast.show();
+
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		} else {
 			if (window.BSKY.DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
@@ -656,6 +628,7 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 	 *   <i class="bi bi-person-standing"></i>&nbsp;Following</button>
 	 *   <i class="bi bi-person-walking"></i>&nbsp;Followers</button>
 	 *   <i class="bi bi-person-dash"></i>&nbsp;Blocking</button>
+	 *   <i class="bi bi-person-fill-dash"></i>&nbsp;Blocked By</button>
 	 *   <i class="bi bi-person-slash"></i>&nbsp;Muting</button>
 	 *   <i class="bi bi-list-ul"></i>&nbsp;My Lists</button>
 	 *
@@ -734,22 +707,39 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 		html							+= '<tr class="align-top">';
 		html							+= `<td>&nbsp;</td>`;
 		html							+= `<td><i class="bi bi-ban-fill text-danger" title="Profile not found"></i></td>`;
-		html							+= `<td><a href="https://bsky.app/profile/${handle}" target="_blank" title="${handle}">${handle}</a></td>`;
+		html							+= `<td><a href="${API.bluesky.profile.url}${handle}" target="_blank" title="${handle}">${handle}</a></td>`;
 		html							+= `<td class="text-danger fw-medium theme-smaller">${profile.body.error}: ${profile.body.message}</td>`;
 		html							+= '</tr>';
 	} else {
 		handle							= profile.handle;
-		let defaultColor				= "text-body-tertiary";
-		let viewer						= profile.viewer;
+		const defaultColor				= "text-body-tertiary";
+
+		// The labels part
 		let labels						= profile.labels;
 		let labelsAsStr					= "";
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Viewer:`, viewer );
 		if (!COMMON.isNullOrEmpty(labels)) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Labels:`, labels );
 			labelsAsStr					= labels.map(lbl => lbl.val);
 		}
-		html							+= '<tr class="align-top">';
+
+		// The viewer part
+		let viewer						= profile.viewer;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Viewer:`, viewer );
+
+		// The dataset
+		let dataset						= "";
+		dataset							+= " " + HTMLConstants.DATASET_PREFIX + `following="${!COMMON.isNullOrEmpty(viewer.following)}"`;
+		dataset							+= " " + HTMLConstants.DATASET_PREFIX + `followed-by="${!COMMON.isNullOrEmpty(viewer.followedBy)}"`;
+		dataset							+= " " + HTMLConstants.DATASET_PREFIX + `blocked="${viewer?.blocking || false}"`;
+		dataset							+= " " + HTMLConstants.DATASET_PREFIX + `blocked-by="${viewer?.blockedBy || false}"`;
+		dataset							+= " " + HTMLConstants.DATASET_PREFIX + `muted="${viewer?.muted || false}"`;
+		dataset							+= " " + HTMLConstants.DATASET_PREFIX + `blocked-by-list="${viewer?.blockingByList || false}"`;
+		dataset							+= " " + HTMLConstants.DATASET_PREFIX + `muted-by-list="${viewer?.mutedByList || false}"`;
+
+		// The HTML.
+		html							+= `<tr class="theme-record-item align-top"${dataset}>`;
 		html							+= `<td>${idx}</td>`;
+
 		// Icons: Following
 		html							+= `<td>`;
 		if ( flags.block || flags.muted ) {
@@ -761,7 +751,7 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 			html						+= `<i class="bi bi-person-walking ${!COMMON.isNullOrEmpty(viewer.followedBy) ? "text-white bg-success" : defaultColor}" title="you are ${!COMMON.isNullOrEmpty(viewer.followedBy) ? "" : "NOT "}followed by this profile"></i>`;
 		}
 		html							+= `&nbsp;<i class="bi bi-person-dash ${viewer.blocking ? "text-white bg-dark" : defaultColor}" title="you are ${viewer.blocking ? "" : "NOT "}blocking this profile"></i>`;
-		html							+= `&nbsp;<i class="bi bi-person-dash ${viewer.blockedBy ? "text-white bg-danger" : defaultColor}" title="you are ${viewer.blockedBy ? "" : "NOT "}blocked by this profile"></i>`;
+		html							+= `&nbsp;<i class="bi bi-person-fill-dash ${viewer.blockedBy ? "text-white bg-danger" : defaultColor}" title="you are ${viewer.blockedBy ? "" : "NOT "}blocked by this profile"></i>`;
 		html							+= `&nbsp;<i class="bi bi-person-slash ${viewer.muted ? "text-white bg-primary" : defaultColor}" title="you are ${viewer.muted ? "" : "NOT "}muting this profile"></i>`;
 		html							+= `&nbsp;<i class="bi bi-list-ul ${viewer?.blockingByList ? "text-white bg-dark" : defaultColor}" title="you are ${viewer?.blockingByList ? "" : "NOT "}blocking this profile thru list${viewer?.blockingByList ? ": " + viewer?.blockingByList?.name : ""}"></i>`;
 		html							+= `&nbsp;<i class="bi bi-list-stars ${viewer?.mutedByList ? "text-white bg-primary" : defaultColor}" title="you are ${viewer?.mutedByList ? "" : "NOT "}muting this profile thru list${viewer?.mutedByList ? ": " + viewer?.mutedByList?.name : ""}"></i>`;
@@ -770,11 +760,10 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 		if (profile.avatar) {
 			html						+= `<img src="${profile.avatar}"`;
 		} else {
-			html						+= `<img src="${BLANK_IMAGE}"`;
+			html						+= `<img src="${HTMLConstants.BLANK_IMAGE}"`;
 		}
-		html							+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="https://bsky.app/profile/${handle}" target="_blank" title="${handle}">${profile.displayName || handle}</a></td>`;
-		html							+= `<td class="theme-smaller">${(profile.description) ? profile.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
-		// html							+= `<td>${new Date(profile.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+		html							+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="${API.bluesky.profile.url}${handle}" target="_blank" title="${handle}">${profile.displayName || handle}</a></td>`;
+		html							+= `<td class="theme-smaller">${(profile.description) ? profile.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td>`;
 		html							+= '</tr>';
 		
 		// TEST
@@ -789,7 +778,6 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 		if ( keys.length>0 ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Viewer:`, viewer );
 		}
-
 	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
@@ -805,11 +793,12 @@ export function htmlRenderUserFollows( data ) {
 	let total							= 0;
 	let index							= 0;
 	let htmlContent						= null;
-	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWING + " tbody" );
+	let $tableBody						= $( '#'+HTMLConstants.DIV_TABLE_FOLLOWING + " tbody" );
 
 	// Clear the current content.
 	$tableBody.empty();
-	$( DIV_JQ_TAB_FOLLOWING_BADGE ).html(data.missingProfiles.length + data.profiles.length);
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_BADGE ).html(data.missingProfiles.length + data.profiles.length);
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_TOTAL ).html(data.missingProfiles.length + data.profiles.length);
 
 	// Missed
 	total								= data.missingProfiles.length;
@@ -846,14 +835,16 @@ export function htmlRenderUserFollowers( data ) {
 
 	let index							= 0;
 	let htmlContent						= null;
-	let $tableBody						= $( DIV_JQ_TABLE_FOLLOWERS + " tbody" );
+	let $tableBody						= $( '#'+HTMLConstants.DIV_TABLE_FOLLOWERS + " tbody" );
 
 	// Clear the current content.
 	$tableBody.empty();
 
 	// Total
 	let total							= data.length;
-	$( DIV_JQ_TAB_FOLLOWERS_BADGE ).html(total);
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWERS_BADGE ).html(total);
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWERS_TOTAL ).html(total);
+
 	if ( total>0 ) {
 		// Add data.
 		data.forEach( user => {
@@ -878,14 +869,14 @@ export function htmlRenderUserBlocks( data ) {
 
 	let index							= 0;
 	let htmlContent						= null;
-	let $tableBody						= $( DIV_JQ_TABLE_BLOCKING + " tbody" );
+	let $tableBody						= $( '#'+HTMLConstants.DIV_TABLE_BLOCKING + " tbody" );
 
 	// Clear the current content.
 	$tableBody.empty();
 
 	// Total
 	let total							= data.length;
-	$( DIV_JQ_TAB_BLOCKS_BADGE ).html(total);
+	$( '#'+HTMLConstants.DIV_TAB_BLOCKS_BADGE ).html(total);
 	if ( total>0 ) {
 		// Add data.
 		data.forEach( user => {
@@ -910,14 +901,14 @@ export function htmlRenderUserMutes( data ) {
 
 	let index							= 0;
 	let htmlContent						= null;
-	let $tableBody						= $( DIV_JQ_TABLE_MUTING + " tbody" );
+	let $tableBody						= $( '#'+HTMLConstants.DIV_TABLE_MUTING + " tbody" );
 
 	// Clear the current content.
 	$tableBody.empty();
 
 	// Total
 	let total							= data.length;
-	$( DIV_JQ_TAB_MUTED_BADGE ).html(total);
+	$( '#'+HTMLConstants.DIV_TAB_MUTED_BADGE ).html(total);
 	if ( total>0 ) {
 		// Add data.
 		data.forEach( user => {
@@ -946,9 +937,9 @@ function htmlRenderSingleList( idx, list, id ) {
 	html								+= '<tr class="align-top">';
 	html								+= `<td>${idx}</td>`;
 	html								+= `<td>${list.listItemCount}</td>`;
-	html								+= `<td><a href="https://bsky.app/profile/${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}">${list.name}</a></td>`;
-	html								+= `<td class="theme-smaller">${(list.description) ? list.description.substring(0, DESC_MAX_CHARS) : ""}</td>`;
-	html								+= `<td class="theme-smaller">${new Date(list.indexedAt).toLocaleString( LOCALE_SPAIN, LOCALE_OPTIONS )}</td>`;
+	html								+= `<td><a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}">${list.name}</a></td>`;
+	html								+= `<td class="theme-smaller">${(list.description) ? list.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td class="theme-smaller">${new Date(list.indexedAt).toLocaleString( HTMLConstants.LOCALE_SPAIN, HTMLConstants.LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
@@ -964,14 +955,14 @@ export function htmlRenderUserLists( data ) {
 	let index							= 0;
 	let id								= null;
 	let htmlContent						= null;
-	let $tableBody						= $( DIV_JQ_TABLE_MY_LISTS + " tbody" );
+	let $tableBody						= $( '#'+HTMLConstants.DIV_TABLE_MY_LISTS + " tbody" );
 
 	// Clear the current content.
 	$tableBody.empty();
 
 	// Total
 	let total							= data.length;
-	$( DIV_JQ_TAB_MY_LISTS_BADGE ).html(total);
+	$( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html(total);
 	if ( total>0 ) {
 		// Add data.
 		data.forEach( list => {
@@ -998,131 +989,10 @@ export function htmlRenderTrendingTopics( data ) {
 	let index							= 0;
 	let id								= null;
 	let htmlContent						= "";
-	let $container						= $( DIV_JQ_TRENDING_TOPICS );
+	let $container						= $( '#'+HTMLConstants.DIV_TRENDING_TOPICS );
 
 	// Clear the current content.
 	$container.html("");
-
-	/* Trending Topics
-		{
-			"topics": [
-				{
-					"topic": "SNL Concert",
-					"link": "/profile/trending.bsky.app/feed/90941852"
-				},
-				{
-					"topic": "WWE SmackDown",
-					"link": "/profile/trending.bsky.app/feed/90892200"
-				},
-				{
-					"topic": "CDC Layoffs",
-					"link": "/profile/trending.bsky.app/feed/90412700"
-				},
-				{
-					"topic": "Texas Outbreak",
-					"link": "/profile/trending.bsky.app/feed/90355383"
-				}
-			],
-			"suggested": [
-				{
-					"topic": "Popular with Friends",
-					"link": "/profile/bsky.app/feed/with-friends"
-				},
-				{
-					"topic": "Quiet Posters",
-					"link": "/profile/why.bsky.team/feed/infreq"
-				},
-				{
-					"topic": "Sports",
-					"link": "/profile/crevier.bsky.social/feed/aaanstr6k5dvo"
-				},
-				{
-					"topic": "NFL",
-					"link": "/profile/parkermolloy.com/feed/aaai44jkavvrs"
-				},
-				{
-					"topic": "NBA",
-					"link": "/profile/davelevitan.bsky.social/feed/aaadvxju4txkk"
-				},
-				{
-					"topic": "WNBA",
-					"link": "/profile/trollhamels.bsky.social/feed/aaac3xufjdvjg"
-				},
-				{
-					"topic": "MLB",
-					"link": "/profile/parkermolloy.com/feed/aaap7dpu57ve6"
-				},
-				{
-					"topic": "NHL",
-					"link": "/profile/hockeyhotline.bsky.social/feed/aaacm5rbitxqa"
-				},
-				{
-					"topic": "Cats",
-					"link": "/profile/jaz.bsky.social/feed/cv:cat"
-				},
-				{
-					"topic": "Gardening",
-					"link": "/profile/eepy.bsky.social/feed/aaao6g552b33o"
-				},
-				{
-					"topic": "Dogs",
-					"link": "/profile/jaz.bsky.social/feed/cv:dog"
-				},
-				{
-					"topic": "Game Dev",
-					"link": "/profile/trezy.codes/feed/game-dev"
-				},
-				{
-					"topic": "Web Dev",
-					"link": "/profile/did:plc:m2sjv3wncvsasdapla35hzwj/feed/web-development"
-				},
-				{
-					"topic": "Video Games",
-					"link": "/profile/wyattswickedgoods.com/feed/aaaaieaxm5v3y"
-				},
-				{
-					"topic": "Anime",
-					"link": "/profile/anianimals.moe/feed/anime-en-new"
-				},
-				{
-					"topic": "Music",
-					"link": "/profile/cookieduh.xyz/feed/aaagw7oidihfs"
-				},
-				{
-					"topic": "Film & TV",
-					"link": "/profile/francesmeh.reviews/feed/aaaotdzmoni2q"
-				},
-				{
-					"topic": "Taylor Swift",
-					"link": "/profile/heheviolet.bsky.social/feed/aaakqsvp6kke4"
-				},
-				{
-					"topic": "Fashion",
-					"link": "/profile/sammyouatts.bsky.social/feed/aaacqhe34hlv6"
-				},
-				{
-					"topic": "Pop Culture",
-					"link": "/profile/nahuel.bsky.social/feed/aaae2qpt4236c"
-				},
-				{
-					"topic": "Fitness/Health",
-					"link": "/profile/sammyouatts.bsky.social/feed/aaadcogx3hvwc"
-				},
-				{
-					"topic": "Beauty",
-					"link": "/profile/abmuse.net/feed/aaac256qq7vh4"
-				},
-				{
-					"topic": "Science",
-					"link": "/profile/bossett.social/feed/for-science"
-				},
-				{
-					"topic": "Blacksky Trending",
-					"link": "/profile/rudyfraser.com/feed/blacksky-trend"
-				}
-			]
-		}
-	 */
 
 	// Total
 	let total							= data.topics.length;
@@ -1139,3 +1009,124 @@ export function htmlRenderTrendingTopics( data ) {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
+
+/* --------------------------------------------------------
+ * HTML Render: Filters following list with options.
+ * -------------------------------------------------------- */
+export function fnFilterTable( item ) {
+	const STEP_NAME						= "fnFilterTable";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const TEST							= true;
+	if (TEST || window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+
+	const TARGET_CLASS					= "theme-record-item";
+
+	// First, hide all records
+	// ------------------------------------
+	let targetTable						= item.dataset.bskyTarget;
+	if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [TARGET Table.==${targetTable}]` );
+
+	let rootSelector					= `#${targetTable} tbody tr.${TARGET_CLASS}`;
+	if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "First, let's display all records...", rootSelector );
+
+	let $matches						= $( rootSelector );
+	if ( $matches.length>0 ) {
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `Found ${$matches.length} record(s).` );
+		$matches.hide();
+	} else {
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "No record(s) found." );
+
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (TEST || window.BSKY.DEBUG) console.groupEnd();
+		return;
+	}
+
+	// Examine the "constraints"
+	// ------------------------------------
+	if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "Let's look for the 'checked' radio buttons..." );
+	let targetFilter					= null;
+	let finalSelector					= "";
+	let selector						= "";
+	let parentForm						= "";
+	let selectors						= {};
+	let matches							= null;
+	let checkedRadios					= item.querySelectorAll( "input[type='radio']:checked" );
+	
+	if ( checkedRadios.length>0 ) {
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `Found ${checkedRadios.length}. Let's see which radio buttons have been checked...` );
+		checkedRadios.forEach( match => {
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `+ Radio button:` );
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [ID...........==${match.id}]` );
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [Name.........==${match.name}]` );
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [Value........==${match.value}]` );
+			
+			// Guess the targets; both, the table object and the type of fields
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `+ Parent form:` );
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [FORM ID......==${match.form.id}]` );
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [FORM Name....==${match.form.name}]` );
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [FORM Dataset.==${COMMON.prettyJson( match.form.dataset )}]` );
+			parentForm					= match.form.id;
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [FORM Parent..==${parentForm}]` );
+			targetFilter				= match.dataset.bskyTarget;
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [TARGET Filter==${targetFilter}]` );
+
+			// The "selector" to select records within the table.
+			rootSelector				= `#${targetTable} tbody tr.${TARGET_CLASS}`;
+			selector					= "";
+			let full					= false;
+			let positive				= false;
+			switch ( match.value.toLowerCase() ) {
+				case "all":
+					full				= true;
+					break;
+				case "true":
+					positive			= true;
+					selector			= `[${HTMLConstants.DATASET_PREFIX}${targetFilter}=true]`;
+					break;
+				case "false":
+					selector			= `[${HTMLConstants.DATASET_PREFIX}${targetFilter}=false]`;
+					break;
+			}
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [Selector.....==${selector}]` );
+			
+			// The button color [formFollowers::Btn::RadioFollowing]
+			let btnId					= `${parentForm}Btn${match.name.replace( parentForm, '' )}`;
+			if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [Button ID....==${btnId}]` );
+			let $button					= $( `#${btnId}` );
+			$button.removeClass( 'btn-secondary' );
+			$button.removeClass( 'btn-success' );
+			$button.removeClass( 'btn-danger' );
+			$button.addClass( ( full ? 'btn-secondary' : positive ? 'btn-success' : 'btn-danger' ) );
+
+			// Add the selector to the array.
+			selectors[match.id]			= { full: full, source: match.id, filter: targetFilter, selector: selector };
+		});
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `Found selectors(s):`, selectors );
+
+		// Mix all selectors in only one.
+		finalSelector					= rootSelector;
+		let filter						= null;
+		for(var key in selectors) {
+			filter						= selectors[key];
+			finalSelector				+= filter.selector;
+		}
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `finalSelector:`, finalSelector );
+
+		// Find the records that match.
+		$matches					= $( finalSelector );
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `Found ${$matches.length} record(s).` );
+
+		// Show records.
+		$matches.show();
+		$( `#${parentForm}Total` ).html( $matches.length );
+	} else {
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "No radio buttons checked." );
+
+		if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (TEST || window.BSKY.DEBUG) console.groupEnd();
+		return;
+	}
+
+	if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (TEST || window.BSKY.DEBUG) console.groupEnd();
+}

@@ -3,6 +3,8 @@
  **********************************************************/
 // Global configuration
 import CONFIGURATION					from "../data/config.json" with { type: "json" };
+// Common HTML Constants
+import * as HTMLConstants				from "./HTML.Constants.js";
 
 
 /**********************************************************
@@ -124,75 +126,5 @@ export const showMessage				= message => {
 export const showError					= message => {
 	$("#"+ID_TOAST_KO+"Body").html( message );
 	$("#"+ID_TOAST_KO).toast("show");
-}
-
-export function renderHTMLElements(parsedSearch) {
-	const STEP_NAME						= "renderHTMLElements";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.DEBUG) console.groupCollapsed(PREFIX);
-
-	// CSS Classes.
-	$("#rootPanel").removeClass("hidden");
-	$("#rootPanel").addClass("visible");
-
-	// Retrieve the "code"...
-	let iss								= parsedSearch.get("iss");
-	let state							= parsedSearch.get("state");
-	let code							= parsedSearch.get("code");
-	let error							= parsedSearch.get("error");
-	let errorDescription				= parsedSearch.get("error_description");
-
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ iss:", iss);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ state:", state);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code:", code);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error:", error);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
-
-	$("#iss").val(iss);
-	$("#state").val(state);
-	$("#code").val(code);
-	$("#error").val(error);
-	$("#errorDescription").val(errorDescription);
-
-	/*
-	 * Also:
-	 * &error=access_denied&error_description=This+request+was+initiated+from+another+device
-	 *
-	 */
-
-	if (window.BSKY.DEBUG) console.groupEnd();
-}
-
-export function renderHTMLErrorElements(errorObject) {
-	const STEP_NAME						= "renderHTMLErrorElements";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Received:", errorObject);
-
-	// CSS Classes.
-	$(".container .center").removeClass("hidden");
-	$(".container .center").addClass("visible");
-
-	let error							= null;
-	let errorDescription				= null;
-	let isAnObject						= ( typeof errorObject === 'object' && !Array.isArray(errorObject) && errorObject !== null );
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "isAnObject:", isAnObject);
-	if ( isAnObject ) {
-		error							= errorObject.error;
-		errorDescription				= errorObject.message;
-	} else {
-		error							= "ERROR";
-		errorDescription				= errorObject;
-	}
-
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error:", error);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ errorDescription:", errorDescription);
-
-	$("#error").val(error);
-	$("#errorDescription").val(errorDescription);
-
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
