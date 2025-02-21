@@ -86,12 +86,15 @@ export const DIV_MODAL_SEARCH_OUTPUT	= "modalSearchProfileResults";
 
 
 // HTML normal DIVs/Placeholders constants
-export const DIV_TAB_NOTIS_BADGE		= "pill-notifications-badge";
 export const DIV_TAB_MUTED_BADGE		= "pill-muting-badge";
 export const DIV_TAB_MY_LISTS_BADGE		= "pill-my-lists-badge";
 export const DIV_TABLE_MY_LISTS			= "table-my-lists";
 export const DIV_TABLE_MUTING			= "table-muting";
 export const DIV_TRENDING_TOPICS		= "trending-topics";
+
+// HTML Notifications constants
+export const DIV_TAB_NOTIS_BADGE		= "pill-notifications-badge";
+export const DIV_NOTIFICATIONS			= "panelNotifications";
 
 // HTML Following constants
 export const DIV_TAB_FOLLOWING_BADGE	= "pill-following-badge";

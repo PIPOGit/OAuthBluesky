@@ -484,7 +484,7 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 
 	// Show only info about the "unread"...
 	// Vaciamos el panel, previamente.
-	let jqRoot							= $( '#'+DIV_NOTIFICATIONS );
+	let jqRoot							= $( '#'+HTMLConstants.DIV_NOTIFICATIONS );
 	jqRoot.html( "" );
 
 	let totalUnread						= unreadNotifications.length;
@@ -494,9 +494,9 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
 
 		// Actualizamos el badge y lo mostramos
-		$( '#'+DIV_TAB_NOTIS_BADGE ).html(totalUnread);
-		COMMON.show( DIV_TAB_NOTIS_BADGE );
-		$( '#'+DIV_NOTIFICATIONS ).addClass( "accordion" );
+		$( '#'+HTMLConstants.DIV_TAB_NOTIS_BADGE ).html(totalUnread);
+		COMMON.show( HTMLConstants.DIV_TAB_NOTIS_BADGE );
+		$( '#'+HTMLConstants.DIV_NOTIFICATIONS ).addClass( "accordion" );
 
 		// Ponemos el badge a 0 y lo ocultamos
 		for ( let key in unreadNotifications ) {
