@@ -73,8 +73,11 @@ export async function getRepositoryInformation() {
 	// no-cors
 
 	try {
-		// Repository Metadata
+		// Repository Metadata configuration
 		root							= CONFIGURATION.github.repo;
+
+		// Repository general info
+		// ------------------------------------------------
 		endpoint						= "";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
@@ -83,20 +86,7 @@ export async function getRepositoryInformation() {
 		response.repositoryMetadata		= repositoryMetadata.body;
 
 		// Last tag info
-		/*
-			$LastTAG = $Tags[0];
-			# $LastTAG;
-			$LastTAG.name;
-			# $LastTAG.commit;
-			# $LastTAG.commit.url;
-			$LastTAGURL = $LastTAG.commit.url;
-			# $LastTAGURL;
-			$TagCommit = IRM -Method GET -Uri "${LastTAGURL}";
-			# $TagCommit;
-			# $TagCommit.commit;
-			$TagCommit.commit.author;
-			$TagCommit.commit.committer;
-		 */
+		// ------------------------------------------------
 		endpoint						= "/tags";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
@@ -116,7 +106,8 @@ export async function getRepositoryInformation() {
 			lastTagCommitCommitter		= lastTagCommit.body.commit.committer;
 		}
 
-		// Last commit info
+		// Commits info
+		// ------------------------------------------------
 		endpoint						= "/commits";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);

@@ -61,6 +61,10 @@ export const DIV_BTN_DID_DOCUMENT		= "buttonDIDDocument";
 export const DIV_ACCESS_TOKEN_JSON		= "accessTokenJson";
 export const DIV_ACCESS_TOKEN_JWT		= "accessTokenJwt";
 
+// HTML Git
+export const DIV_GIT_INFO				= "gitInfo";
+export const DIV_GIT_INFO_JSON			= "gitInfoContents";
+
 // HTML Toasts
 export const DIV_TOAST_WELCOME			= "toastWelcome";
 export const DIV_TOAST_FOLLOWERS		= "toastFollowersChange";
@@ -80,18 +84,22 @@ export const DIV_PROFILE_POSTS			= "profilePosts";
 
 // HTML Modal Constants
 export const DIV_MODAL_SETTINGS			= "modalSettings";
+export const DIV_MODAL_VERSION			= "modalVersion";
 export const DIV_MODAL_SEARCH_USER		= "modalSearchUser";
 export const DIV_MODAL_SEARCH_PATTERN	= "modalSearchProfilePattern";
 export const DIV_MODAL_SEARCH_OUTPUT	= "modalSearchProfileResults";
 
 
 // HTML normal DIVs/Placeholders constants
-export const DIV_TAB_NOTIS_BADGE		= "pill-notifications-badge";
 export const DIV_TAB_MUTED_BADGE		= "pill-muting-badge";
 export const DIV_TAB_MY_LISTS_BADGE		= "pill-my-lists-badge";
 export const DIV_TABLE_MY_LISTS			= "table-my-lists";
 export const DIV_TABLE_MUTING			= "table-muting";
 export const DIV_TRENDING_TOPICS		= "trending-topics";
+
+// HTML Notifications constants
+export const DIV_TAB_NOTIS_BADGE		= "pill-notifications-badge";
+export const DIV_NOTIFICATIONS			= "panelNotifications";
 
 // HTML Following constants
 export const DIV_TAB_FOLLOWING_BADGE	= "pill-following-badge";

@@ -145,9 +145,10 @@ async function startUp() {
 
 	// Los eventos de los modales Bootstrap
 	// ------------------------------------
+	COMMON.fnGetById(HTML.DIV_MODAL_SEARCH_USER).addEventListener( 'show.bs.modal', modalEventForSearchUsersWhenInvoked );
 	COMMON.fnGetById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'show.bs.modal', modalEventForSettingsWhenInvoked );
 	COMMON.fnGetById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'hidden.bs.modal', modalEventForSettingsWhenClosed );
-	COMMON.fnGetById(HTML.DIV_MODAL_SEARCH_USER).addEventListener( 'show.bs.modal', modalEventForSearchUsersWhenInvoked );
+	COMMON.fnGetById(HTML.DIV_MODAL_VERSION).addEventListener( 'show.bs.modal', modalEventForVersionWhenInvoked );
 
 	if (window.BSKY.DEBUG) console.groupEnd();
 
@@ -160,6 +161,22 @@ async function startUp() {
 /**********************************************************
  * MODAL Events Functions
  **********************************************************/
+
+/* --------------------------------------------------------
+ * Invoked when modal for "User Search" pops-up.
+ * -------------------------------------------------------- */
+function modalEventForVersionWhenInvoked( event ) {
+
+	// Update the version and name fields
+	// ---------------------------------------------------------
+	let $modalBody						= `#${HTML.DIV_MODAL_VERSION} .modal-body`;
+	$( `${$modalBody} #appName` ).html( CONFIGURATION.global.appName );
+	$( `${$modalBody} #appVersion` ).html( CONFIGURATION.global.appVersion );
+
+	// GIT Information
+	// ---------------------------------------------------------
+	$( `#${HTML.DIV_GIT_INFO_JSON}` ).text( COMMON.prettyJson( BSKY.git ) );
+}
 
 /* --------------------------------------------------------
  * Invoked when modal for "User Search" pops-up.

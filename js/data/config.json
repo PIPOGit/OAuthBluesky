@@ -3,7 +3,7 @@
 		"debug": false,
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
-		"appVersion": "1.6.5",
+		"appVersion": "1.6.7",
 		"refresh_dynamic": 15,
 		"refresh_static": 300
 	},

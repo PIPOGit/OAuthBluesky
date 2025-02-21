@@ -943,24 +943,34 @@ async function getTheTrendingTopics() {
 
 	// Retrieve the Trending Topics
 	// ------------------------------------------
-	data								= await APIBluesky.tryAndCatch( "retrieveTrendingTopics", APIBluesky.retrieveTrendingTopics, cursor );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Current data:`, data );
+	try {
+		data								= await APIBluesky.tryAndCatch( "retrieveTrendingTopics", APIBluesky.retrieveTrendingTopics, cursor );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Current data:`, data );
 
-	// if ( !COMMON.isNullOrEmpty( data ) ) {
-	if ( data && ( data?.topics || data?.suggested ) ) {
-		// Topics
-		subTotal						= data.topics.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Topics`, data.topics );
+		// if ( !COMMON.isNullOrEmpty( data ) ) {
+		if ( data && ( data?.topics || data?.suggested ) ) {
+			// Topics
+			subTotal						= data.topics.length;
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Topics`, data.topics );
 
-		// Suggested
-		subTotal						= data.suggested.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Suggested`, data.suggested );
+			// Suggested
+			subTotal						= data.suggested.length;
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} Trending Topics - Suggested`, data.suggested );
 
-		// Save it.
-		BSKY.user.trendingTopics		= data;
+			// Save it.
+			BSKY.user.trendingTopics		= data;
 
-		// Lo pintamos en su sitio.
-		HTML.htmlRenderTrendingTopics( data );
+			// Lo pintamos en su sitio.
+			HTML.htmlRenderTrendingTopics( data );
+		}
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR retrieving the Trending Topics:`, error );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+
+		// Show the error and update the HTML fields
+		HTML.updateHTMLError(error);
+		throw( error );
 	}
 
 
@@ -1347,6 +1357,7 @@ async function updateDashboard() {
 		// Retrieve the Trending Topics
 		apiCallResponse					= await getTheTrendingTopics();
 	} catch (error) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 		// Show the error and update the HTML fields
@@ -1412,6 +1423,7 @@ async function updateStaticInfo() {
 		// Now, check relationships...
 		apiCallResponse					= await getTheRelations();
 	} catch (error) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 		// Show the error and update the HTML fields

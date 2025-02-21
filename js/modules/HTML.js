@@ -63,6 +63,7 @@ export function clock() {
 }
 
 export function updateHighlight() {
+	$( '#'+HTMLConstants.DIV_GIT_INFO_JSON ).removeAttr('data-highlighted');
 	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JSON ).removeAttr('data-highlighted');
 	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JWT ).removeAttr('data-highlighted');
 	hljs.highlightAll();
@@ -274,7 +275,6 @@ async function getReferredBluit( notiURI ) {
 		method: APICall.HTML_GET,
 		headers: headers
 	}
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ withAuthentication:", withAuthentication);
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluitUrl:", bluitUrl);
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
@@ -314,19 +314,35 @@ async function htmlRenderNotification( idx, notification, userAccessToken, clien
 
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + "["+notiReason+"] ["+authorName+"] ["+when.toLocaleString()+"]" );
 
+	// El icono principal.
+	/* Possible reasons: like, repost, follow, mention, reply, quote, starterpack-joined */
+	let svgIcon							= "";
+	let smNoti							= notiReason.toLowerCase();
+	const svgSize						= "24px";
+	switch ( smNoti ) {
+		case "follow":
+		case "like":
+		case "quote":
+		case "reply":
+		case "repost":
+			svgIcon						= `<svg class="bi me-2" role="img" width="${svgSize}" height="${svgSize}" alt="${smNoti}" title="t-${smNoti}" aria-label="${smNoti}" ><use alt="${smNoti}" title="t-${smNoti}" xlink:href="#${smNoti}"/></svg>`;
+			break;
+	}
+
 	// Actualizamos el Header HTML con la info de la notificación.
 	let htmlHeader						= `<h2  class="accordion-header notificacion-header">`;
 	htmlHeader							+= `  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#notification-body-${cid}" aria-expanded="${idx===1 ? "true" : "false"}" aria-controls="notification-body-${cid}"> `;
+	htmlHeader							+= `  ${svgIcon}&nbsp;`;
 	if (authorAvatar) {
-		htmlHeader						+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="24"/></a> `;
+		htmlHeader						+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="${svgSize}"/></a> `;
 	} else {
-		htmlHeader						+= `  <a href="${authorURL}"><i class="bi bi-person-slash" height="24"></i></a> `;
+		htmlHeader						+= `  <a href="${authorURL}"><i class="bi bi-person-slash" height="${svgSize}"></i></a> `;
 	}
 	htmlHeader							+= `  <a href="${authorURL}" class="ps-2" title="Handle: ${authorHandle}, DID: ${authorDid}"><strong>${authorName}</strong></a>`;
 	htmlHeader							+= `</h2 >`;
 
 	// Actualizamos el Body HTML con la info de la notificación.
-	let htmlBody						= `<div id="notification-body-${cid}" class="accordion-body accordion-collapse collapse ${idx===1 ? "show " : ""}notificacion-body" data-bs-parent="#notifications">`;
+	let htmlBody						= `<div id="notification-body-${cid}" class="accordion-body accordion-collapse collapse ${idx===1 ? "show " : ""}notificacion-body" data-bs-parent="#${HTMLConstants.DIV_NOTIFICATIONS}">`;
 	// let htmlBody						= `<div class="accordion-body notificacion-body">`;
 	htmlBody							+= `  <ul style="margin: 0px 0px 8px 0px">`;
 
@@ -484,7 +500,7 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 
 	// Show only info about the "unread"...
 	// Vaciamos el panel, previamente.
-	let jqRoot							= $( '#'+DIV_NOTIFICATIONS );
+	let jqRoot							= $( '#'+HTMLConstants.DIV_NOTIFICATIONS );
 	jqRoot.html( "" );
 
 	let totalUnread						= unreadNotifications.length;
@@ -494,9 +510,9 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "+ unread notifications:", unreadNotifications );
 
 		// Actualizamos el badge y lo mostramos
-		$( '#'+DIV_TAB_NOTIS_BADGE ).html(totalUnread);
-		COMMON.show( DIV_TAB_NOTIS_BADGE );
-		$( '#'+DIV_NOTIFICATIONS ).addClass( "accordion" );
+		$( '#'+HTMLConstants.DIV_TAB_NOTIS_BADGE ).html(totalUnread);
+		COMMON.show( HTMLConstants.DIV_TAB_NOTIS_BADGE );
+		$( '#'+HTMLConstants.DIV_NOTIFICATIONS ).addClass( "accordion" );
 
 		// Ponemos el badge a 0 y lo ocultamos
 		for ( let key in unreadNotifications ) {
