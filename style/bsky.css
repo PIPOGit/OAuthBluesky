@@ -80,7 +80,7 @@ body {
 }
 
 
-#version {
+#panelVersion {
   font-size: smaller;
   border-top: 1px solid black;
 }
