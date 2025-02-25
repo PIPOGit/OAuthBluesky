@@ -940,7 +940,7 @@ function htmlRenderSingleList( idx, list, id ) {
 	html								+= '<tr class="align-top">';
 	html								+= `<td>${idx}</td>`;
 	html								+= `<td>${list.listItemCount}</td>`;
-	html								+= `<td><a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}" class="px-1 text-success theme-bolder">${list.name}</a></td>`;
+	html								+= `<td><a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}" class="text-success theme-bolder">${list.name}</a></td>`;
 	html								+= `<td>${(list.description) ? list.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td>`;
 	html								+= `<td>${new Date(list.indexedAt).toLocaleString( HTMLConstants.LOCALE_SPAIN, HTMLConstants.LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
@@ -963,7 +963,7 @@ function htmlRenderSingleModList( idx, list, id, muting=false ) {
 	html								+= `<td>${idx}</td>`;
 	html								+= `<td>${list.listItemCount}</td>`;
 	html								+= `<td>`;
-	html								+= `<a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}" class="px-1 ${textColour} theme-bolder">${list.name}</a>`;
+	html								+= `<a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}" class="${textColour} theme-bolder">${list.name}</a>`;
 	html								+= `, by `;
 	html								+= `<a href="${API.bluesky.profile.url}${list.creator.handle}" target="_blank" title="${list.creator.displayName || list.creator.name}">${list.creator.displayName || list.creator.name}</a>`;
 	html								+= `</td>`;
