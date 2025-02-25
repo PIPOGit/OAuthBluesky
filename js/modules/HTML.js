@@ -364,88 +364,75 @@ async function htmlRenderNotification( idx, notification, userAccessToken, clien
 			htmlBody					+= `    <li class="notificacion-data"><strong>${notiReason} you</strong></li>`;
 	} else {
 		// It's about an action on a post.
-		let notiURI						= "";
 		let replyText					= null;
+		if ( COMMON.areEquals( notiReason, "reply" ) ) {
+			replyText					= notification.record.text;
+		}
+
+		/*
 		if ( COMMON.areEquals( notiReason, "reply" ) ) {
 			notiURI						= notification.record.reply.parent.uri;
 			replyText					= notification.record.text;
 		} else {
 			notiURI						= notification.record.subject.uri;
 		}
-		let notiURISplitted				= notiURI.substring(5).split("/")
-		let notiDID						= notiURISplitted[0];
-		let notiBluitID					= notiURISplitted[2];
-		let userProfileURL				= API.bluesky.profile.url + notiDID + "/post/" + notiBluitID;
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
-		
+		*/
+
 		// Get the referred bluit
-		let bluit						= await getReferredBluit( notiURI );
-
-		// Agregamos la info al html...
-		let referredText				= `Not detected yet for ${notiReason}!`;
-		let referredTextExtra			= "";
-
-		/* Builts samples
-			{
-				"record": {
-					"text": "En breve pondré filtros y todo.\n\nBuenos días, mundo.\nY feliz viernes."
-				},
-				"embed": {
-					"record": {
-						"value": {
-							"text": "Versión 1.6.0.\n\nAhora pinta más bonito. 😍\n\n#atproto\n#atdev\n\noauthbluesky.onrender.com"
-						},
-					}
-				},
-			}
-			{
-				"record": {
-					"text": "¡Qué grande, Jose Mari Erausquin!\n\n#IRPH \n#TJUE \n\nwww.youtube.com/watch?v=mIOL..."
-					"embed": {
-						"external": {
-							"title": "EL TJUE CONTRADICE LA DOCTRINA IRPH DEL TRIBUNAL SUPREMO.",
-						}
-					},
-				},
-				"embed": {
-					"external": {
-						"title": "EL TJUE CONTRADICE LA DOCTRINA IRPH DEL TRIBUNAL SUPREMO.",
-					}
-				},
-			}
-
-			bluit.record.text
-			bluit.embed.record.value.text
-			bluit.record.embed.external.title
-			bluit.embed.external.title
-		 */
-
-		// The "proper" text.
-		referredText					= "<blockquote>";
-		referredText					+= bluit?.record?.text ? bluit.record.text : "nothing in <code>bluit.record.text</code>";
-		referredText					+= "</blockquote>";
-
-		// The "related" text.
-		referredTextExtra				= bluit?.embed?.record?.value?.text ? `<em>${bluit.embed.record.value.text}</em>`
-										: bluit?.record?.embed?.external?.title ? `<em>${bluit.record.embed.external.title}</em>`
-										: bluit?.embed?.external?.title ? `<em>${bluit.embed.external.title}</em>`
-										: bluit?.embed?.record?.text ? `<em>${bluit.embed.record.text}</em>`
-										: "";
-										 // : "<strong>no referred bluit in <code>bluit.embed.record.value.text</code> or <code>bluit.record.embed.external.title</code> or <code>bluit.embed.external.title</code> or <code>bluit.embed.record.text</code></strong>";
-		referredText					+= ( referredTextExtra.trim().length>0 ) ? `Referred to bluit: <blockquote>${referredTextExtra}</blockquote>` : "";
-
-		// HTML Tune-up
-		referredText					= referredText.replaceAll( '\n', '<br/>' );
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
-
-		// Add the text to the "body"
+		let notiURI						= "";
+		notiURI							= notification.record.uri ? notification.record.uri
+										  : notification.record?.subject?.uri ? notification.record.subject.uri
+										  : notification.record?.embed?.record?.uri ? notification.record.embed.record.uri
+										  : notification.record?.embed?.external?.uri ? notification.record.embed.external.uri
+										  : notification.record?.reply?.parent?.uri ? notification.record.reply.parent.uri
+										  : notification.record?.reply?.root?.uri ? notification.record.reply.root.uri
+										  : null;
+		let bluit						= null;
+		let userProfileURL				= null;
 		htmlBody						+= `    <li class="notificacion-data">${notiReason}`;
-		if (replyText) {
-			htmlBody					+= `:<blockquote><i class="text-primary">${replyText}</i></blockquote>to `;
-		} else {
-		htmlBody						+= ` `;
+		if ( notiURI ) {
+			let notiURISplitted			= notiURI.substring(5).split("/")
+			let notiDID					= notiURISplitted[0];
+			let notiBluitID				= notiURISplitted[2];
+			userProfileURL				= API.bluesky.profile.url + notiDID + "/post/" + notiBluitID;
+			if (window.BSKY.DEBUG) console.debug(PREFIX + "+ userProfileURL:", userProfileURL);
+			
+			try {
+				bluit					= await getReferredBluit( notiURI );
+
+				// Agregamos la info al html...
+				let referredText			= `Not detected yet for ${notiReason}!`;
+				let referredTextExtra		= "";
+
+				// The "proper" text.
+				referredText				= "<blockquote>";
+				referredText				+= bluit?.record?.text ? bluit.record.text : "nothing in <code>bluit.record.text</code>";
+				referredText				+= "</blockquote>";
+
+				// The "related" text.
+				referredTextExtra			= bluit?.embed?.record?.value?.text ? `<em>${bluit.embed.record.value.text}</em>`
+											: bluit?.record?.embed?.external?.title ? `<em>${bluit.record.embed.external.title}</em>`
+											: bluit?.embed?.external?.title ? `<em>${bluit.embed.external.title}</em>`
+											: bluit?.embed?.record?.text ? `<em>${bluit.embed.record.text}</em>`
+											: "";
+											// : "<strong>no referred bluit in <code>bluit.embed.record.value.text</code> or <code>bluit.record.embed.external.title</code> or <code>bluit.embed.external.title</code> or <code>bluit.embed.record.text</code></strong>";
+				referredText				+= ( referredTextExtra.trim().length>0 ) ? `Referred to bluit: <blockquote>${referredTextExtra}</blockquote>` : "";
+
+				// HTML Tune-up
+				referredText				= referredText.replaceAll( '\n', '<br/>' );
+				if (window.BSKY.DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
+
+				// Add the text to the "body"
+				if (replyText) {
+					htmlBody				+= `:<blockquote><i class="text-primary">${replyText}</i></blockquote>to `;
+				} else {
+				htmlBody					+= ` `;
+				}
+				htmlBody					+= `<a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
+			} catch (error) {
+				if (window.BSKY.DEBUG) console.debug(PREFIX + "ERROR retrieving the referred bluit:", error);
+			}
 		}
-		htmlBody						+= `<a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
 		htmlBody						+= `    </li>`;
 	}
 	htmlBody							+= `  </ul>`;
@@ -953,9 +940,34 @@ function htmlRenderSingleList( idx, list, id ) {
 	html								+= '<tr class="align-top">';
 	html								+= `<td>${idx}</td>`;
 	html								+= `<td>${list.listItemCount}</td>`;
-	html								+= `<td><a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}">${list.name}</a></td>`;
-	html								+= `<td class="theme-smaller">${(list.description) ? list.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td>`;
-	html								+= `<td class="theme-smaller">${new Date(list.indexedAt).toLocaleString( HTMLConstants.LOCALE_SPAIN, HTMLConstants.LOCALE_OPTIONS )}</td>`;
+	html								+= `<td><a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}" class="px-1 text-bg-success">${list.name}</a></td>`;
+	html								+= `<td>${(list.description) ? list.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(list.indexedAt).toLocaleString( HTMLConstants.LOCALE_SPAIN, HTMLConstants.LOCALE_OPTIONS )}</td>`;
+	html								+= '</tr>';
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return html;
+}
+
+function htmlRenderSingleModList( idx, list, id ) {
+	const STEP_NAME						= "htmlRenderSingleModList";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[idx=${idx}] [id=${id}]` );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "LIST:", list );
+
+	let html							= "";
+	html								+= '<tr class="align-top">';
+	html								+= `<td>${idx}</td>`;
+	html								+= `<td>${list.listItemCount}</td>`;
+	html								+= `<td>`;
+	html								+= `<a href="${API.bluesky.profile.url}${list.creator.handle}/lists/${id}" target="_blank" title="${list.name}" class="px-1 text-bg-danger">${list.name}</a>`;
+	html								+= `, by `;
+	html								+= `<a href="${API.bluesky.profile.url}${list.creator.handle}" target="_blank" title="${list.creator.displayName || list.creator.name}">${list.creator.displayName || list.creator.name}</a>`;
+	html								+= `</td>`;
+	html								+= `<td>${(list.description) ? list.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td>`;
+	html								+= `<td>${new Date(list.indexedAt).toLocaleString( HTMLConstants.LOCALE_SPAIN, HTMLConstants.LOCALE_OPTIONS )}</td>`;
 	html								+= '</tr>';
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
@@ -971,10 +983,55 @@ export function htmlRenderUserLists( data ) {
 	let index							= 0;
 	let id								= null;
 	let htmlContent						= null;
-	let $tableBody						= $( '#'+HTMLConstants.DIV_TABLE_MY_LISTS + " tbody" );
+	let targetTable						= HTMLConstants.DIV_TABLE_MY_LISTS;
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Target table:", targetTable );
+	let $tableBody						= $( '#'+targetTable + " tbody" );
 
 	// Clear the current content.
 	$tableBody.empty();
+
+	/* Array of:
+			{
+				"uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.list/3lhlbyczswq2w",
+				"cid": "bafyreic64pu2spvoo3zbb26dkr5kq2tdsjjlhltocsugmwq2k7zwba6yne",
+				"name": "Bluesky atProto Developers",
+				"purpose": "app.bsky.graph.defs#curatelist",
+				"listItemCount": 9,
+				"indexedAt": "2025-02-07T09:29:14.614Z",
+				"labels": [],
+				"viewer": {
+					"muted": false
+				},
+				"creator": {
+					"did": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
+					"handle": "madrilenyer.bsky.social",
+					"displayName": "Madrileñer",
+					"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:tjc27aje4uwxtw5ab6wwm4km/bafkreieq35674mas2u5dwxnaupsx5s5f7muhvahgqjjczqkfb5pw2pummm@jpeg",
+					"associated": {
+						"chat": {
+							"allowIncoming": "all"
+						}
+					},
+					"viewer": {
+						"muted": false,
+						"blockedBy": false
+					},
+					"labels": [
+						{
+							"src": "did:plc:tjc27aje4uwxtw5ab6wwm4km",
+							"uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.actor.profile/self",
+							"cid": "bafyreiavezlxjtf354k3z37z5mn33e4wyey4sa36nwo4zzj2tv2nmnx4ju",
+							"val": "!no-unauthenticated",
+							"cts": "2024-11-13T14:16:08.560Z"
+						}
+					],
+					"createdAt": "2024-11-13T14:16:09.516Z",
+					"description": "De aquí, de Madrid",
+					"indexedAt": "2024-11-17T11:17:42.863Z"
+				},
+				"description": "Accounts highly tighted into atProto development"
+			}
+	 */
 
 	// Total
 	let total							= data.length;
@@ -985,6 +1042,78 @@ export function htmlRenderUserLists( data ) {
 			index++;
 			id							= list.uri.split("/")[4];
 			htmlContent					= htmlRenderSingleList( index, list, id );
+			$tableBody.append( htmlContent );
+		});
+	}
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+export function htmlRenderUserModerationLists( data, muting=false ) {
+	const STEP_NAME						= "htmlRenderUserModerationLists";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[muting=${muting}]` );
+
+	let index							= 0;
+	let id								= null;
+	let htmlContent						= null;
+	let targetTable						= muting ? HTMLConstants.DIV_TABLE_MY_MOD_M_LISTS : HTMLConstants.DIV_TABLE_MY_MOD_B_LISTS;
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Target table:", targetTable );
+	let $tableBody						= $( '#'+targetTable + " tbody" );
+
+	// Clear the current content.
+	$tableBody.empty();
+
+	/* Array of:
+			{
+				"uri": "at://did:plc:lwrtfyctdshpmgxe26xa56hd/app.bsky.graph.list/3lb567r7bus22",
+				"cid": "bafyreic72qqwivepepicro2b3d6lny3shksjrzigtjbvkppw7rbbq6lcuu",
+				"name": "Por un lugar limpio de fascistas, nazis y cuentas que suplantan",
+				"purpose": "app.bsky.graph.defs#modlist",
+				"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:lwrtfyctdshpmgxe26xa56hd/bafkreicxyhoqt2q7q6l4krxbk5qbaw3ulvxgplcmoc4tpreojmkiaw7o6e@jpeg",
+				"listItemCount": 150,
+				"indexedAt": "2024-11-24T20:22:25.015Z",
+				"labels": [],
+				"viewer": {
+					"muted": false,
+					"blocked": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.listblock/3lbckpe7dam2b"
+				},
+				"creator": {
+					"did": "did:plc:lwrtfyctdshpmgxe26xa56hd",
+					"handle": "juanminews.bsky.social",
+					"displayName": "Juan Miguel Garrido 🔻🏳️‍🌈🇵🇸🇱🇧",
+					"avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:lwrtfyctdshpmgxe26xa56hd/bafkreictrsvbnnvrefzbrmaspcnklhblmtgrdfji3fyq2ymugvwlyewt4m@jpeg",
+					"associated": {
+						"chat": {
+							"allowIncoming": "all"
+						}
+					},
+					"viewer": {
+						"muted": false,
+						"blockedBy": false,
+						"following": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lbfhebpufz24",
+						"followedBy": "at://did:plc:lwrtfyctdshpmgxe26xa56hd/app.bsky.graph.follow/3lbiibwxtpe24"
+					},
+					"labels": [],
+					"createdAt": "2023-10-20T21:17:21.983Z",
+					"description": "Periodista",
+					"indexedAt": "2025-02-18T11:47:32.613Z"
+				},
+				"description": "Lista para mantener limpios de mierda vuestros timelines.\nBloquearás de golpe 80 cuentas basura (y subiendo).\nSi conoces alguna, pásamela y la metemos en el vertedero del olvido."
+			}
+	 */
+
+	// Total
+	let total							= data.length;
+	// $( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html(total);
+	if ( total>0 ) {
+		// Add data.
+		data.forEach( list => {
+			index++;
+			id							= list.uri.split("/")[4];
+			htmlContent					= htmlRenderSingleModList( index, list, id );
 			$tableBody.append( htmlContent );
 		});
 	}

@@ -47,7 +47,7 @@ export async function getRepositoryInformation() {
 	let root							= null;
 	let endpoint						= null;
 	let url								= null;
-	let repositoryMetadata				= null;
+	let repoMetadata					= null;
 	let allTags							= null;
 	let allCommits						= null;
 	let lastTag							= null;
@@ -81,9 +81,9 @@ export async function getRepositoryInformation() {
 		endpoint						= "";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
-		repositoryMetadata				= await APICall.makeAPICall( STEP_NAME, url );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received repositoryMetadata:", repositoryMetadata );
-		response.repositoryMetadata		= repositoryMetadata.body;
+		repoMetadata					= await APICall.makeAPICall( STEP_NAME, url );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received repoMetadata:", repoMetadata );
+		response.repoMetadata			= repoMetadata.body;
 
 		// Last tag info
 		// ------------------------------------------------
@@ -155,7 +155,6 @@ export async function getRepositoryInformation() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	
-	// return { state: state, codeVerifier: codeVerifier, codeChallenge: codeChallenge, body: body };
 	return response;
 }
 

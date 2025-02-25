@@ -108,14 +108,9 @@
 						</div>
 					</div>
 
-					<!-- Los Trending Topics -->
-					<div id="trendingTopics" class="border-2 border-primary border-top mt-2 p-2">
-						Trending Topics
-					</div>
-
 					<!-- El menú lateral. -->
 					<!-- TODO: See: https://getbootstrap.com/docs/5.3/components/list-group/#javascript-behavior -->
-					<div class="row px-1 d-flex border-2 border-top border-primary">
+					<div class="row px-1 d-flex border-2 border-top border-primary mt-2">
 						<div class="nav nav-pills flex-column align-items-end text-primary" id="pillsTab" role="tablist">
 							<button class="nav-link btn btn-outline-primary btn-sm justify-content-end d-flex"
 								data-bs-target="#modalVersion"
@@ -125,8 +120,20 @@
 								<svg class="bi align-self-center" role="img" width="16px" height="16px" aria-label="nine-dots"><use xlink:href="#nine-dots"/></svg>
 								&nbsp;Version
 							</button>
-							<button class="nav-link btn btn-outline-primary btn-sm justify-content-end d-flex"																data-bs-target="#modalSettings"													type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-gear"></i>&nbsp;Settings</button>
-							<button class="nav-link btn btn-outline-primary btn-sm justify-content-end d-flex"																data-bs-target="#modalSearchUser"												type="button" data-bs-toggle="modal"		   aria-selected="false"><i class="bi bi-people"></i>&nbsp;Search User</button>
+							<button class="nav-link btn btn-outline-primary btn-sm justify-content-end d-flex"
+								data-bs-target="#modalSettings"
+								type="button"
+								data-bs-toggle="modal"
+								aria-selected="false">
+								<i class="bi bi-gear"></i>&nbsp;Settings
+							</button>
+							<button class="nav-link btn btn-outline-primary btn-sm justify-content-end d-flex"
+								data-bs-target="#modalSearchUser"
+								type="button"
+								data-bs-toggle="modal"
+								aria-selected="false">
+								<i class="bi bi-people"></i>&nbsp;Search User
+							</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-access-token"	name="pill-access-token"	data-bs-target="#panelAccessToken"		aria-controls="panelAccessToken"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><i class="bi bi-person-badge"></i>&nbsp;AccessToken</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex active"	id="pill-my-profile"	name="pill-my-profile"		data-bs-target="#panelMyProfile"		aria-controls="panelMyProfile"			type="button" data-bs-toggle="pill" role="tab" aria-selected="true" aria-current="page"><i class="bi bi-person-vcard"></i>&nbsp;User Profile</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-notifications"	name="pill-notifications"	data-bs-target="#panelNotifications"	aria-controls="panelNotifications"		type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-notifications-badge" name="pill-notifications-badge" class="badge bg-success"></span>&nbsp;<i class="bi bi-bell"></i>&nbsp;Notificaciones</button>
@@ -138,6 +145,11 @@
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-my-feeds"		name="pill-my-feeds"		data-bs-target="#panel-my-feeds"		aria-controls="panel-my-feeds"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-my-feeds-badge" name="pill-my-feeds-badge" class="badge bg-info"></span>&nbsp;My Feeds</button>
 							<button class="nav-link btn btn-outline-success btn-sm justify-content-end d-flex"			id="pill-in-lists"		name="pill-in-lists"		data-bs-target="#panel-in-lists"		aria-controls="panel-in-lists"			type="button" data-bs-toggle="pill" role="tab" aria-selected="false"><span id="pill-in-lists-badge" name="pill-in-lists-badge" class="badge bg-success"></span>&nbsp;In Lists</button>
 						</div>
+					</div>
+
+					<!-- Los Trending Topics -->
+					<div id="trendingTopics" class="border-2 border-primary border-top mt-2 p-2">
+						Trending Topics
 					</div>
 
 					<!-- La versión. -->
@@ -671,19 +683,54 @@
 							<!-- El panel de mis listas -->
 							<div id="panel-my-lists" name="panel-my-lists" class="tab-pane fade theme-my-lists" role="tabpanel" aria-labelledby="pill-my-lists" tabindex="0">
 								<div class="theme-table">
-									<table id="table-my-lists" name="table-my-lists" class="table table-sm table-striped table-hover">
-										<thead class="table-header theme-table-header">
-											<tr>
-												<th scope="col" class="col-1">#</th>
-												<th scope="col" class="col-1">Members</th>
-												<th scope="col">Name</th>
-												<th scope="col">Description</th>
-												<th scope="col">Since</th>
-											</tr>
-										</thead>
-										<tbody class="table-group-divider theme-table-body">
-										</tbody>
-									</table>
+									<div>
+										<h4>My Own Lists</h4>
+										<table id="table-my-lists" name="table-my-lists" class="table table-sm table-striped table-hover theme-smaller">
+											<thead class="table-header theme-table-header">
+												<tr>
+													<th scope="col" class="col-1">#</th>
+													<th scope="col" class="col-1">Members</th>
+													<th scope="col">Name</th>
+													<th scope="col" class="col-4">Description</th>
+													<th scope="col" class="col-2">Since</th>
+												</tr>
+											</thead>
+											<tbody class="table-group-divider theme-table-body">
+											</tbody>
+										</table>
+									</div>
+									<div>
+										<h4>Blocking Moderation Lists</h4>
+										<table id="table-my-mod-blocking-lists" name="table-my-mod-blocking-lists" class="table table-sm table-striped table-hover theme-smaller">
+											<thead class="table-header theme-table-header">
+												<tr>
+													<th scope="col" class="col-1">#</th>
+													<th scope="col" class="col-1">Members</th>
+													<th scope="col">Name</th>
+													<th scope="col" class="col-4">Description</th>
+													<th scope="col" class="col-2">Since</th>
+												</tr>
+											</thead>
+											<tbody class="table-group-divider theme-table-body">
+											</tbody>
+										</table>
+									</div>
+									<div>
+										<h4>Muting Moderation Lists</h4>
+										<table id="table-my-mod-muting-lists" name="table-my-mod-muting-lists" class="table table-sm table-striped table-hover theme-smaller">
+											<thead class="table-header theme-table-header">
+												<tr>
+													<th scope="col" class="col-1">#</th>
+													<th scope="col" class="col-1">Members</th>
+													<th scope="col">Name</th>
+													<th scope="col" class="col-4">Description</th>
+													<th scope="col" class="col-2">Since</th>
+												</tr>
+											</thead>
+											<tbody class="table-group-divider theme-table-body">
+											</tbody>
+										</table>
+									</div>
 								</div>
 							</div>
 
@@ -789,8 +836,16 @@
 							<div id="appInfo" class="mt-2">
 								<span id="appName">BlueSkyAPP</span>, v<span id="appVersion">1.0</span>
 							</div>
-							<div id="gitInfo" class="mt-2">
-								<pre><code id="gitInfoContents"  name="gitInfoContents"  class="language-json mb-2"></code></pre>
+							<div id="gitInfo" class="bg-body-secondary border border-4 border-secondary-subtle mt-2 p-2 theme-smaller">
+								GIT Name: <span id="gitAppName">BlueSkyAPP</span>, <span id="gitAppFullName">BlueSkyAPP</span><br/>
+								GIT Full Name: <span id="gitDescription">Description</span><br/>
+								Public URL: <a href="" id="gitPublicURLLink" target="_blank"><span id="gitPublicURL">Public URL</span></a><br/>
+								GIT URL: <a href="" id="gitURLLink" target="_blank"><span id="gitURL">GIT Repo URL</span></a><br/>
+								GIT Last TAG: <span id="gitLastTAG">GIT Last TAG</span><br/>
+								GIT Last Updated: <span id="gitLastUpdated">GIT Last Updated</span>
+							</div>
+							<div id="gitRawInfo" class="mt-2">
+								<pre><code id="gitInfoContents"  name="gitInfoContents"  class="language-json mb-2 theme-max-height"></code></pre>
 							</div>
 						</div>
 						<div class="modal-footer">
@@ -814,7 +869,7 @@
 								<div class="input-group input-group-sm mb-3">
 									<span class="input-group-text">Bluesky user @</span>
 									<div class="form-floating">
-										<input id="modalSearchProfilePattern" name="modalSearchProfilePattern" type="text" size="40" class="form-control" placeholder="User Handle to Search" aria-label="User Handle to Search" aria-describedby="modalSearchProfilePatternHelp" onInput="BSKY.searchUser(this);" required>
+										<input id="modalSearchProfilePattern" name="modalSearchProfilePattern" type="text" size="40" class="form-control" placeholder="User Handle to Search" aria-label="User Handle to Search" data-bsky-target="modalSearchProfileResults" aria-describedby="modalSearchProfilePatternHelp" onInput="BSKY.searchUser(this);" required>
 										<label for="modalSearchProfilePattern" class="form-label">User Handle to Search</label>
 									</div>
 								</div>
