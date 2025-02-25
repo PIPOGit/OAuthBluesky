@@ -1,4 +1,16 @@
 /* ********************************************************
+ * El panel de las notificaciones.
+ * ********************************************************/
+.theme-notifications {
+  /* border: var(--bsky-panel-border-size) solid var(--bsky-panel-border-color); */
+  background-color: azure;
+  min-height: 100px;
+  max-height: var(--bsky-table-height);
+  overflow-y: scroll;
+}
+
+
+/* ********************************************************
  * El estilo de cada notificación.
  * ********************************************************/
 .notification {

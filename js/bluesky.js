@@ -53,7 +53,8 @@ const MAX_ITERATIONS					= 100;
 /**********************************************************
  * Module Variables
  **********************************************************/
-let timerId								= 0;
+let timerIdStaticLoop					= 0;
+let timerIdDynamicLoop					= 0;
 window.BSKY								= window.BSKY || {};
 window.BSKY.data						= {};
 window.BSKY.user						= {};
@@ -327,65 +328,6 @@ async function getTheUserProfile() {
 
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserProfile( userProfile );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-}
-
-
-/* --------------------------------------------------------
- * LOGGED-IN PROCESS.
- *
- * "Business function": Retrieve who the user follows.
- * -------------------------------------------------------- */
-async function getWhoTheUserFollows() {
-	const STEP_NAME						= "getWhoTheUserFollows";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_ALL					= `${PREFIX}[ALL] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows...` );
-
-	// Now, the user's follows.
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user follows...` );
-	let apiCallResponse					= null;
-	let cursor							= null;
-	let hayCursor						= false;
-	let data							= null;
-	let allData							= [];
-	let n								= 0;
-	let acumulado						= 0;
-	let subTotal						= 0;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
-	do {
-		n++;
-		// Retrieve user's follows to show
-		// ------------------------------------------
-		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserFollows", APIBluesky.retrieveUserFollows, cursor );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
-
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
-
-		data							= apiCallResponse.follows;
-		subTotal						= data.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} following`, data );
-		allData.push(...data);
-		acumulado						= allData.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allData );
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} following`, allData );
-
-	// Save it.
-	BSKY.user.following					= allData;
-
-	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserFollows( BSKY.user.following );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -908,7 +850,129 @@ async function getTheUserLists() {
 	BSKY.user.lists						= allData;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserLists( allData );
+	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserLists( allData );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve which are the user's lists.
+ * -------------------------------------------------------- */
+async function getTheUserMutingModerationLists() {
+	const STEP_NAME						= "getTheUserMutingModerationLists";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving the blocking moderation lists of the user(${BSKY.user.userHandle})...` );
+
+	// Now, the user's blocking mod lists.
+	let apiCallResponse					= null;
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the blocking moderation lists of the user...` );
+	let cursor							= null;
+	let hayCursor						= false;
+	let data							= null;
+	let allData							= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's lists
+		// ------------------------------------------
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserMutingModerationLists", APIBluesky.retrieveUserMutingModerationLists, cursor );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		data							= apiCallResponse.lists;
+		subTotal						= data.length;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} lists`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} lists`, allData );
+		
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
+
+	// Save it.
+	BSKY.user.moderation				= BSKY.user.moderation || {};
+	BSKY.user.moderation.muting			= allData;
+
+	// Lo pintamos en su sitio.
+	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserModerationLists( allData, true );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Business function": Retrieve which are the user's lists.
+ * -------------------------------------------------------- */
+async function getTheUserBlockingModerationLists() {
+	const STEP_NAME						= "getTheUserBlockingModerationLists";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_ALL					= `${PREFIX}[ALL] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving the muting moderation lists of the user(${BSKY.user.userHandle})...` );
+
+	// Now, the user's mute mod lists.
+	let apiCallResponse					= null;
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the muting moderation lists of the user...` );
+	let cursor							= null;
+	let hayCursor						= false;
+	let data							= null;
+	let allData							= [];
+	let n								= 0;
+	let acumulado						= 0;
+	let subTotal						= 0;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_ALL );
+	do {
+		n++;
+		// Retrieve user's lists
+		// ------------------------------------------
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserBlockingModerationLists", APIBluesky.retrieveUserBlockingModerationLists, cursor );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+		
+		// Datos. Seguimos?
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		data							= apiCallResponse.lists;
+		subTotal						= data.length;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} lists`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} lists`, allData );
+		
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
+
+	// Save it.
+	BSKY.user.moderation				= BSKY.user.moderation || {};
+	BSKY.user.moderation.blocking		= allData;
+
+	// Lo pintamos en su sitio.
+	HTML.htmlRenderUserModerationLists( allData );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -965,14 +1029,14 @@ async function getTheTrendingTopics() {
 		}
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR retrieving the Trending Topics:`, error );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
-		throw( error );
-	}
 
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		// throw( error );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1087,7 +1151,7 @@ async function validateAccessToken() {
 		// Let's see if there is something in the localStorage...
 		lsCallbackData					= localStorage.getItem(LSKEYS.CALLBACK_DATA) || null;
 		if (COMMON.isNullOrEmpty(lsCallbackData)) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Nothing in the localStorage." );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Nothing[${LSKEYS.CALLBACK_DATA}] in the localStorage.` );
 		} else {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Something in the localStorage." );
 			BSKY.auth.callbackData		= JSON.parse( lsCallbackData );
@@ -1096,21 +1160,21 @@ async function validateAccessToken() {
 
 		lsCallbackData					= localStorage.getItem(LSKEYS.CALLBACK_URL) || null;
 		if (COMMON.isNullOrEmpty(lsCallbackData)) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Nothing in the localStorage." );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Nothing[${LSKEYS.CALLBACK_URL}] in the localStorage.` );
 		} else {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Something in the localStorage." );
 			BSKY.auth.redirectURL		= lsCallbackData;
 			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Detected:", BSKY.auth.redirectURL );
 		}
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current code:", BSKY.auth.callbackData.code );
-
-		if (COMMON.isNullOrEmpty(BSKY.auth.callbackData.code)) {
+		if (!BSKY?.auth?.callbackData?.code || COMMON.isNullOrEmpty(BSKY.auth.callbackData.code)) {
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `No "code" detected.` );
 			// NO. No token and no code. Throw an error.
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 			throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_02 );
 		} else {
 			// YES. Let's retrieve the token
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "Current code:", BSKY.auth.callbackData.code );
 
 			// With the "code", let's retrieve the user access_token from the server.
 			apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserAccessToken", APIBluesky.retrieveUserAccessToken );
@@ -1232,39 +1296,69 @@ async function fnLogout() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+BSKY.user.userHandle+"]" );
 
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Stopping the timers..." );
+	clearTimeout( timerIdStaticLoop );
+	clearTimeout( timerIdDynamicLoop );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Logging out from Bluesky..." );
 	let loggedOutInfo					= await APIBluesky.tryAndCatch( "performUserLogout", APIBluesky.performUserLogout, null );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current loggedOutInfo:", loggedOutInfo );
 
+	// Remove things from localStorage
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleting localStorage items:" );
+	localStorage.removeItem(LSKEYS.BSKYDATA);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ Deleted:", LSKEYS.BSKYDATA );
+	localStorage.removeItem(LSKEYS.ROOT_URL);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ Deleted:", LSKEYS.ROOT_URL );
+	localStorage.removeItem(LSKEYS.user.profile);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ Deleted:", LSKEYS.user.profile );
+	localStorage.removeItem(LSKEYS.CALLBACK_DATA);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ Deleted:", LSKEYS.CALLBACK_DATA );
+	localStorage.removeItem(LSKEYS.CALLBACK_URL);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ Deleted:", LSKEYS.CALLBACK_URL );
+
+	// Set, in localStorage, we come from "LOGOUT"
+	localStorage.setItem(LSKEYS.LOGOUT, true);
+
+	// Remove the crypto key from the database and the database itself.
+	await DB.deleteDatabase();
+	
+	// Auto-detect the fallback URL from current...
+	let currentURL						= new URL( window.location );
+	let origin							= currentURL.origin;
+	let path							= currentURL.pathname;
+	let lastChar						= path.lastIndexOf( '/' );
+	let fallBackPath					= path.substring( 0, lastChar );
+	let fallBackURLFromCurrent			= new URL( currentURL.origin + fallBackPath );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected:` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [currentURL==${currentURL}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [fallBackURLFromCurrent==${fallBackURLFromCurrent}]` );
+
 	// Check if "logout" has been successfull
-	let header							= loggedOutInfo.headers;
-	if ( header.ok && header.status == 204 ) {
-		// Remove things from localStorage
-		localStorage.removeItem(LSKEYS.BSKYDATA);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.BSKYDATA );
-		localStorage.removeItem(LSKEYS.ROOT_URL);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.ROOT_URL );
-		localStorage.removeItem(LSKEYS.user.profile);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.user.profile );
-		localStorage.removeItem(LSKEYS.CALLBACK_DATA);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.CALLBACK_DATA );
-		localStorage.removeItem(LSKEYS.CALLBACK_URL);
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.CALLBACK_URL );
-
-		// Set, in localStorage, we come from "LOGOUT"
-		localStorage.setItem(LSKEYS.LOGOUT, true);
-
-		// Remove the crypto key from the database and the database itself.
-		await DB.deleteDatabase();
-
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Redirecting to:", BSKY.auth.root );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		window.location					= BSKY.auth.root;
+	// + http://localhost/bluesky/dashboard.html
+	// + https://oauthbluesky.onrender.com/dashboard.html
+	let fallBackURL						= null;
+	if ( !COMMON.isNullOrEmpty(loggedOutInfo) ) {
+		let header							= loggedOutInfo.headers;
+		if ( header.ok && header.status == 204 ) {
+			fallBackURL					= BSKY.auth.root;
+		} else {
+			fallBackURL					= fallBackURLFromCurrent;
+		}
 	} else {
-		if (window.BSKY.DEBUG) console.warn( PREFIX + "ERROR!" );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		// BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);
+		if ( BSKY?.auth?.root || !COMMON.isNullOrEmpty(BSKY.auth.root) ) {
+			fallBackURL					= BSKY.auth.root;
+		} else {
+			fallBackURL					= fallBackURLFromCurrent;
+		}
 	}
+
+	// Send to fallback URL.
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Redirecting to: [${fallBackURLFromCurrent}]...` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	window.location						= fallBackURL;
 }
 
 
@@ -1289,37 +1383,62 @@ async function fnDashboard() {
 	// Los botones del userDid y el clientId Metadata
 	HTML.updateUserDIDInfo();
 
-	// Update the page.
-	apiCallResponse						= await updateDashboard();
+	try {
+		// First, let's validate the access token.
+		// ------------------------------------------
+		apiCallResponse					= await validateAccessToken();
 
-	// "Constant data".
-	apiCallResponse						= await updateStaticInfo();
+		// Retrieve the dynamic data.
+		apiCallResponse					= await updateDashboard();
 
-	// "Constant data".
-	const refreshStaticSeconds			= window.BSKY.refreshStaticSeconds;
-	const refreshStaticTime				= refreshStaticSeconds * 1000;
-	if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the 'static' info every ${refreshStaticSeconds} second(s)` );
-	// timerId								= setInterval(() => updateStaticInfo(), refreshStaticTime);
-	(function staticLoop() {
-		setTimeout(() => {
-			// Your logic here
-			updateStaticInfo();
-			staticLoop();
-		}, refreshStaticTime);
-	})();
+		// Retrieve the static data.
+		apiCallResponse					= await updateStaticInfo();
 
-	// Update the page.
-	const refreshDynamicSeconds			= window.BSKY.refreshDynamicSeconds;
-	const refreshDynamicTime			= refreshDynamicSeconds * 1000;
-	if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the dashboard every ${refreshDynamicSeconds} second(s)` );
-	// timerId								= setInterval(() => updateDashboard(), refreshDynamicTime);
-	(function dynamicLoop() {
-		setTimeout(() => {
-			// Your logic here
-			updateDashboard();
-			dynamicLoop();
-		}, refreshDynamicTime);
-	})();
+		// Static update
+		const refreshStaticSeconds			= window.BSKY.refreshStaticSeconds;
+		const refreshStaticTime				= refreshStaticSeconds * 1000;
+		if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the 'static' info every ${refreshStaticSeconds} second(s)` );
+		// timerId								= setInterval(() => updateStaticInfo(), refreshStaticTime);
+		(function staticLoop() {
+			timerIdStaticLoop = setTimeout( async () => {
+				// First, let's validate the access token.
+				// ------------------------------------------
+				apiCallResponse					= await validateAccessToken();
+
+				// Your logic here
+				updateStaticInfo();
+				staticLoop();
+			}, refreshStaticTime);
+		})();
+
+		// Dynamic update
+		const refreshDynamicSeconds			= window.BSKY.refreshDynamicSeconds;
+		const refreshDynamicTime			= refreshDynamicSeconds * 1000;
+		if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the dashboard every ${refreshDynamicSeconds} second(s)` );
+		// timerId								= setInterval(() => updateDashboard(), refreshDynamicTime);
+		(function dynamicLoop() {
+			timerIdDynamicLoop = setTimeout( async () => {
+				// First, let's validate the access token.
+				// ------------------------------------------
+				apiCallResponse					= await validateAccessToken();
+
+				// Your logic here
+				updateDashboard();
+				dynamicLoop();
+			}, refreshDynamicTime);
+		})();
+	} catch (error) {
+		// Show the error and update the HTML fields
+		HTML.updateHTMLError(error);
+
+		// Errors? LOGOUT.
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Errors found. Performing the auto-logout." );
+		await fnLogout();
+
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		// throw( error );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1341,10 +1460,6 @@ async function updateDashboard() {
 	// Steps.
 	let apiCallResponse					= null;
 	try {
-		// First, let's validate the access token.
-		// ------------------------------------------
-		apiCallResponse					= await validateAccessToken();
-
 		// Later, retrieve the rest of things.
 		// ------------------------------------------
 
@@ -1357,11 +1472,11 @@ async function updateDashboard() {
 		// Retrieve the Trending Topics
 		apiCallResponse					= await getTheTrendingTopics();
 	} catch (error) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
+
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	}
 
@@ -1388,19 +1503,11 @@ async function updateStaticInfo() {
 	// Steps.
 	let apiCallResponse					= null;
 	try {
-		// First, let's validate the access token.
-		// ------------------------------------------
-		apiCallResponse					= await validateAccessToken();
-
 		// Later, retrieve the rest of things.
 		// ------------------------------------------
 
 		// Retrieve the user's profile to show
 		apiCallResponse					= await getTheUserProfile();
-
-		// Retrieve who the user is following
-		// TODO: Esta sobraría
-		// apiCallResponse					= await getWhoTheUserFollows();
 
 		// Retrieve who the user is following FROM THE PDS Repository
 		apiCallResponse					= await getWhoTheUserFollowsFromTheRepo();
@@ -1420,14 +1527,20 @@ async function updateStaticInfo() {
 		// Retrieve the user's lists
 		apiCallResponse					= await getTheUserLists();
 
+		// Retrieve the user's lists
+		apiCallResponse					= await getTheUserMutingModerationLists();
+
+		// Retrieve the user's lists
+		apiCallResponse					= await getTheUserBlockingModerationLists();
+
 		// Now, check relationships...
 		apiCallResponse					= await getTheRelations();
 	} catch (error) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
+
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	}
 

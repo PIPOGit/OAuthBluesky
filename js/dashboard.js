@@ -173,9 +173,39 @@ function modalEventForVersionWhenInvoked( event ) {
 	$( `${$modalBody} #appName` ).html( CONFIGURATION.global.appName );
 	$( `${$modalBody} #appVersion` ).html( CONFIGURATION.global.appVersion );
 
-	// GIT Information
+	// GIT Information as per PowerShell
+	// ---------------------------------------------------------
+	/*
+		Write-Host "Name: $($RepoMetadata.name) [$($RepoMetadata.full_name)]
+		Write-Host "Description: $($RepoMetadata.description)";
+		Write-Host "Web: $($RepoMetadata.homepage) | GIT URL: $($RepoMetadata.url)";
+		Write-Host "Dates: $($RepoMetadata.updated_at) | $($RepoMetadata.pushed_at)";
+		Write-Host "Last Commit on: $($LastCommit.commit.committer.date)";
+		Write-Host "Last Tag: $($LastTAG.name), on: $($TagCommit.commit.committer.date)";
+
+		# Sample:
+		# Name: OAuthBluesky [PIPOGit/OAuthBluesky]
+		# Description: Bluesky OAuth2 Client, with Vanilla JavaScript (post, hosted in dev.to)
+		# Web: https://oauthbluesky.onrender.com/ | GIT URL: https://api.github.com/repos/PIPOGit/OAuthBluesky
+		# Dates: 2025-02-21T18:20:37Z | 2025-02-21T18:20:33Z
+		# Last Commit on: 2025-02-21T18:20:31Z
+		# Last Tag: v1.6.6, on: 2025-02-21T18:03:49Z
+
+	 */
+	$( `${$modalBody} #gitAppName` ).html( BSKY.git.repoMetadata.name );
+	$( `${$modalBody} #gitAppFullName` ).html( BSKY.git.repoMetadata.full_name );
+	$( `${$modalBody} #gitDescription` ).html( BSKY.git.repoMetadata.description );
+	$( `${$modalBody} #gitPublicURL` ).html( BSKY.git.repoMetadata.homepage );
+	$( `${$modalBody} #gitURL` ).html( BSKY.git.repoMetadata.html_url );
+	$( `${$modalBody} #gitLastTAG` ).html( BSKY.git.lastTag.name );
+	$( `${$modalBody} #gitLastUpdated` ).html( BSKY.git.lastCommit.commit.committer.date );
+	$( `${$modalBody} #gitPublicURLLink` ).prop( "href", BSKY.git.repoMetadata.homepage );
+	$( `${$modalBody} #gitURLLink` ).prop( "href", BSKY.git.repoMetadata.html_url );
+
+	// Raw GIT Information
 	// ---------------------------------------------------------
 	$( `#${HTML.DIV_GIT_INFO_JSON}` ).text( COMMON.prettyJson( BSKY.git ) );
+	HTML.updateHighlight();
 }
 
 /* --------------------------------------------------------
@@ -222,6 +252,9 @@ function modalEventForSettingsWhenClosed( event ) {
  *
  * "Search an user"
  *
+ *   Requires a: "data-bsky-target" to complete.
+ *   This is the "output" field where to display the results list.
+ *
  *		/xrpc/app.bsky.actor.searchActorsTypeahead
  *		endpoint: API.bluesky.XRPC.api.public.searchActorsTypeahead
  *
@@ -235,21 +268,28 @@ function modalEventForSettingsWhenClosed( event ) {
 async function fnSearchUser( source ) {
 	const STEP_NAME						= "fnSearchUser";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
-	if (window.BSKY.DEBUG) console.warn( PREFIX + "Under development yet!" );
 
 	// Veamos qué trae...
 	let searchString					= source.value;
+
+	// El "target" field...
+	let targetField						= source.dataset.bskyTarget;
+
+	// LOG Head.
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX + `[searching for: ${source.value}] [output:${targetField}]` );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "source.dataset:", source.dataset );
+
 	if ( !COMMON.isNullOrEmpty( searchString ) && ( searchString.length>0 ) ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Searching for:", searchString );
 		let received					= await APIBluesky.tryAndCatch( "searchProfile", APIBluesky.searchProfile, searchString );
 		let actors						= received.actors;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received actors:", actors );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `Received ${actors.length} actor(s):`, actors );
 
-		if ( actors ) {
-			// Borramos lo que hubiera
-			let $list					= $( `#${HTML.DIV_MODAL_SEARCH_OUTPUT}` );
-			$list.empty();
+		// Borramos lo que hubiera
+		let $list						= $( `#${targetField}` );
+		$list.empty();
+		if ( actors && actors.length>0 ) {
 			// Agregamos los encontrados.
 			let html					= null;
 			actors.forEach( actor => {
@@ -263,6 +303,9 @@ async function fnSearchUser( source ) {
 				html					+= `</li>`;
 				$list.append( html );
 			});
+		// } else {
+		// 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Found(${actors.length}): Nothing` );
+		// 	$list.append( `No profiles found for: [${searchString}]` );
 		}
 	}
 

@@ -3,7 +3,7 @@
 		"debug": false,
 		"debug_folded": true,
 		"appName": "BlueSkyAPP",
-		"appVersion": "1.6.7",
+		"appVersion": "1.6.9",
 		"refresh_dynamic": 15,
 		"refresh_static": 300
 	},
@@ -64,6 +64,8 @@
 					"pds": {
 						"getBlocks": "/app.bsky.graph.getBlocks",
 						"getConvoForMembers": "/chat.bsky.convo.getConvoForMembers",
+						"getListBlocks": "/app.bsky.graph.getListBlocks",
+						"getListMutes": "/app.bsky.graph.getListMutes",
 						"getLists": "/app.bsky.graph.getLists",
 						"getMutes": "/app.bsky.graph.getMutes",
 						"getTrendingTopics": "/app.bsky.unspecced.getTrendingTopics",

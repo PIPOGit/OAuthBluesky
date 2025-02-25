@@ -95,7 +95,9 @@ export const DIV_TAB_MUTED_BADGE		= "pill-muting-badge";
 export const DIV_TAB_MY_LISTS_BADGE		= "pill-my-lists-badge";
 export const DIV_TABLE_MY_LISTS			= "table-my-lists";
 export const DIV_TABLE_MUTING			= "table-muting";
-export const DIV_TRENDING_TOPICS		= "trending-topics";
+export const DIV_TRENDING_TOPICS		= "trendingTopics";
+export const DIV_TABLE_MY_MOD_M_LISTS	= "table-my-mod-muting-lists";
+export const DIV_TABLE_MY_MOD_B_LISTS	= "table-my-mod-blocking-lists";
 
 // HTML Notifications constants
 export const DIV_TAB_NOTIS_BADGE		= "pill-notifications-badge";

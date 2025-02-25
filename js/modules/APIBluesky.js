@@ -173,6 +173,7 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 				// Show the error and update the HTML fields
 				HTML.updateHTMLError(error);
 				if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
+				throw( apiCallResponse );
 			}
 		} else {
 			// Show the error and update the HTML fields
@@ -193,7 +194,7 @@ export async function performUserLogout() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Now, the user's profile.
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Performing the user's logout...` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Performing the user's Bluesky logout...` );
     let body							= `token=${BSKY.data.userAccessToken}`;
     let fetchOptions					= {
         method: HTML_POST,
@@ -204,15 +205,20 @@ export async function performUserLogout() {
         body: body
     }
     let url								= BSKY.auth.userRevocationEndPoint;
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ with this options:", COMMON.prettyJson( fetchOptions ) );
+	let response						= null;
+	if ( !COMMON.isNullOrEmpty(url) ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "+ with this options:", COMMON.prettyJson( fetchOptions ) );
 
- 	let responseFromServer				= await APICall.makeAPICall( "fnLogout", url, fetchOptions );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+		response						= await APICall.makeAPICall( "fnLogout", url, fetchOptions );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received response:", COMMON.prettyJson( response ) );
+	} else {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "No BS logout URL detected!", url );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return responseFromServer;
+	return response;
 }
 
 // Atomic function to retrieve the user access token
@@ -907,6 +913,114 @@ export async function retrieveUserLists(cursor) {
 
 	// Prepare the URL..
 	let endpoint						= API.bluesky.XRPC.api.pds.getLists;
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting the user's lists... Invoking endpoint:", endpoint );
+
+	// The URL is protected, so... PDS Server
+	let root							= BSKY.auth.userPDSURL + "/xrpc";
+	let url								= root + endpoint;
+	url									+= "?actor=" + BSKY.user.userHandle;
+	url									+= "&limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': APICall.CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let userData						= responseFromServer.body;
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return userData;
+}
+
+// Atomic function to retrieve who are the user muting
+export async function retrieveUserMutingModerationLists(cursor) {
+	const STEP_NAME						= "retrieveUserMutingModerationLists";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.pds.getListMutes;
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting the user's lists... Invoking endpoint:", endpoint );
+
+	// The URL is protected, so... PDS Server
+	let root							= BSKY.auth.userPDSURL + "/xrpc";
+	let url								= root + endpoint;
+	url									+= "?actor=" + BSKY.user.userHandle;
+	url									+= "&limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+
+    // Create the DPoP-Proof 'body' for this request.
+    // ------------------------------------------
+	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
+	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
+
+    // TuneUp the call
+    // ------------------------------------------
+    let headers							= {
+		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
+		'DPoP': dpopProof,
+		'Accept': APICall.CONTENT_TYPE_JSON,
+        'DPoP-Nonce': BSKY.data.dpopNonce
+    }
+    let fetchOptions					= {
+        method: HTML_GET,
+        headers: headers
+    }
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "headers:", COMMON.prettyJson( headers ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
+
+    // Finally, perform the call
+    // ------------------------------------------
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+ 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+	// Here, we gather the "access_token" item in the received json.
+	let userData						= responseFromServer.body;
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return userData;
+}
+
+// Atomic function to retrieve who are the user muting
+export async function retrieveUserBlockingModerationLists(cursor) {
+	const STEP_NAME						= "retrieveUserBlockingModerationLists";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
+
+	// Prepare the URL..
+	let endpoint						= API.bluesky.XRPC.api.pds.getListBlocks;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting the user's lists... Invoking endpoint:", endpoint );
 
 	// The URL is protected, so... PDS Server

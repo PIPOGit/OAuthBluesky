@@ -22,7 +22,15 @@ a, a:visited {
   width: auto;
   padding: 10px 40px;
 }
+.theme-small {
+  font-size: small;
+}
 .theme-smaller {
   font-size: smaller;
 }
-
+.theme-max-height {
+  max-height: 300px;
+}
+.theme-bolder {
+  font-weight: bolder;
+}
