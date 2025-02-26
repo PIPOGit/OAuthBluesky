@@ -16,7 +16,6 @@
 	],
 	"dpop_bound_access_tokens": true,
 	"token_endpoint_auth_method": "none",
-	"token_endpoint_auth_signing_alg": "none",
 	"client_name": "BSKY Analyzer Browser App",
 	"client_uri": "https://oauthbluesky.onrender.com"
 }
