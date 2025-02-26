@@ -1064,7 +1064,7 @@ export function htmlRenderTrendingTopics( data ) {
 		// Add data.
 		data.topics.forEach( item => {
 			index++;
-			htmlContent					+= `<a href="${API.bluesky.profile.root}${item.link}" role="button" class="btn btn-sm btn-outline-dark m-1" target="_blank" aria-disabled="true">${item.topic}</button>`;
+			htmlContent					+= `<a href="${API.bluesky.profile.root}${item.link}" role="button" class="btn btn-sm btn-outline-dark m-1 rounded rounded-3" target="_blank" aria-disabled="true">${item.topic}</button>`;
 		});
 		$container.html( htmlContent );
 	}

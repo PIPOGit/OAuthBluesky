@@ -3,7 +3,9 @@
  * ********************************************************/
  
 .nav button {
-  width: 12rem;
+  /* width: 12rem; */
+  font-size: smaller;
+  width: inherit;
   padding-top: var(--bsky-menu-button-margin);
   padding-bottom: var(--bsky-menu-button-margin);
 }

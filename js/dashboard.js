@@ -303,9 +303,9 @@ async function fnSearchUser( source ) {
 				html					+= `</li>`;
 				$list.append( html );
 			});
-		// } else {
-		// 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Found(${actors.length}): Nothing` );
-		// 	$list.append( `No profiles found for: [${searchString}]` );
+		} else {
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Found(${actors.length}): Nothing` );
+			$list.append( `No profiles found for: [${searchString}]` );
 		}
 	}
 

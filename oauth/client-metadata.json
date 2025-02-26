@@ -7,8 +7,8 @@
 	],
 	"scope": "atproto transition:generic transition:chat.bsky",
 	"response_types": [
-		"code id_token",
-		"code"
+		"code",
+		"code id_token"
 	],
 	"redirect_uris": [
 		"https://oauthbluesky.onrender.com/oauth/callback.html",
@@ -16,6 +16,7 @@
 	],
 	"dpop_bound_access_tokens": true,
 	"token_endpoint_auth_method": "none",
-	"client_name": "BlueSkyAPP Browser App",
+	"token_endpoint_auth_signing_alg": "none",
+	"client_name": "BSKY Analyzer Browser App",
 	"client_uri": "https://oauthbluesky.onrender.com"
 }
