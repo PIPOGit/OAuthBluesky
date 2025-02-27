@@ -1,0 +1,54 @@
+/* ********************************************************
+ * MODALs & TOASTs
+ * ********************************************************/
+
+
+/* ********************************************************
+ * Para los modales.
+ * ********************************************************/
+.theme-modal {
+}
+
+/* Para los encabezados. */
+.theme-modal .modal-header {
+  background-color: cyan;
+  padding: calc( var(--bs-modal-header-padding-x) / 2 ) var(--bs-modal-header-padding-x);
+  font-size: larger;
+}
+
+
+/* ********************************************************
+ * Para los toasts.
+ * ********************************************************/
+.theme-toast {
+}
+
+
+/* ********************************************************
+ * Para las imágenes de los encabezados de ambos.
+ * ********************************************************/
+.theme-toast .toast-header {
+  background-color: cyan;
+  padding: calc( var(--bs-toast-padding-x) / 2 ) var(--bs-toast-padding-x);
+  font-size: larger;
+}
+.theme-modal .modal-header img,
+.theme-toast .toast-header img {
+  height: 48px;
+  margin-right: 12px;
+}
+
+
+/* ********************************************************
+ * Para los encabezados de ambos.
+ * ********************************************************/
+.theme-modal .modal-header h1::before,
+.theme-toast .toast-header h6::before {
+  font-weight: normal;
+  color: navy;
+  content: "BSKY Analyzer ";
+  border-right: 1px solid navy;
+  margin-right: 6px;
+  text-shadow: 2px 2px lightseagreen;
+  font-size: larger;
+}

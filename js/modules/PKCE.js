@@ -77,20 +77,20 @@ export async function prepareDataForPARRequest( userHandle, clientId, callbackUr
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ callbackUrl:", callbackUrl );
 
 	// The state & code verifier
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let state							= UUID.generateRandomState();
     let codeVerifier					= UUID.generateRandomCodeVerifier();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated state:", state );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated codeVerifier:", codeVerifier );
 
     // The code verifier challenge
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let codeChallenge					= await pkceChallengeFromVerifier(codeVerifier);
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated codeChallenge:", codeChallenge );
 
     // Build up the URL.
     // Just, to make it simple! I know there are better ways to do this, BUT...
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let body							= "response_type=code";
     body								+= "&prompt=login";
     body								+= "&code_challenge_method=S256";

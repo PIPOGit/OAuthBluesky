@@ -78,14 +78,18 @@ async function startUp() {
 
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
+	const PREFIX_MODULE_INFO			= `${PREFIX}[Module Info] `;
 	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
 
 	// ================================================================
+	// Module info.
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_MODULE_INFO );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+
+	// ================================================================
 	// Actualizamos el objeto raiz.
+	// + Properties
 	// + Logging Properties
-	window.BSKY.DEBUG					= CONFIGURATION.global.debug;
-	window.BSKY.DEBUG_FOLDED			= CONFIGURATION.global.debug_folded;
 	window.BSKY.refreshStaticSeconds	= CONFIGURATION.global.refresh_static;
 	window.BSKY.refreshDynamicSeconds	= CONFIGURATION.global.refresh_dynamic;
 	// + Functions
@@ -96,30 +100,27 @@ async function startUp() {
 	window.BSKY.filterFollowers			= HTML.fnFilterTable;
 
 	// ================================================================
-	// Module info.
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
-
-	// ================================================================
 	// Module END
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
+
+
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_INNER );
 
 	// La clave criptográfica en la base de datos
+	// ---------------------------------------------------------
 	await DB.checkCryptoKeyInDB();
 
-	// Perform dashboard operations
-	// ------------------------------------
-
 	// El reloj
-	// ------------------------------------
+	// ---------------------------------------------------------
 	setInterval(() => HTML.clock(), BSKY.data.MILLISECONDS );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Clock started" );
 
 	// GitHub Information
-	// ------------------------------------
+	// ---------------------------------------------------------
 	let githubInfo						= await GitHub.getRepositoryInformation();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received githubInfo:", githubInfo );
 
@@ -127,7 +128,7 @@ async function startUp() {
 	BSKY.git							= githubInfo;
 
 	// Geolocation Information
-	// ------------------------------------
+	// ---------------------------------------------------------
 	let geolocationInfo					= await GEO.getGeolocationInformation();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received geolocationInfo:", geolocationInfo );
 
@@ -139,23 +140,28 @@ async function startUp() {
 	let place							= where[where.length-1];
 	$( `#${HTML.DIV_GEOLOCATION}` ).val( place.name );
 
-	// The "context".
-	// ------------------------------------
-	BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);
-
 	// Los eventos de los modales Bootstrap
-	// ------------------------------------
-	COMMON.fnGetById(HTML.DIV_MODAL_SEARCH_USER).addEventListener( 'show.bs.modal', modalEventForSearchUsersWhenInvoked );
-	COMMON.fnGetById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'show.bs.modal', modalEventForSettingsWhenInvoked );
-	COMMON.fnGetById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'hidden.bs.modal', modalEventForSettingsWhenClosed );
-	COMMON.fnGetById(HTML.DIV_MODAL_VERSION).addEventListener( 'show.bs.modal', modalEventForVersionWhenInvoked );
+	// ---------------------------------------------------------
+	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER).addEventListener( 'show.bs.modal', modalEventForSearchUsersWhenInvoked );
+	COMMON.getById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'show.bs.modal', modalEventForSettingsWhenInvoked );
+	COMMON.getById(HTML.DIV_MODAL_SETTINGS).addEventListener( 'hidden.bs.modal', modalEventForSettingsWhenClosed );
+	COMMON.getById(HTML.DIV_MODAL_VERSION).addEventListener( 'show.bs.modal', modalEventForVersionWhenInvoked );
 
-	if (window.BSKY.DEBUG) console.groupEnd();
-
+	// End of module setup
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.DEBUG) console.groupEnd();
+
+	// Perform dashboard operations
+	// ---------------------------------------------------------
 	BSKY.dashboard();
 }
+
+
+/**********************************************************
+ * PRIVATE Functions
+ **********************************************************/
+
 
 
 /**********************************************************

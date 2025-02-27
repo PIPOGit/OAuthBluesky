@@ -15,6 +15,8 @@ import CONFIGURATION					from "../data/config.json" with { type: "json" };
 import * as COMMON						from "./common.functions.js";
 // Common Crypto functions
 import * as CRYPT						from "./OAuth2/Crypt.js";
+// Common HTML functions
+import * as HTML						from "./HTML.js";
 // IDB functions
 import { openDB, deleteDB }				from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
@@ -163,6 +165,9 @@ export async function checkCryptoKeyInDB(comeFromLogout=false) {
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return;
 	}
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Checking Browser Database...` );
 
 	// Inicializamos la conexión con IndexedDB
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Initializing the database...` );

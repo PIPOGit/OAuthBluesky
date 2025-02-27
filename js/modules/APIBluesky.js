@@ -75,11 +75,12 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();
+	window.BSKY.faviconWorking();
 
 	let apiCallResponse					= null;
 	try {
 		// Let's retrieve first if there are unread user's notifications.
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await callbackFunction(callbackOptions);
 		if (show && window.BSKY.DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
 
@@ -238,12 +239,12 @@ export async function retrieveUserAccessToken() {
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Access Token URL:", url );
 
     // Retrieve the crypto key.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "cryptoKey:", COMMON.prettyJson( BSKY.data.cryptoKey ) );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( BSKY.data.jwk ) );
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, null, null, url, BSKY.data.dpopNonce, HTML_POST);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
@@ -262,7 +263,7 @@ export async function retrieveUserAccessToken() {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Generated [body]:", COMMON.prettyJson( Object.fromEntries( body ) ));
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
         'DPOP': dpopProof,
         'Content-Type': APICall.CONTENT_TYPE_FORM_ENCODED,
@@ -277,7 +278,7 @@ export async function retrieveUserAccessToken() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -313,7 +314,7 @@ export async function refreshAccessToken() {
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Access Token URL:", url );
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, null, url, BSKY.data.dpopNonce, HTML_POST);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest);
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
@@ -331,7 +332,7 @@ export async function refreshAccessToken() {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Generated [body]:", COMMON.prettyJson( Object.fromEntries( body ) ));
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
         'DPOP': dpopProof,
         'Content-Type': APICall.CONTENT_TYPE_FORM_ENCODED,
@@ -347,7 +348,7 @@ export async function refreshAccessToken() {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -393,13 +394,13 @@ export async function retrieveUnreadNotifications(renderHTMLErrors=true) {
 
     // Create the DPoP-Proof 'body' for this request.
 	// We already have the cryptoKey somewhere, from previous calls...
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX_PREFETCH + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -416,7 +417,7 @@ export async function retrieveUnreadNotifications(renderHTMLErrors=true) {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions, renderHTMLErrors );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -447,13 +448,13 @@ export async function retrieveNotifications(renderHTMLErrors=true) {
 
     // Create the DPoP-Proof 'body' for this request.
 	// We already have the cryptoKey somewhere, from previous calls...
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX_PREFETCH + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -470,7 +471,7 @@ export async function retrieveNotifications(renderHTMLErrors=true) {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions, renderHTMLErrors );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -492,18 +493,21 @@ export async function retrieveUserProfile( userProfile ) {
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting the user's profile... Invoking endpoint:", endpoint );
 
 	// The URL is OPEN, so... Public Server
-	let root							= API.bluesky.XRPC.public;
+	// let root							= API.bluesky.XRPC.public;
+
+	// The URL is protected, so... PDS Server
+	let root							= BSKY.auth.userPDSURL + "/xrpc";
 	let url								= root + endpoint + "?actor=" + userProfile;
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -518,7 +522,7 @@ export async function retrieveUserProfile( userProfile ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -546,13 +550,13 @@ export async function retrieveUserProfileFromPDS( userProfile ) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -567,7 +571,7 @@ export async function retrieveUserProfileFromPDS( userProfile ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -600,13 +604,13 @@ export async function retrieveUserFollows(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -621,7 +625,7 @@ export async function retrieveUserFollows(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -659,13 +663,13 @@ export async function retrieveRepoListRecords( data ) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -680,7 +684,7 @@ export async function retrieveRepoListRecords( data ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -709,13 +713,13 @@ export async function retrieveRepoBlockOfRecords(queryString) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -730,7 +734,7 @@ export async function retrieveRepoBlockOfRecords(queryString) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -752,9 +756,6 @@ export async function retrieveUserFollowers(cursor) {
 	let endpoint						= API.bluesky.XRPC.api.public.getFollowers;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting who are the user's followers... Invoking endpoint:", endpoint );
 
-	// The URL is OPEN, so... Public Server
-	// let root							= API.bluesky.XRPC.public;
-
 	// The URL is PDS, so... PDS Server
 	let root							= BSKY.auth.userPDSURL + "/xrpc";
 	let url								= root + endpoint;
@@ -766,13 +767,13 @@ export async function retrieveUserFollowers(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -787,7 +788,7 @@ export async function retrieveUserFollowers(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -819,13 +820,13 @@ export async function retrieveUserBlocks(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -840,7 +841,7 @@ export async function retrieveUserBlocks(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -872,13 +873,13 @@ export async function retrieveUserMutes(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -893,7 +894,7 @@ export async function retrieveUserMutes(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -926,13 +927,13 @@ export async function retrieveUserLists(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -947,7 +948,7 @@ export async function retrieveUserLists(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -980,13 +981,13 @@ export async function retrieveUserMutingModerationLists(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -1001,7 +1002,7 @@ export async function retrieveUserMutingModerationLists(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -1034,13 +1035,13 @@ export async function retrieveUserBlockingModerationLists(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -1055,7 +1056,7 @@ export async function retrieveUserBlockingModerationLists(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -1088,13 +1089,13 @@ export async function retrieveTrendingTopics(cursor) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
 		'DPoP': dpopProof,
@@ -1109,7 +1110,7 @@ export async function retrieveTrendingTopics(cursor) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
@@ -1137,13 +1138,13 @@ export async function searchProfile( searchedProfiles ) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, HTML_GET);
 	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );
 
     // TuneUp the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let headers							= {
 		'Authorization': `DPoP ${BSKY.data.userAccessToken}`,
         'Content-Type': APICall.CONTENT_TYPE_FORM_ENCODED,
@@ -1159,7 +1160,7 @@ export async function searchProfile( searchedProfiles ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
     // Finally, perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
  	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
