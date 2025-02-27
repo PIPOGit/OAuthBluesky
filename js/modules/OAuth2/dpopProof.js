@@ -44,7 +44,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+url+"]");
 
     // Create the DPoP-Proof 'body' for this request.
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let dpopProofHeader = {
         typ: DPoP_HEADER_TYPE,
         alg: CRYPT.KEY_ALGORITM,
@@ -71,7 +71,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
 
 
     // Crypt and sign the DPoP-Proof header+body
-    // ------------------------------------------
+	// ---------------------------------------------------------
     // + Prepare
     const h = JSON.stringify(dpopProofHeader);
     const p = JSON.stringify(dpopProofPayload);
@@ -85,7 +85,7 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
 
 
     // The DPoP-Proof
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let dpopProof = `${partialToken}.${signatureAsBase64}`;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "dpopProof:", dpopProof );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "dpopProof:", JWT.jwtToPrettyJSON( dpopProof ) );

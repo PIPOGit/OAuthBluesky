@@ -45,8 +45,6 @@ const APP_LOCALHOST_CALLBACK_URL		= CLIENT_APP.redirect_to_localhost;
  * Module Variables
  **********************************************************/
 let redirectURI							= APP_CALLBACK_URL;
-let isLocalhost							= false;
-
 
 
 /**********************************************************
@@ -77,58 +75,55 @@ async function startUp() {
 
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
+	const PREFIX_MODULE_INFO			= `${PREFIX}[Module Info] `;
 	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
 
 	// ================================================================
 	// Module info.
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_MODULE_INFO );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
 
 	// ================================================================
 	// Actualizamos el objeto raiz.
 	// + Functions
 	window.BSKY.authenticateWithBluesky = fnAuthenticateWithBluesky;
-	window.BSKY.launchToast				= fnLaunchToast;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
 
 	// ================================================================
 	// Module END
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
+
+
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_INNER );
 
 	// Check whether we come from LOGOUT.
+	// ---------------------------------------------------------
 	let comeFromLogout					= checkIfComesFromLogout();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "comeFromLogout:", comeFromLogout );
 
-	// Check whether we are in localhost.
-	isLocalhost							= checkIfWeAreInLocalhost();
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "isLocalhost:", isLocalhost );
-	if (isLocalhost) {
-		redirectURI						= APP_LOCALHOST_CALLBACK_URL;
-	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "redirectURI:", redirectURI );
-
 	// La clave criptográfica en la base de datos
+	// ---------------------------------------------------------
 	await DB.checkCryptoKeyInDB(comeFromLogout);
 
-	// Update the "userHandle" field
-	let gotUserHandle					= checkUserHandle();
-
-	// BS Toast Test
-	if (gotUserHandle && !comeFromLogout) {
-		let id							= HTML.DIV_TOAST_WELCOME;
-		let jqID						= "#" + id;
-		let toastOptions				= null;
-		$( `${jqID} > .toast-body` ).html( `Welcome back, ${BSKY.user.userHandle}!` );
-		let jqBSToast					= new bootstrap.Toast( jqID, toastOptions );
-		jqBSToast.show();
+	// Check whether we are in localhost.
+	// ---------------------------------------------------------
+	let isLocalhost						= checkIfWeAreInLocalhost();
+	if (isLocalhost) {
+		console.warn( "%c==== [warn] ENTERING DEVEL MODE ====", COMMON.CONSOLE_LOCAL );
+		redirectURI						= APP_LOCALHOST_CALLBACK_URL;
 	}
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `isLocalhost:${isLocalhost}, redirectURI:${redirectURI}, ` );
 
-	if (window.BSKY.DEBUG) console.groupEnd();
+	// Update the "userHandle" field
+	// ---------------------------------------------------------
+	let gotUserHandle					= checkUserHandle( comeFromLogout );
 
+	// End of module setup
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.DEBUG) console.groupEnd();
 }
@@ -258,7 +253,7 @@ async function step05PARRequest() {
 	localStorage.setItem(LSKEYS.CALLBACK_URL, redirectURI);
 
     // Prepare the data to perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	let preparedData					= await PKCE.prepareDataForPARRequest( BSKY.user.userHandle, APP_CLIENT_ID, redirectURI );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received prepared data:", preparedData );
 	BSKY.auth.state						= preparedData.state;
@@ -267,7 +262,7 @@ async function step05PARRequest() {
 	let body							= preparedData.body;
 
     // TuneUp and perform the call
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let url								= BSKY.auth.userPAREndPoint;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
     let fetchOptions					= {
@@ -298,22 +293,22 @@ function step06RedirectUserToBlueskyAuthPage() {
 	// Info step
 	HTML.showStepInfo( STEP_NAME, `Redirecting user to Bluesky authorization page...` );
 
-    // ------------------------------------------
+	// ---------------------------------------------------------
     // SAVE ALL RECEIVED DATA
 	// IN localStorage BEFORE LEAVING!!!
-    // ------------------------------------------
+	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
 	saveRuntimeLoginDataInLocalStorage();
 
     // Buld up the URL.
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let url								= BSKY.auth.userAuthorizationEndPoint;
     url									+= "?client_id=" + encodeURIComponent( APP_CLIENT_ID );
     url									+= "&request_uri=" + encodeURIComponent( BSKY.auth.userAuthServerRequestURI );
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Redirecting the user to URL:", url );
 
     // Redirect the user to the Bluesky Auth Page
-    // ------------------------------------------
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     window.location = url;
@@ -356,9 +351,6 @@ function checkIfWeAreInLocalhost() {
 	let thisURL							= new URL(window.location);
 	let isLocalhost						= COMMON.areEquals(thisURL.host, "localhost");
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
-
-	// The "context".
-	localStorage.setItem(LSKEYS.ROOT_URL, window.location);
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -421,10 +413,10 @@ function saveRuntimeLoginDataInLocalStorage() {
  *
  * Function to be executed in the "login page".
  * -------------------------------------------------------- */
-function checkUserHandle() {
+function checkUserHandle( comeFromLogout ) {
 	const STEP_NAME						= "checkUserHandle";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[comeFromLogout==${comeFromLogout}]` );
 
 	// Update the "user handle" field with the value in localStorage, if any.
 	let previous						= false;
@@ -436,35 +428,23 @@ function checkUserHandle() {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${BSKY.user.userHandle}"` );
 		}
 		previous						= true;
+
+		// Bootstrap Salute
+		// ---------------------------------------------------------
+		if (!comeFromLogout) {
+			let id							= HTML.DIV_TOAST_WELCOME;
+			let jqID						= "#" + id;
+			let toastOptions				= null;		// Kept here for further purposes
+			$( `${jqID} > .toast-body` ).html( `Welcome back, ${BSKY.user.userHandle}!` );
+			let jqBSToast					= new bootstrap.Toast( jqID, toastOptions );
+			jqBSToast.show();
+		}
 	} else {
 		localStorage.removeItem(LSKEYS.user.handle)
 	}
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return previous;
-}
-
-function fnLaunchToast( obj ) {
-	const STEP_NAME						= "fnLaunchToast";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "OBJ:", obj );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "OBJ.dataset:", obj.dataset );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "OBJ.dataset.toastId:", obj.dataset.toastId );
-
-	if (obj.dataset.toastId) {
-		let jqID						= "#" + obj.dataset.toastId;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "GOT OBJ.dataset.toastId:", `[jqID==${jqID}]` );
-		
-		let toastOptions				= null;
-		// let toastOptions				= {"animation": true, "autohide": true, "delay": 5000};
-		let jqBSToast					= new bootstrap.Toast( jqID, toastOptions );
-		jqBSToast.show();
-	}
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -486,6 +466,7 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 
 	// Disable login button.
 	$( HTML.BTN_LOGIN ).attr( "disabled", "" );
+	window.BSKY.faviconWorking();
 
 	// Hide error panel and show the info one.
 	COMMON.hide( HTML.DIV_PANEL_ERROR );
@@ -503,22 +484,26 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 
 		variable						= await stop02RetrieveUserDIDDocument();
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDidDocument:", COMMON.prettyJson( BSKY.auth.userDidDocument ) );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDidDocument:", BSKY.auth.userDidDocument );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDidDocument:", COMMON.prettyJson( BSKY.auth.userDidDocument ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSURL:", BSKY.auth.userPDSURL );
 
 		variable						= await step03RetrievePDSServerMetadata();
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", COMMON.prettyJson( BSKY.auth.userPDSMetadata ) );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", BSKY.auth.userPDSMetadata );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", COMMON.prettyJson( BSKY.auth.userPDSMetadata ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerURL:", BSKY.auth.userAuthServerURL );
 
 		variable						= await step04RetrieveAuthServerDiscoveryMetadata();
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerDiscovery:", COMMON.prettyJson( BSKY.auth.userAuthServerDiscovery ) );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerDiscovery:", BSKY.auth.userAuthServerDiscovery );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerDiscovery:", COMMON.prettyJson( BSKY.auth.userAuthServerDiscovery ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthorizationEndPoint:", BSKY.auth.userAuthorizationEndPoint );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userTokenEndPoint:", BSKY.auth.userTokenEndPoint );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPAREndPoint:", BSKY.auth.userPAREndPoint );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userRevocationEndPoint:", BSKY.auth.userRevocationEndPoint );
 
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current redirectURI:", redirectURI );
 		variable						= await step05PARRequest();
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerRequestURI:", BSKY.auth.userAuthServerRequestURI );
 
@@ -539,7 +524,8 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 
 		// Hide error panel and show the info one.
 		COMMON.show( HTML.DIV_PANEL_ERROR );
-
+	} finally {
+		window.BSKY.faviconStandBy();
 		// Enable login button.
 		$( HTML.BTN_LOGIN ).removeAttr( "disabled" );
 	}

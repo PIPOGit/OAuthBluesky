@@ -84,3 +84,10 @@ export function fnUpdateDebug( form ) {
 	if (window.BSKY.DEBUG) console.groupEnd();
 }
 
+export function activateLogSystem()		{ updateLogSystem( true ); }
+export function deactivateLogSystem()	{ updateLogSystem( false ); }
+export function toggleLogSystem()		{ updateLogSystem( !window.BSKY.DEBUG ); }
+function updateLogSystem( value ) {
+	window.BSKY.DEBUG					= value;
+	window.BSKY.GROUP_DEBUG				= window.BSKY.DEBUG && window.BSKY.DEBUG_FOLDED;
+}

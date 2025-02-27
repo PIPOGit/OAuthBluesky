@@ -11,6 +11,8 @@ import CONFIGURATION					from "../data/config.json" with { type: "json" };
 import * as COMMON						from "./common.functions.js";
 // To perform API calls
 import * as APICall						from "./APICall.js";
+// Common HTML functions
+import * as HTML						from "./HTML.js";
 
 
 /**********************************************************
@@ -43,6 +45,9 @@ export async function getRepositoryInformation() {
 	const PREFIX_HEADERS				= `${PREFIX}[Headers] `;
 	const PREFIX_BODY					= `${PREFIX}[Body] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Retrieving GIT Repository Information...` );
 
 	let root							= null;
 	let endpoint						= null;
@@ -77,7 +82,7 @@ export async function getRepositoryInformation() {
 		root							= CONFIGURATION.github.repo;
 
 		// Repository general info
-		// ------------------------------------------------
+		// ---------------------------------------------------------
 		endpoint						= "";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
@@ -86,7 +91,7 @@ export async function getRepositoryInformation() {
 		response.repoMetadata			= repoMetadata.body;
 
 		// Last tag info
-		// ------------------------------------------------
+		// ---------------------------------------------------------
 		endpoint						= "/tags";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
@@ -107,7 +112,7 @@ export async function getRepositoryInformation() {
 		}
 
 		// Commits info
-		// ------------------------------------------------
+		// ---------------------------------------------------------
 		endpoint						= "/commits";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);

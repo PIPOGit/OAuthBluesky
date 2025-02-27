@@ -22,8 +22,12 @@ import * as APIBluesky					from "./modules/APIBluesky.js";
 import * as APICall						from "./modules/APICall.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/BrowserDB.js";
+// Common Favicon functions
+import * as FAVICON						from "./modules/Favicon.js";
 // Common HTML functions
 import * as HTML						from "./modules/HTML.js";
+// Common Keyboard Listener functions
+import * as KPListener					from "./modules/KPListener.js";
 // Common OAuth2 functions
 import * as OAuth2						from "./modules/OAuth2.js";
 // Common Crypto functions
@@ -53,12 +57,17 @@ const MAX_ITERATIONS					= 100;
 /**********************************************************
  * Module Variables
  **********************************************************/
-let timerIdStaticLoop					= 0;
 let timerIdDynamicLoop					= 0;
+let refreshDynamicSeconds				= 0;
+let refreshDynamicTime					= 0;
+let timerIdStaticLoop					= 0;
+let refreshStaticSeconds				= 0;
+let refreshStaticTime					= 0;
 window.BSKY								= window.BSKY || {};
 window.BSKY.data						= {};
 window.BSKY.user						= {};
 window.BSKY.auth						= {};
+window.BSKY.path						= {};
 
 
 /**********************************************************
@@ -89,14 +98,29 @@ async function startUp() {
 
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_MODULE_INFO			= `${PREFIX}[Module Info] `;
 
-
-	// ================================================================
-	// Actualizamos el objeto raiz.
-	// + Logging Properties
+	// Default logging properties
+	// ---------------------------------------------------------
 	window.BSKY.DEBUG					= CONFIGURATION.global.debug;
 	window.BSKY.DEBUG_FOLDED			= CONFIGURATION.global.debug_folded;
 	window.BSKY.GROUP_DEBUG				= window.BSKY.DEBUG && window.BSKY.DEBUG_FOLDED;
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+
+	// ================================================================
+	// Module info.
+	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_MODULE_INFO );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "CONST_URL:", new URL( window.location ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Configuration:", CONFIGURATION );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "DEBUG:", window.BSKY.DEBUG, "DEBUG_FOLDED:", window.BSKY.DEBUG_FOLDED, "GROUP_DEBUG:", window.BSKY.GROUP_DEBUG );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "CLIENT_APP:", CLIENT_APP );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "PERMISSION: Notification.permission:", Notification.permission );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "PERMISSION: navigator.geolocation:", navigator.geolocation );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `ROOT object: [window.BSKY].`, window.BSKY );
+
+	// ================================================================
+	// Actualizamos el objeto raiz.
 	// + Properties
 	window.BSKY.data.MILLISECONDS		= 250;
 	window.BSKY.data.cryptoKey			= null;
@@ -109,58 +133,42 @@ async function startUp() {
 	window.BSKY.dashboard				= fnDashboard;
 	window.BSKY.logout					= fnLogout;
 	window.BSKY.refreshAccessToken		= fnRefreshAccessToken;
-
-	// ================================================================
-	// Module info.
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "CONST_URL:", new URL( window.location ) );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Configuration:", CONFIGURATION );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "DEBUG:", window.BSKY.DEBUG, "DEBUG_FOLDED:", window.BSKY.DEBUG_FOLDED, "GROUP_DEBUG:", window.BSKY.GROUP_DEBUG );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "CLIENT_APP:", CLIENT_APP );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "PERMISSION: Notification.permission:", Notification.permission );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "PERMISSION: navigator.geolocation:", navigator.geolocation );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `ROOT object: [window.BSKY].`, window.BSKY );
-
-	// ================================================================
-	// Page Events
-
-	/*
-		// JQuery Events
-		$( window ).on( "load", function(jqEvent) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `[$(window).on("load")] window is loaded` );
-		});
-		$( window ).on( "load", postBootstrap );
-	*/
-
-	/*
-		// Vanilla Javascript Events
-		window.onload = (event) => {
-			// executes when complete page is fully loaded, including all frames, objects and images
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `[window.onload] window is loaded` );
-		};
-	*/
+	window.BSKY.faviconStandBy			= FAVICON.toStandBy;
+	window.BSKY.faviconWorking			= FAVICON.toWorking;
 
 	// ================================================================
 	// Module END
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.groupEnd();
+
+
 	// ================================================================
 	// Ejecutamos las acciones propias de esta página.
+	
+	// Auto-detect the fallback URL from current...
+	// ---------------------------------------------------------
+	setupRootContext();
+
+	// La configuración de KeyPress
+	// ---------------------------------------------------------
+	KPListener.setupKeypress();
 
 	// La configuración de HighlightJS
+	// ---------------------------------------------------------
 	hljs.configure({
 		ignoreUnescapedHTML: true
 	});
 
 	// La versión.
-	// ------------------------------------
+	// ---------------------------------------------------------
 	$( `#${HTML.APP_NAME}` ).html( CONFIGURATION.global.appName );
 	$( `#${HTML.DIV_VERSION} > #${HTML.APP_NAME}` ).html( CONFIGURATION.global.appName );
 	$( `#${HTML.DIV_VERSION} > #${HTML.APP_VERSION}` ).html( CONFIGURATION.global.appVersion );
 
+	// End of module setup
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.DEBUG) console.groupEnd();
 }
@@ -169,6 +177,34 @@ async function startUp() {
 /**********************************************************
  * HELPER Functions
  **********************************************************/
+// Context URL helper function
+function setupRootContext() {
+	const STEP_NAME						= "setupRootContext";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// ROOT_CONTEXT
+	// localStorage.setItem(LSKEYS.ROOT_CONTEXT, url);
+	// localStorage.getItem(LSKEYS.ROOT_CONTEXT);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Examining [${window.location}]...` );
+	let currentURL						= new URL( window.location );
+	let origin							= currentURL.origin;
+	let path							= currentURL.pathname;
+	let lastChar						= path.lastIndexOf( '/' );
+	let rootContextPath					= path.substring( 0, lastChar );
+	let rootContextURLFromCurrent		= new URL( currentURL.origin + rootContextPath );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ROOT URL: [${rootContextURLFromCurrent}]...` );
+
+	// The "context".
+	// ---------------------------------------------------------
+	localStorage.setItem(LSKEYS.ROOT_URL, rootContextURLFromCurrent);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Saved ROOT URL in localStorage: [${LSKEYS.ROOT_URL}==${rootContextURLFromCurrent}]...` );
+	BSKY.path.root						= localStorage.getItem(LSKEYS.ROOT_URL);
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
 // Local Storage Helper functions
 function saveRuntimeDataInLocalStorage() {
 	const STEP_NAME						= "saveRuntimeDataInLocalStorage";
@@ -359,7 +395,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 
 
 	// Retrieve the list of following profiles from the repo.
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	const NSID							= "app.bsky.graph.follow";
 	// Who the user follows.
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user follows...` );
@@ -375,7 +411,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 	do {
 		n++;
 		// Retrieve user's follows (in the repo) to show
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		// Received an array of objects of this type:
 		//
 		//		{
@@ -423,7 +459,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 
 
 	// Now, retrieve the profiles information for each cid.
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	// Prepare the responses with the profiles
 	BSKY.user.following.profiles		= [];
 	let search							= [];
@@ -460,7 +496,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 		HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows (${MAX_PROFILES * startAt}/${finishAt})...` );
 
 		// Now, retrieve the block of profiles.
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		// Received an array of profiles of this type:
 		//
 		//		{
@@ -530,7 +566,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 
 
 	// Now, retrieve the missed profiles information.
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	if ( missing.length>=0 ) {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PDS_MISSING + `[Missing: ${missing.length}]` );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_MISSING + `Missed profiles...`, missing );
@@ -642,7 +678,7 @@ async function getWhoAreTheUserFollowers() {
 	do {
 		n++;
 		// Retrieve user's followers to show
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserFollowers", APIBluesky.retrieveUserFollowers, cursor );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
@@ -705,7 +741,7 @@ async function getWhoTheUserIsBlocking() {
 	do {
 		n++;
 		// Retrieve user's blocks
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserBlocks", APIBluesky.retrieveUserBlocks, cursor );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
@@ -765,7 +801,7 @@ async function getWhoTheUserIsMuting() {
 	do {
 		n++;
 		// Retrieve user's mutes
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserMutes", APIBluesky.retrieveUserMutes, cursor );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
@@ -825,7 +861,7 @@ async function getTheUserLists() {
 	do {
 		n++;
 		// Retrieve user's lists
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserLists", APIBluesky.retrieveUserLists, cursor );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
@@ -885,7 +921,7 @@ async function getTheUserMutingModerationLists() {
 	do {
 		n++;
 		// Retrieve user's lists
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserMutingModerationLists", APIBluesky.retrieveUserMutingModerationLists, cursor );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
@@ -946,7 +982,7 @@ async function getTheUserBlockingModerationLists() {
 	do {
 		n++;
 		// Retrieve user's lists
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveUserBlockingModerationLists", APIBluesky.retrieveUserBlockingModerationLists, cursor );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
 		
@@ -1006,7 +1042,7 @@ async function getTheTrendingTopics() {
 	let subTotal						= 0;
 
 	// Retrieve the Trending Topics
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	try {
 		data								= await APIBluesky.tryAndCatch( "retrieveTrendingTopics", APIBluesky.retrieveTrendingTopics, cursor );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Current data:`, data );
@@ -1124,7 +1160,7 @@ async function validateAccessToken() {
 	// Info step
 	HTML.showStepInfo( STEP_NAME, `The access token for the user(${BSKY.user.userHandle})...` );
 
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	// Retrieve the access_token
 	let apiCallResponse					= null;
 	let tokenValidationInfo				= false;
@@ -1268,8 +1304,11 @@ async function fnRefreshAccessToken() {
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();
 
+	// Info step
+	HTML.showStepInfo( STEP_NAME, `Refreshing Access Token for ${BSKY.user.userHandle}...` );
+
 	// Let's refresh the user's access token.
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	let refreshedAccessToken			= await APIBluesky.tryAndCatch( "refreshAccessToken", APIBluesky.refreshAccessToken, BSKY.auth.callbackData.code );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current refreshedAccessToken:", refreshedAccessToken );
 
@@ -1277,7 +1316,7 @@ async function fnRefreshAccessToken() {
 	HTML.clearHTMLError();
 
 	// First, let's validate the access token.
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Validating the refreshed token..." );
 	await validateAccessToken();
 
@@ -1296,9 +1335,11 @@ async function fnLogout() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+BSKY.user.userHandle+"]" );
 
+	window.BSKY.faviconWorking();
+
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Stopping the timers..." );
-	clearTimeout( timerIdStaticLoop );
 	clearTimeout( timerIdDynamicLoop );
+	clearTimeout( timerIdStaticLoop );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Logging out from Bluesky..." );
 	let loggedOutInfo					= await APIBluesky.tryAndCatch( "performUserLogout", APIBluesky.performUserLogout, null );
@@ -1341,20 +1382,20 @@ async function fnLogout() {
 	if ( !COMMON.isNullOrEmpty(loggedOutInfo) ) {
 		let header							= loggedOutInfo.headers;
 		if ( header.ok && header.status == 204 ) {
-			fallBackURL					= BSKY.auth.root;
+			fallBackURL					= BSKY.path.root;
 		} else {
 			fallBackURL					= fallBackURLFromCurrent;
 		}
 	} else {
-		// BSKY.auth.root						= localStorage.getItem(LSKEYS.ROOT_URL);
-		if ( BSKY?.auth?.root || !COMMON.isNullOrEmpty(BSKY.auth.root) ) {
-			fallBackURL					= BSKY.auth.root;
+		if ( BSKY?.path?.root || !COMMON.isNullOrEmpty(BSKY.path.root) ) {
+			fallBackURL					= BSKY.path.root;
 		} else {
 			fallBackURL					= fallBackURLFromCurrent;
 		}
 	}
 
 	// Send to fallback URL.
+	window.BSKY.faviconStandBy();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Redirecting to: [${fallBackURLFromCurrent}]...` );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1373,9 +1414,11 @@ async function fnLogout() {
 async function fnDashboard() {
 	const STEP_NAME						= "fnDashboard";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[time==${new Date().toLocaleString( COMMON.DEFAULT_LOCALE, COMMON.DEFAULT_DATEFORMAT )}]` );
 
 	let apiCallResponse					= null;
+
+	window.BSKY.faviconWorking();
 
 	// Restore data from localStorage.
 	restoreDataFromLocalStorage();
@@ -1385,60 +1428,110 @@ async function fnDashboard() {
 
 	try {
 		// First, let's validate the access token.
-		// ------------------------------------------
+		// ---------------------------------------------------------
 		apiCallResponse					= await validateAccessToken();
 
-		// Retrieve the dynamic data.
-		apiCallResponse					= await updateDashboard();
-
-		// Retrieve the static data.
-		apiCallResponse					= await updateStaticInfo();
-
-		// Static update
-		const refreshStaticSeconds			= window.BSKY.refreshStaticSeconds;
-		const refreshStaticTime				= refreshStaticSeconds * 1000;
-		if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the 'static' info every ${refreshStaticSeconds} second(s)` );
-		// timerId								= setInterval(() => updateStaticInfo(), refreshStaticTime);
-		(function staticLoop() {
-			timerIdStaticLoop = setTimeout( async () => {
-				// First, let's validate the access token.
-				// ------------------------------------------
-				apiCallResponse					= await validateAccessToken();
-
-				// Your logic here
-				updateStaticInfo();
-				staticLoop();
-			}, refreshStaticTime);
-		})();
 
 		// Dynamic update
-		const refreshDynamicSeconds			= window.BSKY.refreshDynamicSeconds;
-		const refreshDynamicTime			= refreshDynamicSeconds * 1000;
-		if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the dashboard every ${refreshDynamicSeconds} second(s)` );
-		// timerId								= setInterval(() => updateDashboard(), refreshDynamicTime);
-		(function dynamicLoop() {
-			timerIdDynamicLoop = setTimeout( async () => {
-				// First, let's validate the access token.
-				// ------------------------------------------
-				apiCallResponse					= await validateAccessToken();
+		// ---------------------------------------------------------
 
-				// Your logic here
-				updateDashboard();
-				dynamicLoop();
-			}, refreshDynamicTime);
-		})();
+		// First load: Retrieve the dynamic data.
+		apiCallResponse					= await updateDynamicInfo();
+
+		// Timed load: Retrieve the dynamic data.
+		refreshDynamicSeconds			= window.BSKY.refreshDynamicSeconds;
+		refreshDynamicTime				= refreshDynamicSeconds * 1000;
+		if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the dashboard every ${refreshDynamicSeconds} second(s)` );
+		timerIdDynamicLoop				= setInterval( updateDynamicData, refreshDynamicTime );
+
+		// Static update
+		// ---------------------------------------------------------
+
+		// First load: Retrieve the static data.
+		apiCallResponse					= await updateStaticInfo();
+
+		// Timed load: Retrieve the dynamic data.
+		refreshStaticSeconds			= window.BSKY.refreshStaticSeconds;
+		refreshStaticTime				= refreshStaticSeconds * 1000;
+		if (window.BSKY.DEBUG) console.debug(PREFIX + `TIMED Update the 'static' info every ${refreshStaticSeconds} second(s)` );
+		timerIdStaticLoop				= setInterval( updateStaticData, refreshStaticTime );
 	} catch (error) {
 		// Show the error and update the HTML fields
+		window.BSKY.faviconStandBy();
 		HTML.updateHTMLError(error);
 
 		// Errors? LOGOUT.
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Errors found. Performing the auto-logout." );
-		await fnLogout();
-
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		// throw( error );
+		await fnLogout();
+	} finally {
+		window.BSKY.faviconStandBy();
 	}
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Wrapper function": Update Dynamic Data.
+ * Involves access token validation before.
+ * -------------------------------------------------------- */
+async function updateDynamicData() {
+	const STEP_NAME						= "updateDynamicData";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[time==${new Date().toLocaleString( COMMON.DEFAULT_LOCALE, COMMON.DEFAULT_DATEFORMAT )}]` );
+
+	window.BSKY.faviconWorking();
+
+	// First, let's validate the access token.
+	// ---------------------------------------------------------
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Validate the token..." );
+	await validateAccessToken();
+
+	// Later, perform the data update.
+	// ---------------------------------------------------------
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Request and render dynamic data..." );
+	await updateDynamicInfo();
+
+	// Finally, set back the favicon.
+	// ---------------------------------------------------------
+	window.BSKY.faviconStandBy();
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGGED-IN PROCESS.
+ *
+ * "Wrapper function": Update Static Data.
+ * Involves access token validation before.
+ * -------------------------------------------------------- */
+async function updateStaticData() {
+	const STEP_NAME						= "updateStaticData";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[time==${new Date().toLocaleString( COMMON.DEFAULT_LOCALE, COMMON.DEFAULT_DATEFORMAT )}]` );
+
+	window.BSKY.faviconWorking();
+
+	// First, let's validate the access token.
+	// ---------------------------------------------------------
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Validate the token..." );
+	await validateAccessToken();
+
+	// Later, perform the data update.
+	// ---------------------------------------------------------
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Request and render static data..." );
+	await updateStaticInfo();
+
+	// Finally, set back the favicon.
+	// ---------------------------------------------------------
+	window.BSKY.faviconStandBy();
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1451,17 +1544,17 @@ async function fnDashboard() {
  * "Business function": HIGH frequency data update.
  * Running initially every CONFIGURATION.global.refresh_dynamic seconds
  * -------------------------------------------------------- */
-async function updateDashboard() {
-	const STEP_NAME						= "updateDashboard";
+async function updateDynamicInfo() {
+	const STEP_NAME						= "updateDynamicInfo";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	// Steps.
 	let apiCallResponse					= null;
 	try {
 		// Later, retrieve the rest of things.
-		// ------------------------------------------
+		// ---------------------------------------------------------
 
 		// Retrieve the user's profile to show
 		apiCallResponse					= await getTheUserProfile();
@@ -1481,7 +1574,7 @@ async function updateDashboard() {
 	}
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, null );
+	HTML.showStepInfo( STEP_NAME );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1499,12 +1592,12 @@ async function updateStaticInfo() {
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	// Steps.
 	let apiCallResponse					= null;
 	try {
 		// Later, retrieve the rest of things.
-		// ------------------------------------------
+		// ---------------------------------------------------------
 
 		// Retrieve the user's profile to show
 		apiCallResponse					= await getTheUserProfile();
@@ -1514,9 +1607,6 @@ async function updateStaticInfo() {
 
 		// Retrieve the user's followers
 		apiCallResponse					= await getWhoAreTheUserFollowers();
-
-		// Retrieve who are the user followers FROM THE PDS Repository
-		// apiCallResponse					= await getWhoAreTheUserFollowersFromTheRepo();
 
 		// Retrieve who the user is blocking
 		apiCallResponse					= await getWhoTheUserIsBlocking();
@@ -1545,7 +1635,7 @@ async function updateStaticInfo() {
 	}
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, null );
+	HTML.showStepInfo( STEP_NAME );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();

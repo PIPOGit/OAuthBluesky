@@ -8,7 +8,8 @@ h4 {
 	color: navy;
 }
 .left-panel {
-	border-right: 4px solid navy;
+	/* border-right: 4px solid navy; */
+	border: 1px solid navy;
 	background-color: azure;
 }
 .right-panel {

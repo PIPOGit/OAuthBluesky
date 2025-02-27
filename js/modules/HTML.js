@@ -1086,7 +1086,7 @@ export function fnFilterTable( item ) {
 	const TARGET_CLASS					= "theme-record-item";
 
 	// First, hide all records
-	// ------------------------------------
+	// ---------------------------------------------------------
 	let targetTable						= item.dataset.bskyTarget;
 	if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + `  + [TARGET Table.==${targetTable}]` );
 
@@ -1106,7 +1106,7 @@ export function fnFilterTable( item ) {
 	}
 
 	// Examine the "constraints"
-	// ------------------------------------
+	// ---------------------------------------------------------
 	if (TEST || window.BSKY.DEBUG) console.debug( PREFIX + "Let's look for the 'checked' radio buttons..." );
 	let targetFilter					= null;
 	let finalSelector					= "";

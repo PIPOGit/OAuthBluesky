@@ -49,21 +49,21 @@ export async function generateCryptoKey() {
 
 	// Create the crypto key.
     // Must save it, 'cause we'll reuse it later.
-    // ------------------------------------------
+	// ---------------------------------------------------------
 
 	// Let's generate a cryptographic key to sign/verify.
     let cryptoKey						= await generateKey();
 
 	// Export the public key in JWK format.
     // Must save it, 'cause we'll reuse it later.
-    // ------------------------------------------
+	// ---------------------------------------------------------
     let jwk								= await crypto.subtle.exportKey(JWK_EXPORT_FORMAT, cryptoKey.publicKey)
 		.then( keydata => {
         return keydata;
     });
 
 	// Remove private data from the JWK.
-    // ------------------------------------------
+	// ---------------------------------------------------------
     delete jwk.ext;
     delete jwk.key_ops;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( jwk ) );

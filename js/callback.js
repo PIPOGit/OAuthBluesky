@@ -28,6 +28,7 @@ const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
+const CALLBACK_DEBUG					= true;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
@@ -92,24 +93,24 @@ async function startUp() {
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
 
 	// ================================================================
 	// Module info.
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
 
 	// ================================================================
 	// Actualizamos el objeto raiz.
 	// + Functions
 	window.BSKY.analizeCallback			= fnAnalizeCallback;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
 
 	// ================================================================
 	// Module END
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.DEBUG) console.groupEnd();
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.groupEnd();
 }
 
 
@@ -119,15 +120,15 @@ async function startUp() {
 function checkIfWeAreInLocalhost() {
 	const STEP_NAME						= "checkIfWeAreInLocalhost";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Set, in localStorage, we come from "LOGOUT"
 	let thisURL							= new URL(window.location);
 	isLocalhost							= COMMON.areEquals(thisURL.host, "localhost");
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
@@ -143,13 +144,13 @@ function checkIfWeAreInLocalhost() {
 function fnAnalizeCallback(toLocalhost=false) {
 	const STEP_NAME						= "fnAnalizeCallback";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// By default...
 	redirectURI							= APP_DASHBOARD_URL;
 
 	// Let's pickup the incoming data from the query string.
-	// ----------------------------------------------------------------
+	// ---------------------------------------------------------
 	// Retrieve URL information
 	let thisURL							= new URL(window.location);
 
@@ -164,20 +165,20 @@ function fnAnalizeCallback(toLocalhost=false) {
 
 	// Check whether we are in localhost or in the public website
 	// and going or not to localhost.
-	// ----------------------------------------------------------------
+	// ---------------------------------------------------------
 	checkIfWeAreInLocalhost();
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "isLocalhost:", isLocalhost );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "toLocalhost:", toLocalhost );
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "isLocalhost:", isLocalhost );
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "toLocalhost:", toLocalhost );
 	if (isLocalhost) {
 		// We are in localhost.
-		// ----------------------------------------------------------------
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "We are in LOCALHOST." );
+		// ---------------------------------------------------------
+		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We are in LOCALHOST." );
 
 		// Going to localhost.
 		// + isLocalhost==true
 		// + toLocalhost==true
 		// Current URL: [APP_CALLBACK_TO_LOCALHOST_URL]
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "We has been CALLED FROM the PUBLIC WEBSITE." );
+		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We has been CALLED FROM the PUBLIC WEBSITE." );
 
 		// Retrieve the data from the query string.
 		iss							= parsedSearch.get("iss");
@@ -186,26 +187,26 @@ function fnAnalizeCallback(toLocalhost=false) {
 
 		// Prepare the object.
 		let callbackData			= new TYPES.CallbackData( iss, state, code, dpopNonce );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
+		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
 
 		// Save the data in the localStorage.
 		localStorage.setItem(LSKEYS.CALLBACK_DATA, JSON.stringify( callbackData ));
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
+		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
 
 		redirectURI					= APP_LOCALHOST_DASHBOARD_URL;
 	} else {
 		// We are in the public website.
-		// ----------------------------------------------------------------
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "We are in the PUBLIC WEBSITE." );
+		// ---------------------------------------------------------
+		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We are in the PUBLIC WEBSITE." );
 
 		if (toLocalhost) {
 			// Going to localhost.
 			// + isLocalhost==false
 			// + toLocalhost==true
 			// Current URL: [APP_LOCALHOST_CALLBACK_URL]
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "We have to REDIRECT to CALLBACK @ LOCALHOST." );
+			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We have to REDIRECT to CALLBACK @ LOCALHOST." );
 
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Preparing the target URL.." );
+			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "Preparing the target URL.." );
 			let url						= new URL( APP_CALLBACK_TO_LOCALHOST_URL );
 			url.search					= thisURL.search;
 			redirectURI					= url.toString();
@@ -214,7 +215,7 @@ function fnAnalizeCallback(toLocalhost=false) {
 			// + isLocalhost==false
 			// + toLocalhost==false
 			// Current URL: [APP_CALLBACK_URL]
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "We STAY in the PUBLIC WEBSITE." );
+			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We STAY in the PUBLIC WEBSITE." );
 
 			// Retrieve the data from the query string.
 			iss							= parsedSearch.get("iss");
@@ -223,17 +224,17 @@ function fnAnalizeCallback(toLocalhost=false) {
 
 			// Prepare the object.
 			let callbackData			= new TYPES.CallbackData( iss, state, code, dpopNonce );
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
+			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
 
 			// Save the data in the localStorage.
 			localStorage.setItem(LSKEYS.CALLBACK_DATA, JSON.stringify( callbackData ));
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
+			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
 		}
 
 	}
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Redirecting to", redirectURI);
+	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug(PREFIX + "Redirecting to", redirectURI);
 
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupEnd();
 	window.location						= redirectURI;
 }
 

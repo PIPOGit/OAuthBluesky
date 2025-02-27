@@ -12,6 +12,10 @@ import * as HTMLConstants				from "./HTML.Constants.js";
  **********************************************************/
 // Fancy CSS style for the DevTools console.
 export const CONSOLE_STYLE				= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
+export const CONSOLE_LOCAL				= 'background-color: darkblue; color: yellow; padding: 1px 4px; border: 1px solid hotpink; font-size: 1em;'
+// For Date/Time locale parsing.
+export const DEFAULT_LOCALE				= 'es-ES';
+export const DEFAULT_DATEFORMAT			= { DateStyle: 'short', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalseconddigits: 3 };
 
 
 /**********************************************************
@@ -48,9 +52,7 @@ const ID_TOAST_KO						= "myToastKO";
  **********************************************************/
 
 // Conversion objects.
-export const localeDefault				= 'es-ES';
-export const numberFormatter			= new Intl.NumberFormat( localeDefault, {style: "currency", currency: "EUR", MinimumIntegerDigits: 6});
-export const dateFormatOptions			= { DateStyle: 'short', year: 'numeric', month: '2-digit', day: '2-digit' };
+export const numberFormatter			= new Intl.NumberFormat( DEFAULT_LOCALE, {style: "currency", currency: "EUR", MinimumIntegerDigits: 6});
 export const prettyJson					= obj => JSON.stringify( obj, null, "  " );
 
 // Comparison functions
@@ -68,7 +70,7 @@ export const removeTrailingSlash		= str => ( str.endsWith('/') ? str.slice(0, -1
 // Filename functions
 export const getFileExtension			= filename => filename.split('.').pop();
 export const getFileNameFromPath		= filename => filename.split( '/' ).pop();
-export const fnGetById					= id => document.getElementById( id );
+export const getById					= id => document.getElementById( id );
 
 // LocalStorage
 export const lsSave						= ( key, value ) => localStorage.setItem( key, value );

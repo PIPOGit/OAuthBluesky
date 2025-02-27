@@ -67,7 +67,7 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	let needsToRefresh					= false;
 
 	// Basic Checks
-	// ------------------------------------------
+	// ---------------------------------------------------------
 	if ( COMMON.isNullOrEmpty( userAuthServerDiscovery ) ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -105,7 +105,7 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 
 
 	// Other Checks
-	// ------------------------------------------
+	// ---------------------------------------------------------
 
 	// Let's retrieve the runtime data
 	let dataInLocalStorage				= JSON.parse( localStorage.getItem(LSKEYS.BSKYDATA) );
@@ -153,7 +153,7 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 
 	// Now that the checks are OK, let's see the
 	// token expiration time.
-	// ------------------------------------------
+	// ---------------------------------------------------------
 
 	isValid								= true;
 
