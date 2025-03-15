@@ -1,13 +1,15 @@
 /* ********************************************************
  * IMPORTs externos
  * ********************************************************/
-@import url("bsky.error.css");			/* Todo lo relacionado con los errores. */
-@import url("bsky.modal.css");			/* Los modales */
-@import url("bsky.tables.css");			/* Las tablas */
-@import url("bsky.tabs.css");			/* Las tabs y los paneles */
-@import url("bsky.helpers.css");		/* Los helpers */
-@import url("bsky.notifications.css");	/* Las notificaciones */
-@import url("bsky.sidebar.css");		/* Para el OffCanvas */
+@import url("bsky.error.css");				/* Todo lo relacionado con los errores. */
+@import url("bsky.modal.css");				/* Los modales */
+@import url("bsky.tables.css");				/* Las tablas */
+@import url("bsky.tabs.css");				/* Las tabs y los paneles */
+@import url("bsky.helpers.css");			/* Los helpers */
+@import url("bsky.profile.css");			/* El perfil del usuario */
+@import url("bsky.notifications.css");		/* Las notificaciones */
+@import url("bsky.sidebar.css");			/* Para el OffCanvas */
+@import url("bsky.media.css");				/* Para cosas según medios */
 
 /* Bootstrap icons. */
 /*
@@ -29,8 +31,12 @@
 
   /* Heights. */
   --bsky-page-height: 640px;
-  --bsky-table-height: 600px;
-  --bsky-menu-button-margin: 4px;
+  --bsky-table-height: 700px;
+  --bsky-menu-button-margin: 2px;
+
+  /* App Color. */
+  --bsky-main-color: azure;
+  --bsky-main-color-secondary: navy;
 
   /* Normal panels. */
   --bsky-panel-border-size: 1px;
@@ -89,4 +95,5 @@ body {
 .theme-version {
   font-size: smaller;
   border-top: 1px solid black;
+  text-align: center;
 }

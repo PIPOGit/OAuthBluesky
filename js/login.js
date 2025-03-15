@@ -1,5 +1,5 @@
 /**********************************************************
- * File Info:
+ * Module Info:
  *
  * This file contains all the operative related
  * specifically with the index/login page.
@@ -39,6 +39,8 @@ const CLIENT_APP						= CONFIGURATION.clientApp;
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
 const APP_CALLBACK_URL					= CLIENT_APP.redirect_uri;
 const APP_LOCALHOST_CALLBACK_URL		= CLIENT_APP.redirect_to_localhost;
+const APP_DASHBOARD_URL					= CLIENT_APP.dashboard;
+const APP_LOCALHOST_DASHBOARD_URL		= CLIENT_APP.dashboard_localhost;
 
 
 /**********************************************************
@@ -122,16 +124,107 @@ async function startUp() {
 	// ---------------------------------------------------------
 	let gotUserHandle					= checkUserHandle( comeFromLogout );
 
-	// End of module setup
+	// Finally, let's see if we already have a valid user access token.
 	// ---------------------------------------------------------
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.DEBUG) console.groupEnd();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Check the token..." );
+	let isValid							= await BSKY.checkUserAccessToken();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "isValid:", isValid );
+	if ( isValid ) {
+		let url							= isLocalhost ? APP_LOCALHOST_DASHBOARD_URL : APP_DASHBOARD_URL;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.DEBUG) console.groupEnd();
+		window.location					= url;
+	} else {
+		COMMON.show( HTML.DIV_ROOT_PANEL );
+		// End of module setup
+		// ---------------------------------------------------------
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.DEBUG) console.groupEnd();
+	}
 }
 
 
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
+
+/* --------------------------------------------------------
+ * Function to check whether we come from the logged-out
+ * process.
+ * -------------------------------------------------------- */
+function checkIfComesFromLogout() {
+	const STEP_NAME						= "checkIfComesFromLogout";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Set, in localStorage, we come from "LOGOUT"
+	let comeFromLogout					= localStorage.getItem(LSKEYS.LOGOUT);
+	comeFromLogout						= ( COMMON.isNullOrEmpty(comeFromLogout) ) ? false : comeFromLogout;
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Are we redirected from LOGOUT:`, comeFromLogout );
+	localStorage.removeItem(LSKEYS.LOGOUT);
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.LOGOUT );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return comeFromLogout;
+}
+
+/* --------------------------------------------------------
+ * Function to check whether we are in the "local environment".
+ * -------------------------------------------------------- */
+function checkIfWeAreInLocalhost() {
+	const STEP_NAME						= "checkIfWeAreInLocalhost";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// Set, in localStorage, where we are.
+	let thisURL							= new URL(window.location);
+	let isLocalhost						= COMMON.areEquals(thisURL.host, "localhost");
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return isLocalhost;
+}
+
+
+/* --------------------------------------------------------
+ * Function to be executed in the "login page".
+ * -------------------------------------------------------- */
+function checkUserHandle( comeFromLogout ) {
+	const STEP_NAME						= "checkUserHandle";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[comeFromLogout==${comeFromLogout}]` );
+
+	// Update the "user handle" field with the value in localStorage, if any.
+	let previous						= false;
+	BSKY.user.userHandle				= localStorage.getItem(LSKEYS.user.handle) || null;
+	if ( BSKY.user.userHandle && !COMMON.isNullOrEmpty(BSKY.user.userHandle) && !COMMON.areEquals(BSKY.user.userHandle.toLowerCase(), "null") ) {
+		let $input						= $( `#${HTML.USER_HANDLE}` );
+		if ( $input.length ) {
+			$input.val( BSKY.user.userHandle );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${BSKY.user.userHandle}"` );
+		}
+		previous						= true;
+
+		// Bootstrap Salute
+		// ---------------------------------------------------------
+		if (!comeFromLogout) {
+			let id							= HTML.DIV_TOAST_WELCOME;
+			let jqID						= "#" + id;
+			let toastOptions				= null;		// Kept here for further purposes
+			$( `${jqID} > .toast-body` ).html( `Welcome back, ${BSKY.user.userHandle}!` );
+			let jqBSToast					= new bootstrap.Toast( jqID, toastOptions );
+			jqBSToast.show();
+		}
+	} else {
+		localStorage.removeItem(LSKEYS.user.handle)
+	}
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return previous;
+}
+
 
 /* --------------------------------------------------------
  * LOGIN PROCESS.
@@ -298,7 +391,7 @@ function step06RedirectUserToBlueskyAuthPage() {
 	// IN localStorage BEFORE LEAVING!!!
 	// ---------------------------------------------------------
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
-	saveRuntimeLoginDataInLocalStorage();
+	BSKY.saveRuntimeDataInLocalStorage();
 
     // Buld up the URL.
 	// ---------------------------------------------------------
@@ -312,139 +405,6 @@ function step06RedirectUserToBlueskyAuthPage() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     window.location = url;
-}
-
-/* --------------------------------------------------------
- * LOGIN PROCESS.
- *
- * Function to check whether we come from the logged-out
- * process.
- * -------------------------------------------------------- */
-function checkIfComesFromLogout() {
-	const STEP_NAME						= "checkIfComesFromLogout";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Set, in localStorage, we come from "LOGOUT"
-	let comeFromLogout					= localStorage.getItem(LSKEYS.LOGOUT);
-	comeFromLogout						= ( COMMON.isNullOrEmpty(comeFromLogout) ) ? false : comeFromLogout;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Are we redirected from LOGOUT:`, comeFromLogout );
-	localStorage.removeItem(LSKEYS.LOGOUT);
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.LOGOUT );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return comeFromLogout;
-}
-
-/* --------------------------------------------------------
- * LOGIN PROCESS.
- *
- * Function to check whether we are in the "local environment".
- * -------------------------------------------------------- */
-function checkIfWeAreInLocalhost() {
-	const STEP_NAME						= "checkIfWeAreInLocalhost";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Set, in localStorage, where we are.
-	let thisURL							= new URL(window.location);
-	let isLocalhost						= COMMON.areEquals(thisURL.host, "localhost");
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return isLocalhost;
-}
-
-
-/* --------------------------------------------------------
- * LOGIN PROCESS.
- *
- * Function to save data before we move to the Bluesky
- * auth page, to retrieve the runtime data after successful
- * authorization.
- * -------------------------------------------------------- */
-function saveRuntimeLoginDataInLocalStorage() {
-	const STEP_NAME						= "saveRuntimeLoginDataInLocalStorage";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle=="+BSKY.user.userHandle+"]" );
-
-	localStorage.setItem(LSKEYS.user.handle, BSKY.user.userHandle);
-	let savedInformation				= {
-		// Bluesky Variables
-		userHandle:						BSKY.user.userHandle,
-		userDid:						BSKY.user.userDid,
-		userDidDocument:				BSKY.auth.userDidDocument,
-		userPDSURL:						BSKY.auth.userPDSURL,
-		userPDSMetadata:				BSKY.auth.userPDSMetadata,
-		userAuthServerURL:				BSKY.auth.userAuthServerURL,
-		userAuthServerDiscovery:		BSKY.auth.userAuthServerDiscovery,
-		userAuthorizationEndPoint:		BSKY.auth.userAuthorizationEndPoint,
-		userTokenEndPoint:				BSKY.auth.userTokenEndPoint,
-		userPAREndPoint:				BSKY.auth.userPAREndPoint,
-		userRevocationEndPoint:			BSKY.auth.userRevocationEndPoint,
-		userAuthServerRequestURI:		BSKY.auth.userAuthServerRequestURI,
-		dpopNonce:						BSKY.data.dpopNonce,
-		dpopNonceUsed:					BSKY.data.dpopNonceUsed,
-		dpopNonceReceived:				BSKY.data.dpopNonceReceived,
-		wwwAuthenticate:				BSKY.data.wwwAuthenticate,
-		// Auth variables
-		state:							BSKY.auth.state,
-		codeVerifier:					BSKY.auth.codeVerifier,
-		codeChallenge:					BSKY.auth.codeChallenge,
-		callbackData:					BSKY.auth.callbackData,
-		// Response from the access token request
-		userAuthentication:				null,
-		userAccessToken:				null,
-		userRefreshToken:				null,
-		accessTokenHash:				null
-	};
-	localStorage.setItem(LSKEYS.BSKYDATA, JSON.stringify( savedInformation ));
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-}
-
-
-/* --------------------------------------------------------
- * LOGIN PROCESS.
- *
- * Function to be executed in the "login page".
- * -------------------------------------------------------- */
-function checkUserHandle( comeFromLogout ) {
-	const STEP_NAME						= "checkUserHandle";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[comeFromLogout==${comeFromLogout}]` );
-
-	// Update the "user handle" field with the value in localStorage, if any.
-	let previous						= false;
-	BSKY.user.userHandle				= localStorage.getItem(LSKEYS.user.handle) || null;
-	if ( BSKY.user.userHandle && !COMMON.isNullOrEmpty(BSKY.user.userHandle) && !COMMON.areEquals(BSKY.user.userHandle.toLowerCase(), "null") ) {
-		let $input						= $( `#${HTML.USER_HANDLE}` );
-		if ( $input.length ) {
-			$input.val( BSKY.user.userHandle );
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `Updated field: "${$input[0].id}" with (localStorage) value: "${BSKY.user.userHandle}"` );
-		}
-		previous						= true;
-
-		// Bootstrap Salute
-		// ---------------------------------------------------------
-		if (!comeFromLogout) {
-			let id							= HTML.DIV_TOAST_WELCOME;
-			let jqID						= "#" + id;
-			let toastOptions				= null;		// Kept here for further purposes
-			$( `${jqID} > .toast-body` ).html( `Welcome back, ${BSKY.user.userHandle}!` );
-			let jqBSToast					= new bootstrap.Toast( jqID, toastOptions );
-			jqBSToast.show();
-		}
-	} else {
-		localStorage.removeItem(LSKEYS.user.handle)
-	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return previous;
 }
 
 

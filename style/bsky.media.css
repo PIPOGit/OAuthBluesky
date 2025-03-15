@@ -1,0 +1,24 @@
+/* ********************************************************
+ * Media CSS
+ * ********************************************************/
+@media (max-width: 992px) {
+	.left-panel {
+        height: 200px;
+	}
+	.right-panel {
+        min-height: 300px;
+	}
+	.theme-modal .modal-header h1::before,
+	.theme-toast .toast-header h6::before {
+        display: none;
+	}
+}
+
+@media (min-width: 992px) {
+	.left-panel {
+		height: 75vh !important;
+	}
+    .navbar-expand-lg .navbar-toggler {
+        display: block;
+    }
+}

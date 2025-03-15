@@ -16,7 +16,7 @@
  * Para las tablas.
  * ********************************************************/
 .theme-table {
-  min-height: 100px;
+  min-height: var(--bsky-table-height);
   max-height: var(--bsky-table-height);
   overflow-y: scroll;
 }

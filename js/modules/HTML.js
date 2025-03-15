@@ -33,6 +33,7 @@ const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
+const GLOBAL							= CONFIGURATION.global;
 
 // Bluesky constants
 
@@ -248,7 +249,7 @@ export function clearStepInfo() {
 
 export function showStepInfo( step=null, message=null ) {
 	if ( !COMMON.isNullOrEmpty( message ) ) {
-		if ( !COMMON.isNullOrEmpty( step ) ) {
+		if ( !COMMON.isNullOrEmpty( step ) && GLOBAL.show_info_step ) {
 			$( '#'+HTMLConstants.DIV_PANEL_INFO_STEP ).html( `[${step}] ${message}` );
 		} else {
 			$( '#'+HTMLConstants.DIV_PANEL_INFO_STEP ).html( `${message}` );
@@ -333,11 +334,13 @@ async function htmlRenderNotification( idx, notification, userAccessToken, clien
 	let htmlHeader						= `<h2  class="accordion-header notificacion-header">`;
 	htmlHeader							+= `  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#notification-body-${cid}" aria-expanded="${idx===1 ? "true" : "false"}" aria-controls="notification-body-${cid}"> `;
 	htmlHeader							+= `  ${svgIcon}&nbsp;`;
+	htmlHeader							+= `<a href="javascript:void(0)" onClick="BSKY.showProfile('${authorHandle}', '${authorDid}')" data-bsky-handle="${authorHandle}" data-bsky-did="${authorDid}" data-bs-toggle="modal" data-bs-target="#${HTMLConstants.DIV_MODAL_USER_PROFILE}" data-bs-dismiss="modal">`;
 	if (authorAvatar) {
-		htmlHeader						+= `  <a href="${authorURL}"><img src="${authorAvatar}" height="${svgSize}"/></a> `;
+		htmlHeader						+= `<img src="${authorAvatar}" height="${svgSize}"/>`;
 	} else {
-		htmlHeader						+= `  <a href="${authorURL}"><i class="bi bi-person-slash" height="${svgSize}"></i></a> `;
+		htmlHeader						+= `<i class="bi bi-person-slash" height="${svgSize}"></i>`;
 	}
+	htmlHeader							+= `</a>`;
 	htmlHeader							+= `  <a href="${authorURL}" class="ps-2" title="Handle: ${authorHandle}, DID: ${authorDid}"><strong>${authorName}</strong></a>`;
 	htmlHeader							+= `</h2 >`;
 
@@ -455,8 +458,8 @@ export function htmlRenderNoNotifications() {
 	COMMON.hide( HTMLConstants.DIV_TAB_NOTIS_BADGE );
 
 	// Limpiamos el "DIV" de las notis.
-	$( '#'+HTMLConstants.DIV_NOTIFICATIONS ).removeClass( "accordion" );
-	$( '#'+HTMLConstants.DIV_NOTIFICATIONS ).html( "No notifications found" );
+	$( '#'+HTMLConstants.DIV_PANEL_NOTIFICATIONS ).removeClass( "accordion" );
+	$( '#'+HTMLConstants.DIV_PANEL_NOTIFICATIONS ).html( '<div id="notifications" name="notifications" class="notifications">No notifications found</div>' );
 }
 
 export async function htmlRenderNotifications( notifications, userAccessToken, clientId, accessTokenHash ) {
@@ -538,16 +541,22 @@ export function htmlRenderUserProfile( profile ) {
 	$( '#'+HTMLConstants.DIV_PROFILE_NAME_TOP ).html( profile.displayName || profile.handle );
 
 	$( '#'+HTMLConstants.DIV_PROFILE_HANDLE ).html( profile.handle );
-	$( '#'+HTMLConstants.DIV_PROFILE_HANDLE_TOP ).html( profile.handle );
+	$( '#'+HTMLConstants.DIV_PROFILE_HANDLE_TOP ).html( "@" + profile.handle );
 
 	$( '#'+HTMLConstants.DIV_PROFILE_FOLLOWERS ).html( profile.followersCount );
 	$( '#'+HTMLConstants.DIV_PROFILE_FOLLOWING ).html( profile.followsCount );
 	$( '#'+HTMLConstants.DIV_PROFILE_POSTS ).html( profile.postsCount );
 	$( '#'+HTMLConstants.DIV_PROFILE_DESCRIPTION ).html( profile.description );
 
-	// El enlace
-	let $link							= $( '#'+HTMLConstants.DIV_PROFILE_HANDLE_LINK );
+	// El enlace de arriba
+	let $link							= $( '#'+HTMLConstants.DIV_PROFILE_HANDLE_TOP );
 	let href							= API.bluesky.profile.url + profile.handle;
+	$link.attr("href",  href);
+	$link.attr("alt",   `ALT: ${profile.description}`);
+	$link.attr("title", `TITLE: ${profile.description}`);
+
+	// El enlace del perfil
+	$link								= $( '#'+HTMLConstants.DIV_PROFILE_HANDLE_LINK );
 	$link.attr("href",  href);
 	$link.attr("alt",   `ALT: ${profile.description}`);
 	$link.attr("title", `TITLE: ${profile.description}`);
@@ -571,9 +580,9 @@ export function htmlRenderUserProfile( profile ) {
 			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
 			// El toast.
 			let toastOptions			= {"animation": true, "autohide": true, "delay": 5000};
-			let $toast					= $( '#'+HTMLConstants.DIV_TOAST_FOLLOWERS, toastOptions );
-			let $toastImg				= $( '#'+HTMLConstants.DIV_TOAST_FOLLOWERS + " > .toast-header > img" );
-			let $toastBody				= $( '#'+HTMLConstants.DIV_TOAST_FOLLOWERS + " > .toast-body" );
+			let $toast					= $( '#'+HTMLConstants.DIV_TOAST_INFO, toastOptions );
+			let $toastImg				= $( '#'+HTMLConstants.DIV_TOAST_INFO + " > .toast-header > img" );
+			let $toastBody				= $( '#'+HTMLConstants.DIV_TOAST_INFO + " > .toast-body" );
 			let html					= `Diferencia de ${diffFollowers} followers y de ${diffFollowing} following`;
 			let delay					= ( window.BSKY.refreshDynamicSeconds - 1 ) * 1000;
 
@@ -760,14 +769,15 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 		html							+= `&nbsp;<i class="bi bi-list-stars ${viewer?.mutedByList ? "text-white bg-primary" : defaultColor}" title="you are ${viewer?.mutedByList ? "" : "NOT "}muting this profile thru list${viewer?.mutedByList ? ": " + viewer?.mutedByList?.name : ""}"></i>`;
 
 		html							+= `</td><td>`;
+		html							+= `<a href="javascript:void(0)" onClick="BSKY.showProfile('${profile.handle}', '${profile.did}')" data-bsky-handle="${profile.handle}" data-bsky-did="${profile.did}" data-bs-toggle="modal" data-bs-target="#${HTMLConstants.DIV_MODAL_USER_PROFILE}" data-bs-dismiss="modal">`;
 		if (profile.avatar) {
 			html						+= `<img src="${profile.avatar}"`;
 		} else {
 			html						+= `<img src="${HTMLConstants.BLANK_IMAGE}"`;
 		}
-		html							+= ` height="20" style="vertical-align: bottom;">&nbsp;<a href="${API.bluesky.profile.url}${handle}" target="_blank" title="${handle}">${profile.displayName || handle}</a></td>`;
-		html							+= `<td class="theme-smaller">${(profile.description) ? profile.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td>`;
-		html							+= '</tr>';
+		html							+= ` height="20" style="vertical-align: bottom;"></a>&nbsp;`;
+		html							+= `<a href="${API.bluesky.profile.url}${handle}" target="_blank" title="${handle}">${profile.displayName || handle}</a></td>`;
+		html							+= `<td class="theme-smaller">${(profile.description) ? profile.description.substring(0, HTMLConstants.DESC_MAX_CHARS) : ""}</td></tr>`;
 		
 		// TEST
 		delete viewer.following;

@@ -7,6 +7,9 @@
  **********************************************************/
 // Global configuration
 import CONFIGURATION					from "../data/config.json" with { type: "json" };
+// Common MimeTypes Operations
+import MIMETYPES						from "../data/MimeTypes.json" with { type: "json" };
+export *	 							from "../data/MimeTypes.json" with { type: "json" };
 // Common functions
 import * as COMMON						from "./common.functions.js";
 
@@ -20,6 +23,8 @@ import * as COMMON						from "./common.functions.js";
 
 // Other constants
 export const BLANK_IMAGE				= "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+export const CONST_BLACK_IMAGE			= "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+export const CONST_WHITE_IMAGE			= "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=";
 export const DESC_MAX_CHARS				= 60;
 
 // Locale constants
@@ -37,6 +42,9 @@ export const DIV_VERSION				= "panelVersion";
 // HTML Login Form Constants
 export const USER_HANDLE				= "userHandle";
 export const BTN_LOGIN					= "buttonLogin";
+
+// HTML Root Panel
+export const DIV_ROOT_PANEL				= "rootPanel";
 
 // HTML Info & Error Panels
 export const DIV_PANEL_INFO				= "panelInfo";
@@ -67,7 +75,7 @@ export const DIV_GIT_INFO_JSON			= "gitInfoContents";
 
 // HTML Toasts
 export const DIV_TOAST_WELCOME			= "toastWelcome";
-export const DIV_TOAST_FOLLOWERS		= "toastFollowersChange";
+export const DIV_TOAST_INFO				= "toastInformation";
 
 // HTML Profile
 export const DIV_PROFILE_AVATAR			= "profileAvatar";
@@ -89,6 +97,11 @@ export const DIV_MODAL_SEARCH_USER		= "modalSearchUser";
 export const DIV_MODAL_SEARCH_PATTERN	= "modalSearchProfilePattern";
 export const DIV_MODAL_SEARCH_OUTPUT	= "modalSearchProfileResults";
 
+// HTML User Profile
+export const DIV_MODAL_USER_PROFILE		= "modalUserProfile";
+export const RELATION_FOLLOW			= "relation-follow";
+export const RELATION_BLOCKED			= "relation-blocked";
+export const RELATION_MUTED				= "relation-muted";
 
 // HTML normal DIVs/Placeholders constants
 export const DIV_TAB_MUTED_BADGE		= "pill-muting-badge";
@@ -101,7 +114,8 @@ export const DIV_TABLE_MY_MOD_B_LISTS	= "table-my-mod-blocking-lists";
 
 // HTML Notifications constants
 export const DIV_TAB_NOTIS_BADGE		= "pill-notifications-badge";
-export const DIV_NOTIFICATIONS			= "panelNotifications";
+export const DIV_PANEL_NOTIFICATIONS	= "panelNotifications";
+export const DIV_NOTIFICATIONS			= "notifications";
 
 // HTML Following constants
 export const DIV_TAB_FOLLOWING_BADGE	= "pill-following-badge";
@@ -119,4 +133,8 @@ export const DIV_TABLE_FOLLOWERS		= "tableFollowers";
 export const DIV_TAB_BLOCKS_BADGE		= "pill-blocking-badge";
 export const DIV_PANEL_BLOCKING			= "panelBlocking";
 export const DIV_TABLE_BLOCKING			= "tableBlocking";
+
+// Common MIME Types
+export const MIME_TYPE_JSON				= MIMETYPES.filter( x => x.mime === "application/json" )[0];
+
 

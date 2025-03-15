@@ -3,12 +3,23 @@
 	<head>
 		<title>LOGIN | BSKY Analyzer</title>
 
-		<!-- Meta Bootstrap -->
+		<!-- Meta CharSet -->
 		<meta charset="UTF-8">
+
+		<!-- Meta ViewPort -->
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 		<!-- Meta Bluesky -->
 		<meta http-equiv="Permissions-Policy" content="interest-cohort=()">
+
+		<!-- Several Meta's -->
+		<meta name="application-name" content="BSKY Analyzer">
+		<meta name="application-title" content="BSKY Analyzer">
+		<meta name="Copyright" content="© PIPOGit @ GITHub" />
+		<meta name="Description" content="Bluesky aggregator page to analyze bluesky user's profile and relationships">
+		<meta name="Author" content="Arturo Garc&iacute;a Mart&iacute;n, <ArturoGarciaMartin@gmail.com>">
+		<meta name="Keywords" content="Bluesky analyzer aggregator">
+		<meta name="Generator" content="EditPlus®">
 
 		<!-- Favicon & Inner Stylesheet. -->
 		<link id="favicon" rel="icon" type="image/x-icon" href="./images/BSKY-Analyzer.Logo.ico">
@@ -52,10 +63,10 @@
 	<body>
 
 		<!-- Panel root. -->
-		<div class="container-lg">
+		<div id="rootPanel" class="container-lg hidden">
 
 			<!-- Panel superior: login. -->
-			<div class="d-flex row row-cols-md-2 vh-75">
+			<div class="d-flex row row-cols-md-2">
 
 				<!-- Panel izquierdo -->
 				<div class="col p-4 py-2 align-content-center text-center left-panel">
@@ -70,7 +81,7 @@
 					</div>
 
 					<!-- La versión. -->
-					<div id="panelVersion" name="panelVersion" class="sticky-bottom theme-version">&copy;&reg;<span id="appName">BSKY Analyzer</span>&trade;, v<span id="appVersion">1.0</span></div>
+					<div id="panelVersion" name="panelVersion" class="theme-version">&copy;&reg;<span id="appName">BSKY Analyzer</span>&trade;, v<span id="appVersion">1.0</span></div>
 				</div>
 
 				<!-- Panel derecho -->
@@ -91,16 +102,14 @@
 							</div>
 						</div>
 
-						<!-- El helper -->
-						<div id="userHandleHelp" name="userHandleHelp" class="form-text mb-3">
-							Type your Bluesky user handle without the initial "@" (<i>example: "safety.bsky.app"</i>)
+						<div class="d-flex justify-content-between row">
+							<!-- El helper -->
+							<div id="userHandleHelp" name="userHandleHelp" class="col-8 form-text" style="text-align: center;">
+								Type your Bluesky user handle without the initial "@" (<i>example: "safety.bsky.app"</i>)
+							</div>
+							<!-- El botón -->
+							<button id="buttonLogin" name="buttonLogin" type="submit" title="Log-in the application" class="btn btn-sm btn-success col-4">Login with Bluesky</button>
 						</div>
-
-						<!-- El botón -->
-						<div class="text-end">
-							<button id="buttonLogin" name="buttonLogin" type="submit" title="Log-in the application" class="btn btn-sm btn-success">Login with Bluesky</button>
-						</div>
-
 					</form>
 
 				</div>
