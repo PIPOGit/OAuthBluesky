@@ -3,6 +3,9 @@
  * ********************************************************/
 .root-panel {
   height: var(--bsky-page-height);
+  margin-right: auto;
+  margin-left: auto;
+	background-color: #f8f8f8;
 }
 .left-panel {
 	border-right: 4px solid navy;
@@ -10,6 +13,9 @@
 }
 .right-panel {
 	background-color: #f8f8f8;
+}
+.vh-80 {
+	height: 80vh !important;
 }
 .vh-75 {
 	height: 75vh !important;

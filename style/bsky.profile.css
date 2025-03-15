@@ -1,0 +1,45 @@
+/* ********************************************************
+ * USER PROFILE
+ * ********************************************************/
+
+
+/* ********************************************************
+ * Para el modal del user profile.
+ * ********************************************************/
+.theme-profile {
+  /* height: 500px; */
+}
+
+.theme-profile-images {
+}
+
+.theme-profile-images-banner {
+  border: 1px solid var( --bsky-main-color-secondary );
+}
+
+.theme-profile-images-avatar {
+  border: 1px solid var(--bsky-main-color-secondary);
+  position: absolute;
+  left: 24px;
+  top: 64px;
+  padding: 0px;
+  width: 172px;
+  height: 172px;
+}
+
+.theme-profile-info {
+/*
+  position: relative;
+  left: 200px;
+  width: 75%;
+*/
+}
+
+.profile-description {
+  border-top: 1px solid var(--bs-secondary-color);
+  background-color: var(--bs-tertiary-bg);
+}
+
+.theme-profile-relation {
+  border-top: 2px solid navy;
+}

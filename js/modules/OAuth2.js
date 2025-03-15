@@ -178,7 +178,7 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 		// BS Toast Test
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `BS Toast Test` );
 		// El toast.
-		let toastDivID					= HTML.DIV_TOAST_FOLLOWERS;
+		let toastDivID					= HTML.DIV_TOAST_INFO;
 		let toastJQDivID				= `#${toastDivID}`;
 		let delay						= ( window.BSKY.refreshDynamicSeconds - 1 ) * 1000;
 		let toastOptions				= {"animation": true, "autohide": true, "delay": delay};

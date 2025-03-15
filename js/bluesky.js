@@ -46,6 +46,7 @@ const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
+const NSID								= API.bluesky.NSID;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
@@ -135,6 +136,10 @@ async function startUp() {
 	window.BSKY.refreshAccessToken		= fnRefreshAccessToken;
 	window.BSKY.faviconStandBy			= FAVICON.toStandBy;
 	window.BSKY.faviconWorking			= FAVICON.toWorking;
+	window.BSKY.validateAccessToken		= validateAccessToken;
+	window.BSKY.getUserProfile			= getTheUserProfile;
+	window.BSKY.checkUserAccessToken	= checkUserAccessToken;
+	window.BSKY.saveRuntimeDataInLocalStorage	= saveRuntimeDataInLocalStorage;
 
 	// ================================================================
 	// Module END
@@ -255,7 +260,7 @@ function restoreDataFromLocalStorage() {
 	// Restore data from localStorage.
 	let dataInLocalStorage				= localStorage.getItem(LSKEYS.BSKYDATA);
 
-	let saved = JSON.parse( dataInLocalStorage ) || {};
+	let saved							= JSON.parse( dataInLocalStorage ) || {};
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Gathered data from localStorage["+LSKEYS.BSKYDATA+"]:", saved);
 	// Bluesky Variables
 	BSKY.user.userHandle				= saved.userHandle;
@@ -293,6 +298,63 @@ function restoreDataFromLocalStorage() {
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
+/* --------------------------------------------------------
+ * Inner "Business function": Retrieve records from the
+ * user's PDS (the "repo"), of a given type ("NSID").
+ * -------------------------------------------------------- */
+async function getRepoRecordsOfNSIDType( nsid ) {
+	const STEP_NAME						= "getRepoRecordsOfNSIDType";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[nsid=${nsid}]` );
+
+	let n								= 0;
+	let apiCallResponse					= null;
+	let cursor							= null;
+	let hayCursor						= false;
+	let data							= [];
+	let allData							= [];
+	let subTotal						= 0;
+	let acumulado						= 0;
+
+	do {
+		n++;
+		// Retrieve the user's repo records of type 'NSID'
+		// ---------------------------------------------------------
+		// Received an array of objects of this type:
+		//
+		//		{
+		//		    "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lifiak24z423",
+		//		    "cid": "bafyreigg5f77n57bdm24ufu3xgeqex5wgnb4fruwufwoe54bb5uhvuemje",
+		//		    "value": {
+		//		        "$type": "app.bsky.graph.follow",
+		//		        "subject": "did:plc:rfdm4kde7l4uic6opx6bqcy2",
+		//		        "createdAt": "2025-02-17T19:30:03.108Z"
+		//		    }
+		//		}
+		//
+		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveRepoListRecords", APIBluesky.retrieveRepoListRecords, { cursor: cursor, nsid: nsid } );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+
+		// Datos. Seguimos?
+		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
+
+		data							= apiCallResponse.records;
+		subTotal						= data.length;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected sub total: ${subTotal} following`, data );
+		allData.push(...data);
+		acumulado						= allData.length;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} following`, allData );
+
+		// Update the info panel
+		HTML.showStepInfo( STEP_NAME, `Retrieving who the user follows (${acumulado})...` );
+	} while ( hayCursor && (n<MAX_ITERATIONS) );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return allData;
+}
 
 
 /**********************************************************
@@ -342,31 +404,34 @@ async function getTheUserNotifications() {
 /* --------------------------------------------------------
  * LOGGED-IN PROCESS.
  *
- * "Business function": Retrieve user Profile.
+ * "Business function": Retrieve user Profile from the PDS.
  * -------------------------------------------------------- */
-async function getTheUserProfile() {
+async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 	const STEP_NAME						= "getTheUserProfile";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_ERROR					= `${PREFIX}[ERROR] `;
 	const PREFIX_RETRY					= `${PREFIX}[RETRY] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[handle==${handle}]` );
 
 	// Info step
 	HTML.showStepInfo( STEP_NAME, `Retrieving the user's profile...` );
 
 	// Now, the user's profile.
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile...` );
-	let userProfile						= await APIBluesky.tryAndCatch( "retrieveUserProfile", APIBluesky.retrieveUserProfile, BSKY.user.userHandle );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userProfile:", userProfile );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile[${handle}]...` );
+	let userProfile						= await APIBluesky.tryAndCatch( "retrieveUserProfile", APIBluesky.retrieveUserProfile, handle );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Current userProfile[${handle}]:`, userProfile );
 
 	// Save it.
-	BSKY.user.profile					= userProfile;
+	if ( COMMON.areEquals( handle, BSKY.user.userHandle ) ) {
+		BSKY.user.profile				= userProfile;
 
-	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserProfile( userProfile );
+		// Lo pintamos en su sitio.
+		HTML.htmlRenderUserProfile( userProfile );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return userProfile;
 }
 
 
@@ -380,82 +445,37 @@ async function getTheUserProfile() {
  * 2.- Retrieve the profile of each "cid".
  * 3.- Retrieve the info about "not found" profiles.
  * -------------------------------------------------------- */
-async function getWhoTheUserFollowsFromTheRepo() {
-	const STEP_NAME						= "getWhoTheUserFollowsFromTheRepo";
+async function getWhoTheUserFollows() {
+	const STEP_NAME						= "getWhoTheUserFollows";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_PDS_REPO				= `${PREFIX}[Step 1: PDS REPO] `;
-	const PREFIX_PDS_PROFILES			= `${PREFIX}[Step 2: PDS REPO Profiles] `;
-	const PREFIX_PDS_MISSING			= `${PREFIX}[Step 3: PDS REPO MISSING Profiles] `;
+	const PREFIX_PDS_PROFILES			= `${PREFIX}[PDS REPO Profiles] `;
+	const PREFIX_PDS_MISSING			= `${PREFIX}[PDS REPO MISSING Profiles] `;
 	const PREFIX_MISSING				= `${PREFIX}[MISSING] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving who the user follows...` );
 	BSKY.user.following					= BSKY.user.following || {};
 
-
-	// Retrieve the list of following profiles from the repo.
+	// Retrieve the list of records of a given type from the repo.
 	// ---------------------------------------------------------
-	const NSID							= "app.bsky.graph.follow";
-	// Who the user follows.
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user follows...` );
-	let apiCallResponse					= null;
-	let cursor							= null;
-	let hayCursor						= false;
-	let data							= null;
-	let allData							= [];
-	let n								= 0;
-	let acumulado						= 0;
-	let subTotal						= 0;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PDS_REPO );
-	do {
-		n++;
-		// Retrieve user's follows (in the repo) to show
-		// ---------------------------------------------------------
-		// Received an array of objects of this type:
-		//
-		//		{
-		//		    "uri": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lifiak24z423",
-		//		    "cid": "bafyreigg5f77n57bdm24ufu3xgeqex5wgnb4fruwufwoe54bb5uhvuemje",
-		//		    "value": {
-		//		        "$type": "app.bsky.graph.follow",
-		//		        "subject": "did:plc:rfdm4kde7l4uic6opx6bqcy2",
-		//		        "createdAt": "2025-02-17T19:30:03.108Z"
-		//		    }
-		//		}
-		//
-		apiCallResponse					= await APIBluesky.tryAndCatch( "retrieveRepoListRecords", APIBluesky.retrieveRepoListRecords, { cursor: cursor, nsid: NSID } );
-		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `+ [${n}] Current apiCallResponse:`, apiCallResponse );
+	const nsid							= NSID.follow;
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
-		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
-
-		data							= apiCallResponse.records;
-		subTotal						= data.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `  Detected sub total: ${subTotal} following`, data );
-		allData.push(...data);
-		acumulado						= allData.length;
-		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `  Detected acumulado: ${acumulado} following`, allData );
-
-		// Update the info panel
-		HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows (${acumulado})...` );
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-
-	// Save it.
-	BSKY.user.following.raw				= allData;
+	// The records.
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve repo records...` );
+	let allData							= await getRepoRecordsOfNSIDType( nsid );
 
 	if ( COMMON.isNullOrEmpty( allData ) ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `No following detected.` );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `No following detected.` );
 
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return;
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_REPO + `Detected ${acumulado} following`, allData );
+	// Save it.
+	BSKY.user.following.raw				= allData;
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${allData.length} records of type[${nsid}] in the repo`, allData );
 
 
 	// Now, retrieve the profiles information for each cid.
@@ -493,7 +513,7 @@ async function getWhoTheUserFollowsFromTheRepo() {
 		let queryString					= "?" + search.join("").substring(1);
 
 		// Update the info panel
-		HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) follows (${MAX_PROFILES * startAt}/${finishAt})...` );
+		HTML.showStepInfo( STEP_NAME, `Retrieving who the user follows (${MAX_PROFILES * startAt}/${finishAt})...` );
 
 		// Now, retrieve the block of profiles.
 		// ---------------------------------------------------------
@@ -662,7 +682,7 @@ async function getWhoAreTheUserFollowers() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user(${BSKY.user.userHandle})...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user...` );
 
 	// Now, the user's followers.
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who follows the user...` );
@@ -695,12 +715,12 @@ async function getWhoAreTheUserFollowers() {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected acumulado: ${acumulado} followers`, allData );
 
 		// Info step
-		HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user(${BSKY.user.userHandle}) (${acumulado})...` );
+		HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user (${acumulado})...` );
 		
 	} while ( hayCursor && (n<MAX_ITERATIONS) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} followers`, allData );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} records in the repo of the user` );
 
 	// Save it.
 	BSKY.user.followers					= allData;
@@ -725,7 +745,7 @@ async function getWhoTheUserIsBlocking() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) is blocking...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving who the user is blocking...` );
 
 	// Now, the user's blocks.
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user is blocking...` );
@@ -785,7 +805,7 @@ async function getWhoTheUserIsMuting() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving who the user(${BSKY.user.userHandle}) is muting...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving who the user is muting...` );
 
 	// Now, the user's mutes.
 	let apiCallResponse					= null;
@@ -845,7 +865,7 @@ async function getTheUserLists() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving the lists of the user(${BSKY.user.userHandle})...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving the lists of the user...` );
 
 	// Now, the user's mutes.
 	let apiCallResponse					= null;
@@ -905,7 +925,7 @@ async function getTheUserMutingModerationLists() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving the blocking moderation lists of the user(${BSKY.user.userHandle})...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving the blocking moderation lists of the user...` );
 
 	// Now, the user's blocking mod lists.
 	let apiCallResponse					= null;
@@ -966,7 +986,7 @@ async function getTheUserBlockingModerationLists() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Retrieving the muting moderation lists of the user(${BSKY.user.userHandle})...` );
+	HTML.showStepInfo( STEP_NAME, `Retrieving the muting moderation lists of the user...` );
 
 	// Now, the user's mute mod lists.
 	let apiCallResponse					= null;
@@ -1090,7 +1110,7 @@ async function getTheRelations() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Cross-checking relationships with the user [${BSKY.user.userHandle}]...` );
+	HTML.showStepInfo( STEP_NAME, `Cross-checking relationships with the user...` );
 
 	if (window.BSKY.DEBUG) console.warn( PREFIX + "Under Development!" );
 	// TODO: Cross-check following, followers, blocks and mutes with
@@ -1100,6 +1120,44 @@ async function getTheRelations() {
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+/* --------------------------------------------------------
+ * LOGIN PROCESS.
+ *
+ * Function to check whether we already have a
+ * valid user access token.
+ * -------------------------------------------------------- */
+async function checkUserAccessToken() {
+	const STEP_NAME						= "checkUserAccessToken";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	// First step: Retrieve data from local storage, if any.
+	restoreDataFromLocalStorage();
+
+	// Second step: Retrieve, if any, the token.
+	let valid							= false;
+	if ( !COMMON.isNullOrEmpty( BSKY.data.userAccessToken ) ) {
+		try {
+			let tokenValidationInfo		= OAuth2.validateAccessToken( BSKY.data.userAccessToken, BSKY.auth.userAuthServerDiscovery, BSKY.data.userAuthentication, BSKY.auth.userDidDocument, BSKY.auth.userPDSMetadata );
+			let isAccessTokenValid		= tokenValidationInfo.isValid;
+
+			if ( isAccessTokenValid ) {
+				if (window.BSKY.DEBUG) console.debug( PREFIX + `We have a VALID user access token. Continue.` );
+				valid					= true;
+			} else {
+				if (window.BSKY.DEBUG) console.debug( PREFIX + `We have an INVALID user access token. Stop.` );
+			}
+		} catch ( error ) {
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `We have no user access token. Stop.` );
+		}
+	}
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return valid;
 }
 
 
@@ -1158,7 +1216,7 @@ async function validateAccessToken() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `The access token for the user(${BSKY.user.userHandle})...` );
+	HTML.showStepInfo( STEP_NAME, `The access token of the user...` );
 
 	// ---------------------------------------------------------
 	// Retrieve the access_token
@@ -1175,7 +1233,7 @@ async function validateAccessToken() {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Do we have access token?
-	if (COMMON.isNullOrEmpty(BSKY.data.userAccessToken)) {
+	if ( COMMON.isNullOrEmpty( BSKY.data.userAccessToken ) ) {
 		// NO. Let's see if this is the first time after login.
 
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "No userAccessToken." );
@@ -1203,7 +1261,7 @@ async function validateAccessToken() {
 			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Detected:", BSKY.auth.redirectURL );
 		}
 
-		if (!BSKY?.auth?.callbackData?.code || COMMON.isNullOrEmpty(BSKY.auth.callbackData.code)) {
+		if ( !BSKY?.auth?.callbackData?.code || COMMON.isNullOrEmpty( BSKY.auth.callbackData.code ) ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `No "code" detected.` );
 			// NO. No token and no code. Throw an error.
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1305,7 +1363,7 @@ async function fnRefreshAccessToken() {
 	HTML.clearHTMLError();
 
 	// Info step
-	HTML.showStepInfo( STEP_NAME, `Refreshing Access Token for ${BSKY.user.userHandle}...` );
+	HTML.showStepInfo( STEP_NAME, `Refreshing the user Access Token...` );
 
 	// Let's refresh the user's access token.
 	// ---------------------------------------------------------
@@ -1603,7 +1661,7 @@ async function updateStaticInfo() {
 		apiCallResponse					= await getTheUserProfile();
 
 		// Retrieve who the user is following FROM THE PDS Repository
-		apiCallResponse					= await getWhoTheUserFollowsFromTheRepo();
+		apiCallResponse					= await getWhoTheUserFollows();
 
 		// Retrieve the user's followers
 		apiCallResponse					= await getWhoAreTheUserFollowers();

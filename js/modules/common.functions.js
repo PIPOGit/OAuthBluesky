@@ -54,6 +54,16 @@ const ID_TOAST_KO						= "myToastKO";
 // Conversion objects.
 export const numberFormatter			= new Intl.NumberFormat( DEFAULT_LOCALE, {style: "currency", currency: "EUR", MinimumIntegerDigits: 6});
 export const prettyJson					= obj => JSON.stringify( obj, null, "  " );
+export const getDateForFile				= param => {
+	const date							= new Date();
+	let formattedDate					=  `${date.getFullYear()}-`;
+	formattedDate						+= `${ ( "" + ( date.getMonth()   + 1 ) ).padStart( 2, "0" ) }-`;
+	formattedDate						+= `${ ( "" + ( date.getDate()        ) ).padStart( 2, "0" ) } - `;
+	formattedDate						+= `${ ( "" + ( date.getHours()       ) ).padStart( 2, "0" ) }.`;
+	formattedDate						+= `${ ( "" + ( date.getMinutes()     ) ).padStart( 2, "0" ) }.`;
+	formattedDate						+= `${ ( "" + ( date.getSeconds()     ) ).padStart( 2, "0" ) } - `;
+	return formattedDate;
+};
 
 // Comparison functions
 export const getTypeOf					= option => typeof option;
@@ -129,4 +139,12 @@ export const showError					= message => {
 	$("#"+ID_TOAST_KO+"Body").html( message );
 	$("#"+ID_TOAST_KO).toast("show");
 }
-
+export const showInfo					= message => {
+	// El toast.
+	const jqID							= "#" + HTMLConstants.DIV_TOAST_INFO;
+	const $toastBody					= $( jqID + " > .toast-body" );
+	const toastOptions					= {"animation": true, "autohide": true, "delay": 2500};
+	$toastBody.html( message );
+	const jqBSToast						= new bootstrap.Toast( jqID, toastOptions );
+	jqBSToast.show();
+}

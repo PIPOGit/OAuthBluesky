@@ -2,8 +2,9 @@
 	"global": {
 		"debug": false,
 		"debug_folded": true,
+		"show_info_step": false,
 		"appName": "BSKY Analyzer",
-		"appVersion": "1.7.2",
+		"appVersion": "1.7.3",
 		"refresh_dynamic": 15,
 		"refresh_static": 300
 	},
@@ -53,6 +54,11 @@
 				"root": "https://bsky.app",
 				"url": "https://bsky.app/profile/",
 				"pld": "https://web.plc.directory/did/"
+			},
+			"NSID": {
+				"follow": "app.bsky.graph.follow",
+				"block": "app.bsky.graph.block",
+				"mute": "app.bsky.graph.mute"
 			},
 			"XRPC": {
 				"public": "https://public.api.bsky.app/xrpc",
