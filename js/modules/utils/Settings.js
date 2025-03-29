@@ -3,9 +3,10 @@
  *
  **********************************************************/
 // Global configuration
-import CONFIGURATION					from "../data/config.json" with { type: "json" };
+import CONFIGURATION					from "../../data/config.json" with { type: "json" };
+
 // Common functions
-import * as COMMON						from "./common.functions.js";
+import * as COMMON						from "../common/CommonFunctions.js";
 // To perform API calls
 import * as APICall						from "./APICall.js";
 
@@ -47,8 +48,8 @@ export function fnUpdateCurrentRefreshTime( item ) {
 export function fnUpdateDebug( form ) {
 	const STEP_NAME						= "fnUpdateDebug";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
-	
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
 	const inputs						= form.querySelectorAll( "input" );
 
 	inputs.forEach( item => {
@@ -80,10 +81,11 @@ export function fnUpdateDebug( form ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ refreshStaticSeconds[${window.BSKY.refreshStaticSeconds}]: [${window.BSKY.refreshStaticSeconds}]` );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ refreshDynamicSeconds[${window.BSKY.refreshDynamicSeconds}]: [${window.BSKY.refreshDynamicSeconds}]` );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
+export function getLogSystemStatus()	{ return { debug: window.BSKY.DEBUG, folded: window.BSKY.DEBUG_FOLDED, group: window.BSKY.GROUP_DEBUG } }
 export function activateLogSystem()		{ updateLogSystem( true ); }
 export function deactivateLogSystem()	{ updateLogSystem( false ); }
 export function toggleLogSystem()		{ updateLogSystem( !window.BSKY.DEBUG ); }

@@ -5,13 +5,15 @@
  *
  **********************************************************/
 // Global configuration
-import CONFIGURATION					from "../data/config.json" with { type: "json" };
+import CONFIGURATION					from "../../data/config.json" with { type: "json" };
+
 // Common functions
-import * as COMMON						from "./common.functions.js";
+import * as COMMON						from "../common/CommonFunctions.js";
+// Common HTML Constants
+import * as HTMLConstants				from "../common/HTML.Constants.js";
+
 // Common Settings functions
 import * as SETTINGS					from "./Settings.js";
-// Common HTML Constants
-import * as HTMLConstants				from "./HTML.Constants.js";
 
 
 /**********************************************************
@@ -21,14 +23,13 @@ import * as HTMLConstants				from "./HTML.Constants.js";
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 
 // Inner constants
-const API								= CONFIGURATION.api;
+const KEYSTROKES						= CONFIGURATION.keystrokes;
 
-const KEYSTROKES_LOG_ON					= "shift d t";						// onKeyUpShiftDT, SETTINGS.activateLogSystem
-const KEYSTROKES_LOG_OFF				= "shift d f";						// onKeyUpShiftDF, SETTINGS.deactivateLogSystem
-const KEYSTROKES_LOG_TOGGLE				= "shift d space";					// onKeyUpShiftDSpace, SETTINGS.toggleLogSystem
-const KEYSTROKES_DOWNLOAD_BSKY			= "up down up down ctrl shift a";	// onKeySeqDownloadBSKY, download_BSKY
-
-
+const KEYSTROKES_LOG_ON					= KEYSTROKES.log_on;			// onKeyUpShiftDT, SETTINGS.activateLogSystem
+const KEYSTROKES_LOG_OFF				= KEYSTROKES.log_off;			// onKeyUpShiftDF, SETTINGS.deactivateLogSystem
+const KEYSTROKES_LOG_TOGGLE				= KEYSTROKES.log_toggle;		// onKeyUpShiftDSpace, SETTINGS.toggleLogSystem
+const KEYSTROKES_DOWNLOAD_BSKY			= KEYSTROKES.download_bsky;		// onKeySeqDownloadBSKY, download_BSKY
+const KEYSTROKES_CUSTOM_FUNCTION		= KEYSTROKES.custom_function;	// onKeySeqCustomFunction, BSKY.customFunction
 
 /**********************************************************
  * Module Variables
@@ -63,10 +64,11 @@ export function setupKeypress() {
 	} else {
 		listener						= listener || null;
 	}
-	
+
 	if ( !COMMON.isNullOrEmpty( listener ) ) {
 		let myCombos					= listener.register_many([
 			{
+				// KEYSTROKES_LOG_ON => Activates LOG
 				"keys"          		: KEYSTROKES_LOG_ON,
 				"is_exclusive"  		: true,
 				"on_keydown"    		: function() {
@@ -74,6 +76,7 @@ export function setupKeypress() {
 				"on_keyup"      		: onKeyUpShiftDT,
 				"this"   				: myScope
 			},
+				// KEYSTROKES_LOG_OFF => Deactivates LOG
 			{
 				"keys"          		: KEYSTROKES_LOG_OFF,
 				"is_exclusive"  		: true,
@@ -83,6 +86,7 @@ export function setupKeypress() {
 				"this"   				: myScope
 			},
 			{
+				// KEYSTROKES_LOG_TOGGLE => Toggle LOG activation
 				"keys"          		: KEYSTROKES_LOG_TOGGLE,
 				"is_exclusive"  		: true,
 				"on_keyup"      		: onKeyUpShiftDSpace,
@@ -91,9 +95,17 @@ export function setupKeypress() {
 
 			// ADMIN functionality
 			{
+				// KEYSTROKES_DOWNLOAD_BSKY => Download a JSON file with the contents of the BSKY.data object.
 				"keys"          		: KEYSTROKES_DOWNLOAD_BSKY,
 				"is_sequence"  			: true,
 				"on_keyup"      		: onKeySeqDownloadBSKY,
+				"this"          		: myScope
+			},
+			{
+				// KEYSTROKES_CUSTOM_FUNCTION => Launches a custom function.
+				"keys"          		: KEYSTROKES_CUSTOM_FUNCTION,
+				"is_sequence"  			: true,
+				"on_keyup"      		: onKeySeqCustomFunction,
 				"this"          		: myScope
 			}
 		]);
@@ -105,7 +117,7 @@ export function setupKeypress() {
 		console.warn( "NO KEYBOARD LISTENER DETECTED!" );
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -134,7 +146,7 @@ function onKeyUpShiftDSpace( event ) {
 function onKeySeqDownloadBSKY( event ) {
 	const STEP_NAME						= "onKeySeqDownloadBSKY";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Cogemos el objeto BSKY...
 	const obj							= {};
@@ -143,21 +155,22 @@ function onKeySeqDownloadBSKY( event ) {
 	obj.git								= BSKY.git;
 	obj.path							= BSKY.path;
 	obj.user							= BSKY.user;
-	
+
 	// Lo pasamos a string...
-	// TODO: Faltaría por incorporar lo de los emojis
-	// See: https://gist.github.com/satans17/38b54d7803598b1aa83d
-	const UNIFIED_EMOJI_RANGES			= [
-		'\ud83c[\udf00-\udfff]', // U+1F300 to U+1F3FF
-		'\ud83d[\udc00-\ude4f]', // U+1F400 to U+1F64F
-		'\ud83d[\ude80-\udeff]'  // U+1F680 to U+1F6FF
-	];
-	const EMOJI_REGEX					= new RegExp( UNIFIED_EMOJI_RANGES.join('|'), 'g' );
-	const objAsString					= COMMON.prettyJson( obj )
-											.replace(EMOJI_REGEX, "")
-											.replace(/\r/g, "")
-											.replace(/\n/g, "")
-											.replace(/[\x00-\x1F]/g, "");
+	// See: https://edvins.io/how-to-strip-emojis-from-string-in-java-script
+	const REGEX_NON_PRINTABLE_CHARS		= /(\r|\n|\r\n|\R)/g;
+	const REGEX_CTRL_CHARS				= /[\x00-\x1F]/g;
+	const REGEX_HARD_SPACE_1			= /&zwj;/gi;
+	const REGEX_HARD_SPACE_2			= /\u{200D}/giu;
+	const REGEX_EMOJI					= /\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Presentation}|\p{Emoji}\u{FE0F}/giu;
+	const objAsString					= COMMON.escapeUnicode( COMMON.prettyJson( obj ) )
+											// .replace( REGEX_CTRL_CHARS, "" )
+											.replace( REGEX_EMOJI, "" )
+											.replace( REGEX_HARD_SPACE_1, "" )
+											.replace( REGEX_HARD_SPACE_2, "" )
+											.replace( REGEX_NON_PRINTABLE_CHARS, "" )
+											.replace( /\r/g, "" )
+											.replace( /\n/g, "" );
 
 	// Le damos nombre...
 	const date							= new Date();
@@ -166,10 +179,15 @@ function onKeySeqDownloadBSKY( event ) {
 
 	// ... y lo descargamos.
 	const mimeType						= HTMLConstants.MIME_TYPE_JSON.mime + "; charset=utf-8";
-	download( objAsString, downloadedFileName, mimeType );
-
 	console.log( `Activated[${KEYSTROKES_DOWNLOAD_BSKY}] - BSKY Downloaded File[${mimeType}]: [${downloadedFileName}]` );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.DEBUG) console.groupEnd();
+	download( objAsString, downloadedFileName, mimeType );
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
+
+function onKeySeqCustomFunction( event ) {
+	BSKY.customFunction( event );
+}
+

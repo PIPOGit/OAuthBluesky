@@ -3,25 +3,47 @@
  *
  * This file contains all the operative related
  * specifically with the index/login page.
- *
  **********************************************************/
 
 
 /**********************************************************
  * Module imports
  **********************************************************/
-// Global configuration
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
+// The application configuration
 import CONFIGURATION					from "./data/config.json" with { type: "json" };
+
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
-import * as COMMON						from "./modules/common.functions.js";
-// To perform API calls
-import * as APICall						from "./modules/APICall.js";
-// Common BrowserDB functions
-import * as DB							from "./modules/BrowserDB.js";
+import * as COMMON						from "./modules/common/CommonFunctions.js";
+// Common Classes and Exceptions ("Types")
+import * as TYPES						from "./modules/common/CommonTypes.js";
 // Common HTML functions
-import * as HTML						from "./modules/HTML.js";
+import * as HTML						from "./modules/common/HTML.js";
+
+/* --------------------------------------------------------
+ * Modules with Helper functions
+ * -------------------------------------------------------- */
+// To perform API calls
+import * as APICall						from "./modules/utils/APICall.js";
+// Common BrowserDB functions
+import * as DB							from "./modules/utils/BrowserDB.js";
+
+/* --------------------------------------------------------
+ * Modules with Crypto and authentication functions
+ * -------------------------------------------------------- */
 // Common PKCE functions
-import * as PKCE						from "./modules/PKCE.js";
+import * as PKCE						from "./modules/auth/PKCE.js";
+
+/* --------------------------------------------------------
+ * Modules with external functionalities functions
+ * -------------------------------------------------------- */
+// Common GEO functions
+import * as GEO							from "./modules/external/GEO.js";
 
 
 /**********************************************************
@@ -34,6 +56,8 @@ const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
+const BLUESKY							= API.bluesky;
+const XRPC								= BLUESKY.XRPC;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
@@ -52,11 +76,9 @@ let redirectURI							= APP_CALLBACK_URL;
 /**********************************************************
  * BOOTSTRAP Functions
  **********************************************************/
-
-
-/**********************************************************
+/* --------------------------------------------------------
  * Module Load
- **********************************************************/
+ * -------------------------------------------------------- */
 ( ( parent, argument ) => {
 	if ( COMMON.getTypeOf( argument ) === 'function' ) {
 		parent.addEventListener( "DOMContentLoaded", argument );
@@ -69,77 +91,83 @@ let redirectURI							= APP_CALLBACK_URL;
 );
 
 
-/**********************************************************
+/* --------------------------------------------------------
  * Module BootStrap Loader Function
- **********************************************************/
+ * -------------------------------------------------------- */
 async function startUp() {
 	'use strict'
 
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_MODULE_INFO			= `${PREFIX}[Module Info] `;
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+
+	// ---------------------------------------------------------
+	// General default logging properties
+	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// ================================================================
-	// Module info.
-	if (window.BSKY.DEBUG) console.groupCollapsed( PREFIX_MODULE_INFO );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+	// Module INFO INI
 
-	// ================================================================
-	// Actualizamos el objeto raiz.
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_MODULE_INFO );
+	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+
+	// Root Object update.
+	// ---------------------------------------------------------
+	// + Properties
 	// + Functions
 	window.BSKY.authenticateWithBluesky = fnAuthenticateWithBluesky;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
 
+	// Module INFO END
 	// ================================================================
-	// Module END
+	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + `Updated object: [window.BSKY].`, window.BSKY );
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_MODULE_INFO + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
-
-	// ================================================================
-	// Ejecutamos las acciones propias de esta página.
+	// Page setup concrete actions.
+	// ---------------------------------------------------------
 
 	// Check whether we come from LOGOUT.
-	// ---------------------------------------------------------
 	let comeFromLogout					= checkIfComesFromLogout();
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "comeFromLogout:", comeFromLogout );
 
-	// La clave criptográfica en la base de datos
-	// ---------------------------------------------------------
+	// Crypto Key to Database
 	await DB.checkCryptoKeyInDB(comeFromLogout);
 
 	// Check whether we are in localhost.
-	// ---------------------------------------------------------
-	let isLocalhost						= checkIfWeAreInLocalhost();
+	const isLocalhost					= BSKY.checkIfWeAreInLocalhost();
 	if (isLocalhost) {
 		console.warn( "%c==== [warn] ENTERING DEVEL MODE ====", COMMON.CONSOLE_LOCAL );
 		redirectURI						= APP_LOCALHOST_CALLBACK_URL;
 	}
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `isLocalhost:${isLocalhost}, redirectURI:${redirectURI}, ` );
 
+	// Check whether we are back from an error.
+	const errorFromPage					= checkIfThereHasBeenErrors();
+
+	// Geolocation Information
+	let geolocationInfo					= await GEO.getGeolocationInformation();
+
 	// Update the "userHandle" field
-	// ---------------------------------------------------------
 	let gotUserHandle					= checkUserHandle( comeFromLogout );
 
 	// Finally, let's see if we already have a valid user access token.
-	// ---------------------------------------------------------
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Check the token..." );
 	let isValid							= await BSKY.checkUserAccessToken();
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "isValid:", isValid );
+	let url								= isLocalhost ? APP_LOCALHOST_DASHBOARD_URL : APP_DASHBOARD_URL;
+
+	// ---------------------------------------------------------
+	// End of module setup
+	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+
+	// Perform latest operations
+	// ---------------------------------------------------------
 	if ( isValid ) {
-		let url							= isLocalhost ? APP_LOCALHOST_DASHBOARD_URL : APP_DASHBOARD_URL;
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.DEBUG) console.groupEnd();
 		window.location					= url;
 	} else {
 		COMMON.show( HTML.DIV_ROOT_PANEL );
-		// End of module setup
-		// ---------------------------------------------------------
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.DEBUG) console.groupEnd();
 	}
 }
 
@@ -147,7 +175,6 @@ async function startUp() {
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-
 /* --------------------------------------------------------
  * Function to check whether we come from the logged-out
  * process.
@@ -164,27 +191,33 @@ function checkIfComesFromLogout() {
 	localStorage.removeItem(LSKEYS.LOGOUT);
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Deleted localStorage item:", LSKEYS.LOGOUT );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return comeFromLogout;
 }
 
+
 /* --------------------------------------------------------
- * Function to check whether we are in the "local environment".
+ * Function to check whether there has been errors in the page.
  * -------------------------------------------------------- */
-function checkIfWeAreInLocalhost() {
-	const STEP_NAME						= "checkIfWeAreInLocalhost";
+function checkIfThereHasBeenErrors() {
+	const STEP_NAME						= "checkIfThereHasBeenErrors";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	// Set, in localStorage, where we are.
-	let thisURL							= new URL(window.location);
-	let isLocalhost						= COMMON.areEquals(thisURL.host, "localhost");
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
+	const errorFromPage					= localStorage.getItem( LSKEYS.ERROR_DATA );
+	if ( !COMMON.isNullOrEmpty( errorFromPage ) ) {
+		const error						= JSON.parse( errorFromPage );
+		localStorage.removeItem( LSKEYS.ERROR_DATA );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `Received this error:`, COMMON.prettyJson( error ) );
+		COMMON.showInfo( "Found an error!" );
+	} else {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "No." );
+	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return isLocalhost;
+	return !COMMON.isNullOrEmpty( errorFromPage );
 }
 
 
@@ -220,16 +253,20 @@ function checkUserHandle( comeFromLogout ) {
 	} else {
 		localStorage.removeItem(LSKEYS.user.handle)
 	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return previous;
 }
 
 
-/* --------------------------------------------------------
- * LOGIN PROCESS.
+/**********************************************************
+ * LOGIN STEPs Functions
  *
- * OAuth2 login processes.
+ * LOGIN PROCESS.
+ * OAuth2 login process.
+ **********************************************************/
+/* --------------------------------------------------------
+ * STEP 1: Retrieve the user DID from the user handle
  * -------------------------------------------------------- */
 async function step01RetrieveUserDID() {
 	const STEP_NAME						= "step01RetrieveUserDID";
@@ -239,80 +276,140 @@ async function step01RetrieveUserDID() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Using handle:", BSKY.user.userHandle );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving did for ${BSKY.user.userHandle}...` );
 
-    let url								= API.bluesky.XRPC.url + API.bluesky.XRPC.api.auth.resolveHandle + "?handle=" + BSKY.user.userHandle;
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
-	// Here, we gather the "did" item in the received json.
-	BSKY.user.userDid					= responseFromServer.body.did;
+    // TuneUp and perform the call
+	// ---------------------------------------------------------
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	// The URL
+    let url								= XRPC.url + XRPC.api.auth.resolveHandle + "?handle=" + BSKY.user.userHandle;
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+
+	// The request
+	// ---------------------------------------------------------
+	const requestParams					= TYPES.HTTPRequest.getInstance( STEP_NAME, url );
+
+	// The response
+	// ---------------------------------------------------------
+	let responseFromServer				= await APICall.apiCall( requestParams );
+
+	// Here, we gather the "did" item in the received json.
+	BSKY.user.userDid					= responseFromServer.json.did;
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return BSKY.user.userDid;
 }
 
+
+/* --------------------------------------------------------
+ * STEP 2: Retrieve the user DID Document from the user did.
+ * -------------------------------------------------------- */
 async function stop02RetrieveUserDIDDocument() {
 	const STEP_NAME						= "stop02RetrieveUserDIDDocument";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userDid=="+BSKY.user.userDid+"]" );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving didDocument for ${BSKY.user.userHandle}...` );
 
-    let url								= API.bluesky.plc.url + "/" + BSKY.user.userDid;
+    // TuneUp and perform the call
+	// ---------------------------------------------------------
+
+	// The URL
+    let url								= BLUESKY.plc.url + "/" + BSKY.user.userDid;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+
+	// The request
+	// ---------------------------------------------------------
+	const requestParams					= TYPES.HTTPRequest.getInstance( STEP_NAME, url );
+
+	// The response
+	// ---------------------------------------------------------
+	let responseFromServer				= await APICall.apiCall( requestParams );
+
 	// Here, we gather the "did" item in the received json.
-	BSKY.auth.userDidDocument			= responseFromServer.body;
+	BSKY.auth.userDidDocument			= responseFromServer.json;
 	BSKY.auth.userPDSURL				= BSKY.auth.userDidDocument.service[0].serviceEndpoint;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received userDidDocument:", BSKY.auth.userDidDocument );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received userPDSURL:", BSKY.auth.userPDSURL );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return { userDidDocument: BSKY.auth.userDidDocument, userPDSURL: BSKY.auth.userPDSURL };
 }
 
+
+/* --------------------------------------------------------
+ * STEP 3: Retrieve the user PDS Server metadata from the DID Document.
+ * -------------------------------------------------------- */
 async function step03RetrievePDSServerMetadata() {
 	const STEP_NAME						= "step03RetrievePDSServerMetadata";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userPDSURL=="+BSKY.auth.userPDSURL+"]" );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving PDS Server Metadata for ${BSKY.user.userHandle}...` );
 
-    let url								= BSKY.auth.userPDSURL + API.bluesky.pds.api.metadata;
+    // TuneUp and perform the call
+	// ---------------------------------------------------------
+
+	// The URL
+    let url								= BSKY.auth.userPDSURL + BLUESKY.pds.api.metadata;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+
+	// The request
+	// ---------------------------------------------------------
+	const requestParams					= TYPES.HTTPRequest.getInstance( STEP_NAME, url );
+
+	// The response
+	// ---------------------------------------------------------
+	let responseFromServer				= await APICall.apiCall( requestParams );
+
 	// Here, we gather the "did" item in the received json.
-	BSKY.auth.userPDSMetadata			= responseFromServer.body;
+	BSKY.auth.userPDSMetadata			= responseFromServer.json;
 	BSKY.auth.userAuthServerURL			= BSKY.auth.userPDSMetadata.authorization_servers[0];
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received userPDSMetadata:", BSKY.auth.userPDSMetadata );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received userAuthServerURL:", BSKY.auth.userAuthServerURL );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return { userPDSMetadata: BSKY.auth.userPDSMetadata, userAuthServerURL: BSKY.auth.userAuthServerURL };
 }
 
+
+/* --------------------------------------------------------
+ * STEP 4: Retrieve the Authorization Server metadata from the PDS Server metadata.
+ * -------------------------------------------------------- */
 async function step04RetrieveAuthServerDiscoveryMetadata() {
 	const STEP_NAME						= "step04RetrieveAuthServerDiscoveryMetadata";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userAuthServerURL=="+BSKY.auth.userAuthServerURL+"]" );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving Authentication Server URL...` );
 
-    let url								= BSKY.auth.userAuthServerURL + API.bluesky.authServer.api.discovery;
+    // TuneUp and perform the call
+	// ---------------------------------------------------------
+
+	// The URL
+    let url								= BSKY.auth.userAuthServerURL + BLUESKY.authServer.api.discovery;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+
+	// The request
+	// ---------------------------------------------------------
+	const requestParams					= TYPES.HTTPRequest.getInstance( STEP_NAME, url );
+
+	// The response
+	// ---------------------------------------------------------
+	let responseFromServer				= await APICall.apiCall( requestParams );
+
 	// Here, we gather the "did" item in the received json.
-	BSKY.auth.userAuthServerDiscovery	= responseFromServer.body;
+	BSKY.auth.userAuthServerDiscovery	= responseFromServer.json;
 	BSKY.auth.userAuthorizationEndPoint	= BSKY.auth.userAuthServerDiscovery.authorization_endpoint;
 	BSKY.auth.userTokenEndPoint			= BSKY.auth.userAuthServerDiscovery.token_endpoint;
 	BSKY.auth.userPAREndPoint			= BSKY.auth.userAuthServerDiscovery.pushed_authorization_request_endpoint;
@@ -323,7 +420,7 @@ async function step04RetrieveAuthServerDiscoveryMetadata() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received userPAREndPoint:", BSKY.auth.userPAREndPoint );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received userRevocationEndPoint:", BSKY.auth.userRevocationEndPoint );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return {
 		userAuthServerDiscovery: BSKY.auth.userAuthServerDiscovery
@@ -334,12 +431,17 @@ async function step04RetrieveAuthServerDiscoveryMetadata() {
 	};
 }
 
+
+/* --------------------------------------------------------
+ * STEP 5: Retrieve the PAR Authorization from the PDS Server metadata.
+ * -------------------------------------------------------- */
 async function step05PARRequest() {
 	const STEP_NAME						= "step05PARRequest";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Requesting PAR authorization...` );
 
 	// The "context".
@@ -356,34 +458,54 @@ async function step05PARRequest() {
 
     // TuneUp and perform the call
 	// ---------------------------------------------------------
+
+	// The URL
     let url								= BSKY.auth.userPAREndPoint;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Invoking URL:", url );
+
+    // The call headers.
+	// ---------------------------------------------------------
+    let headers							= {
+        "Content-Type": APICall.CONTENT_TYPE_FORM_ENCODED,
+    }
+
+	// The fetch options
     let fetchOptions					= {
-        method: APICall.HTML_POST,
-        headers: {
-            'Content-Type': APICall.CONTENT_TYPE_FORM_ENCODED
-        },
+        method: APICall.HTTP_POST,
+        headers: headers,
         body: body
     }
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ with this options:", COMMON.prettyJson( fetchOptions ) );
- 	let responseFromServer				= await APICall.makeAPICall( STEP_NAME, url, fetchOptions );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received responseFromServer:", COMMON.prettyJson( responseFromServer ) );
+
+	// The request
+	// ---------------------------------------------------------
+	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
+
+	// The response
+	// ---------------------------------------------------------
+	let responseFromServer				= await APICall.apiCall( requestParams );
+
 	// Here, we gather the "request_uri" item in the received json.
-	BSKY.auth.userAuthServerRequestURI	= responseFromServer.body.request_uri;
+	BSKY.auth.userAuthServerRequestURI	= responseFromServer.json.request_uri;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received dpopNonce:", BSKY.data.dpopNonce );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received userAuthServerRequestURI:", BSKY.auth.userAuthServerRequestURI );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return { dpopNonce: BSKY.data.dpopNonce, userAuthServerRequestURI: BSKY.auth.userAuthServerRequestURI };
 }
 
+
+/* --------------------------------------------------------
+ * STEP 6: Redirect the user to the Authorization page.
+ * -------------------------------------------------------- */
 function step06RedirectUserToBlueskyAuthPage() {
 	const STEP_NAME						= "step06RedirectUserToBlueskyAuthPage";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Redirecting user to Bluesky authorization page...` );
 
 	// ---------------------------------------------------------
@@ -393,8 +515,10 @@ function step06RedirectUserToBlueskyAuthPage() {
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved data in localStorage." );
 	BSKY.saveRuntimeDataInLocalStorage();
 
-    // Buld up the URL.
+    // TuneUp and perform the call
 	// ---------------------------------------------------------
+
+    // Build up the URL.
     let url								= BSKY.auth.userAuthorizationEndPoint;
     url									+= "?client_id=" + encodeURIComponent( APP_CLIENT_ID );
     url									+= "&request_uri=" + encodeURIComponent( BSKY.auth.userAuthServerRequestURI );
@@ -402,7 +526,7 @@ function step06RedirectUserToBlueskyAuthPage() {
 
     // Redirect the user to the Bluesky Auth Page
 	// ---------------------------------------------------------
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     window.location = url;
 }
@@ -414,7 +538,7 @@ function step06RedirectUserToBlueskyAuthPage() {
 /* --------------------------------------------------------
  * LOGIN PROCESS.
  *
- * Function to be executed during the login process.
+ * Function to launch the login process.
  * -------------------------------------------------------- */
 async function fnAuthenticateWithBluesky( form, handle ) {
 	const STEP_NAME						= "fnAuthenticateWithBluesky";
@@ -425,7 +549,7 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 	event.preventDefault();
 
 	// Disable login button.
-	$( HTML.BTN_LOGIN ).attr( "disabled", "" );
+	$( HTML.BTN_LOGIN ).prop( "disabled", "" );
 	window.BSKY.faviconWorking();
 
 	// Hide error panel and show the info one.
@@ -433,25 +557,21 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 	COMMON.show( HTML.DIV_PANEL_INFO );
 
 	let variable						= null;
-	
+
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current handle:", handle );
+		// The user handle
 		BSKY.user.userHandle			= handle;
 
+		// The user did from the handle
 		variable						= await step01RetrieveUserDID();
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDid:", BSKY.user.userDid );
 
+		// The user did document
 		variable						= await stop02RetrieveUserDIDDocument();
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDidDocument:", BSKY.auth.userDidDocument );
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userDidDocument:", COMMON.prettyJson( BSKY.auth.userDidDocument ) );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSURL:", BSKY.auth.userPDSURL );
 
+		// The user PDS Server metadata
 		variable						= await step03RetrievePDSServerMetadata();
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received variable:", COMMON.prettyJson( variable ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", BSKY.auth.userPDSMetadata );
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userPDSMetadata:", COMMON.prettyJson( BSKY.auth.userPDSMetadata ) );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Current userAuthServerURL:", BSKY.auth.userAuthServerURL );
 
 		variable						= await step04RetrieveAuthServerDiscoveryMetadata();
@@ -474,15 +594,17 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Redirecting user to the Bluesky Authorization Server page..." );
 		step06RedirectUserToBlueskyAuthPage();
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		if (window.BSKY.DEBUG) console.error( PREFIX + "Detected error:", COMMON.prettyJson( error ) );
+		if (window.BSKY.DEBUG) console.error( PREFIX + "Detected error:", error.toString() );
 
 		// Clear info panel
 		HTML.clearStepInfo();
 		COMMON.hide( HTML.DIV_PANEL_INFO );
 
 		// Hide error panel and show the info one.
+		HTML.updateHTMLError( error );
 		COMMON.show( HTML.DIV_PANEL_ERROR );
 	} finally {
 		window.BSKY.faviconStandBy();
@@ -490,7 +612,7 @@ async function fnAuthenticateWithBluesky( form, handle ) {
 		$( HTML.BTN_LOGIN ).removeAttr( "disabled" );
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 

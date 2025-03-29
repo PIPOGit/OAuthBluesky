@@ -10,13 +10,16 @@
  *
  **********************************************************/
 // Global configuration
-import CONFIGURATION					from "../data/config.json" with { type: "json" };
+import CONFIGURATION					from "../../data/config.json" with { type: "json" };
+
 // Common functions
-import * as COMMON						from "./common.functions.js";
-// Common Crypto functions
-import * as CRYPT						from "./OAuth2/Crypt.js";
+import * as COMMON						from "../common/CommonFunctions.js";
 // Common HTML functions
-import * as HTML						from "./HTML.js";
+import * as HTML						from "../common/HTML.js";
+
+// Common Crypto functions
+import * as CRYPT						from "../auth/Crypt.js";
+
 // IDB functions
 import { openDB, deleteDB }				from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
@@ -69,7 +72,7 @@ export async function connect() {
 			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_UPGRADE );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_UPGRADE + "Upgrading the database:", DB_NAME );
 			db.createObjectStore(DB_JWK_TABLENAME);
-			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_BLOCKED + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		},
 		blocking(currentVersion, blockedVersion, event) {
@@ -78,7 +81,7 @@ export async function connect() {
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKING + "+ currentVersion:", currentVersion );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKING + "+ blockedVersion:", blockedVersion );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKING + "+ received event:", event );
-			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKING + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_BLOCKING + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		},
 		blocked(currentVersion, blockedVersion, event) {
@@ -87,32 +90,32 @@ export async function connect() {
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "+ currentVersion:", currentVersion );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "+ blockedVersion:", blockedVersion );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "+ received event:", event );
-			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_BLOCKED + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		},
 		terminated() {
 			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_TERMINATED );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_TERMINATED + "DELETED Database:", DB_NAME );
-			if (window.BSKY.DEBUG) console.debug( PREFIX_TERMINATED + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_TERMINATED + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
 	}).then( database => {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_THEN );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_THEN + "Database opened:", DB_NAME );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_THEN + "+ received database:", database );
-		if (window.BSKY.DEBUG) console.debug( PREFIX_THEN + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_THEN + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return database;
 	}).catch( error => {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_CATCH );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_CATCH + "Error opening the database:", DB_NAME );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_CATCH + "+ received error:", error );
-		if (window.BSKY.DEBUG) console.debug( PREFIX_CATCH + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_CATCH + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return null;
 	});
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Returning a database:", database );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return database;
 }
@@ -138,7 +141,7 @@ export async function terminate() {
 		}
 	});
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Returning a database:", database );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return database;
 }
@@ -161,7 +164,7 @@ export async function checkCryptoKeyInDB(comeFromLogout=false) {
 	// If we come from LOGOUT, we must not create a new crypto key and/or store it in the database.
 	if (comeFromLogout) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `We come from logout.` );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return;
 	}
@@ -176,7 +179,7 @@ export async function checkCryptoKeyInDB(comeFromLogout=false) {
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Checking whether the Crypto Key exists in the database:`, CRYPT.JWK_DB_KEY );
 	let savedCryptoKey					= await get( CRYPT.JWK_DB_KEY );
-	
+
 	if ( COMMON.isNullOrEmpty(savedCryptoKey) ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `The Crypto Key DOES NOT exists in the database. Create a new key and store it in the DB:` );
 
@@ -199,7 +202,7 @@ export async function checkCryptoKeyInDB(comeFromLogout=false) {
 	window.BSKY.data.cryptoKey			= savedCryptoKey.cryptoKey;
 	window.BSKY.data.jwk				= savedCryptoKey.jwk;
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -220,20 +223,20 @@ export async function deleteDatabase() {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_THEN );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_THEN + "Database deleted:", DB_NAME );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_THEN + "+ received deleted:", deleted );
-		if (window.BSKY.DEBUG) console.debug( PREFIX_THEN + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_THEN + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return deleted;
 	}).catch( error => {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_CATCH );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_CATCH + "Error deleting the database:", DB_NAME );
 		if (window.BSKY.DEBUG) console.debug( PREFIX_CATCH + "+ received error:", error );
-		if (window.BSKY.DEBUG) console.debug( PREFIX_CATCH + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_CATCH + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return null;
 	});
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Removed the database[${DB_NAME}]:`, deletedDB );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 

@@ -4,29 +4,31 @@
  * See: https://github.com/udelt/dpop_js_test/blob/main/modules/crypto.js
  **********************************************************/
 // Common modules
-import CONFIGURATION				from "../../data/config.json" with { type: "json" };
+import CONFIGURATION					from "../../data/config.json" with { type: "json" };
+
 // Common functions
-import * as COMMON					from "../common.functions.js";
+import * as COMMON						from "../common/CommonFunctions.js";
+
 // Common Base64 functions
-import * as Base64					from "./Base64Url.js";
+import * as Base64						from "./Base64Url.js";
 
 
 /**********************************************************
  * Module Constants
  **********************************************************/
 // Module SELF constants
-const MODULE_NAME					= COMMON.getModuleName( import.meta.url );
+const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 
 // Inner constants
+const CRYPTO							= CONFIGURATION.crypto;
 
 // Crypt constants
-export const JWK_DB_KEY				= "jwkBluesky";
-export const JWK_EXPORT_FORMAT		= "jwk";
-export const SIGNING_ALGORITM		= "ECDSA";
-export const KEY_ALGORITM			= "ES256";
-export const CURVE_ALGORITM			= "P-256";
-export const HASHING_ALGORITM		= "SHA-256";
-
+export const JWK_DB_KEY					= CRYPTO.JWK_DB_KEY;
+export const JWK_EXPORT_FORMAT			= CRYPTO.JWK_EXPORT_FORMAT;
+export const SIGNING_ALGORITM			= CRYPTO.SIGNING_ALGORITM;
+export const KEY_ALGORITM				= CRYPTO.KEY_ALGORITM;
+export const CURVE_ALGORITM				= CRYPTO.CURVE_ALGORITM;
+export const HASHING_ALGORITM			= CRYPTO.HASHING_ALGORITM;
 
 
 /**********************************************************
@@ -68,7 +70,7 @@ export async function generateCryptoKey() {
     delete jwk.key_ops;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "jwk:", COMMON.prettyJson( jwk ) );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return { cryptoKey: cryptoKey, jwk: jwk };
 }
@@ -90,7 +92,7 @@ export async function generateKey() {
 		console.error(err);
 	});
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     return key;
 }
@@ -124,7 +126,7 @@ export async function sign(privateKey, message) {
     return signature;
 };
 
-// Calculate the SHA256 hash of the input text. 
+// Calculate the SHA256 hash of the input text.
 // Returns a promise that resolves to an ArrayBuffer
 export async function sha256(str) {
     const encoder = new TextEncoder();
@@ -141,7 +143,7 @@ export async function createHash(accessToken, noPadding = false){
         var base = Base64.toBase64Url(new Uint8Array(hash));
         if (noPadding){
             base = base.replace(/\=+$/, '');
-        }    
+        }
         return base;
     })
     .catch(function(err){

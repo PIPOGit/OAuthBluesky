@@ -6,13 +6,15 @@
  *
  **********************************************************/
 // Global configuration
-import CONFIGURATION					from "../data/config.json" with { type: "json" };
+import CONFIGURATION					from "../../data/config.json" with { type: "json" };
+
 // Common functions
-import * as COMMON						from "./common.functions.js";
-// To perform API calls
-import * as APICall						from "./APICall.js";
+import * as COMMON						from "../common/CommonFunctions.js";
 // Common HTML functions
-import * as HTML						from "./HTML.js";
+import * as HTML						from "../common/HTML.js";
+
+// To perform API calls
+import * as APICall						from "../utils/APICall.js";
 
 
 /**********************************************************
@@ -86,29 +88,29 @@ export async function getRepositoryInformation() {
 		endpoint						= "";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
-		repoMetadata					= await APICall.makeAPICall( STEP_NAME, url );
+		repoMetadata					= await APICall.call( STEP_NAME, url );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received repoMetadata:", repoMetadata );
-		response.repoMetadata			= repoMetadata.body;
+		response.repoMetadata			= repoMetadata.json;
 
 		// Last tag info
 		// ---------------------------------------------------------
 		endpoint						= "/tags";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
-		allTags							= await APICall.makeAPICall( STEP_NAME, url );
+		allTags							= await APICall.call( STEP_NAME, url );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received allTags:", allTags );
 		if ( allTags ) {
-			lastTag						= allTags.body[0];
+			lastTag						= allTags.json[0];
 			response.lastTag			= lastTag;
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Received lastTag:", lastTag );
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "+ lastTag.name:", lastTag.name );
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "+ lastTag.commit.url:", lastTag.commit.url );
 
 			// Retrieve commit information
-			lastTagCommit				= await APICall.makeAPICall( STEP_NAME, lastTag.commit.url );
-			response.lastTagCommit		= lastTagCommit.body;
-			lastTagCommitAuthor			= lastTagCommit.body.commit.author;
-			lastTagCommitCommitter		= lastTagCommit.body.commit.committer;
+			lastTagCommit				= await APICall.call( STEP_NAME, lastTag.commit.url );
+			response.lastTagCommit		= lastTagCommit.json;
+			lastTagCommitAuthor			= response.lastTagCommit.commit.author;
+			lastTagCommitCommitter		= response.lastTagCommit.commit.committer;
 		}
 
 		// Commits info
@@ -116,10 +118,10 @@ export async function getRepositoryInformation() {
 		endpoint						= "/commits";
 		url								= root + endpoint;
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from:", url);
-		allCommits						= await APICall.makeAPICall( STEP_NAME, url );
+		allCommits						= await APICall.call( STEP_NAME, url );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Received allCommits:", allCommits );
 		if ( allCommits ) {
-			lastCommit					= allCommits.body[0];
+			lastCommit					= allCommits.json[0];
 			response.lastCommit			= lastCommit;
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Received lastCommit:", lastCommit );
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "+ lastCommit.commit:", lastCommit.commit );
@@ -156,10 +158,10 @@ export async function getRepositoryInformation() {
 			}
 		 */
 	}
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received githubInfo:", response );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	
 	return response;
 }
 

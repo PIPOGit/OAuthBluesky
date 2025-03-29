@@ -6,12 +6,13 @@
  *
  **********************************************************/
 // Global configuration
-import CONFIGURATION					from "../data/config.json" with { type: "json" };
+import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 // Common MimeTypes Operations
-import MIMETYPES						from "../data/MimeTypes.json" with { type: "json" };
-export *	 							from "../data/MimeTypes.json" with { type: "json" };
+import MIMETYPES						from "../../data/MimeTypes.json" with { type: "json" };
+export *	 							from "../../data/MimeTypes.json" with { type: "json" };
+
 // Common functions
-import * as COMMON						from "./common.functions.js";
+import * as COMMON						from "./CommonFunctions.js";
 
 
 /**********************************************************
@@ -50,8 +51,8 @@ export const DIV_ROOT_PANEL				= "rootPanel";
 
 // HTML Info & Error Panels
 export const DIV_PANEL_INFO				= "panelInfo";
-export const DIV_PANEL_ERROR			= "panelError";
 export const DIV_PANEL_INFO_STEP		= `${DIV_PANEL_INFO}Step`;
+export const DIV_PANEL_ERROR			= "panelError";
 export const DIV_ERROR					= "error";
 export const DIV_ERROR_DESCRIPTION		= "errorDescription";
 
@@ -80,6 +81,7 @@ export const DIV_TOAST_WELCOME			= "toastWelcome";
 export const DIV_TOAST_INFO				= "toastInformation";
 
 // HTML Profile
+export const DIV_PROFILE_CARD			= "profileCard";
 export const DIV_PROFILE_AVATAR			= "profileAvatar";
 export const DIV_PROFILE_AVATAR_TOP		= "profileAvatarTop";
 export const DIV_PROFILE_DESCRIPTION	= "profileDescription";
@@ -108,6 +110,7 @@ export const RELATION_MUTED				= "relation-muted";
 // HTML normal DIVs/Placeholders constants
 export const DIV_TAB_MUTED_BADGE		= "pill-muting-badge";
 export const DIV_TAB_MY_LISTS_BADGE		= "pill-my-lists-badge";
+export const DIV_TABLE_MY_FEEDS			= "table-my-feeds";
 export const DIV_TABLE_MY_LISTS			= "table-my-lists";
 export const DIV_TABLE_MUTING			= "table-muting";
 export const DIV_TRENDING_TOPICS		= "trendingTopics";
@@ -118,6 +121,12 @@ export const DIV_TABLE_MY_MOD_B_LISTS	= "table-my-mod-blocking-lists";
 export const DIV_TAB_NOTIS_BADGE		= "pill-notifications-badge";
 export const DIV_PANEL_NOTIFICATIONS	= "panelNotifications";
 export const DIV_NOTIFICATIONS			= "notifications";
+
+// HTML idle constants
+export const DIV_TAB_IDLE_BADGE			= "pill-idle-badge";
+export const DIV_PANEL_IDLE				= "panelIdle";
+export const DIV_TABLE_IDLE				= "tableIdle";
+export const DIV_IDLE					= "idle";
 
 // HTML Following constants
 export const DIV_TAB_FOLLOWING_BADGE	= "pill-following-badge";
@@ -135,6 +144,18 @@ export const DIV_TABLE_FOLLOWERS		= "tableFollowers";
 export const DIV_TAB_BLOCKS_BADGE		= "pill-blocking-badge";
 export const DIV_PANEL_BLOCKING			= "panelBlocking";
 export const DIV_TABLE_BLOCKING			= "tableBlocking";
+
+// HTML ClearSky constants
+export const CLEARSKY_UPTIME			= "clearSkyUptime";
+export const CLEARSKY_ACCOUNTS_DATE		= "clearSkyAccountsDate";
+export const CLEARSKY_ACCOUNTS_ACTIVE	= "clearSkyAccountsActive";
+export const CLEARSKY_ACCOUNTS_DELETED	= "clearSkyAccountsDeleted";
+export const CLEARSKY_ACCOUNTS_TOTAL	= "clearSkyAccountsTotal";
+
+// HTML ClearSky lists constants
+export const CLEARSKY_DIV_B_IN			= "table-in-lists";
+export const CLEARSKY_DIV_B_SUBS		= "table-subscribed-to-lists";
+export const CLEARSKY_DIV_B_MEMBER		= "table-member-of-lists";
 
 // Common MIME Types
 export const MIME_TYPE_JSON				= MIMETYPES.filter( x => x.mime === "application/json" )[0];

@@ -3,7 +3,7 @@
  *
  **********************************************************/
 // Common functions
-import * as COMMON						from "./common.functions.js";
+import * as COMMON						from "../common/CommonFunctions.js";
 
 
 /**********************************************************

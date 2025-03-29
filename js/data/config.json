@@ -4,9 +4,17 @@
 		"debug_folded": true,
 		"show_info_step": false,
 		"appName": "BSKY Analyzer",
-		"appVersion": "1.7.3",
+		"appVersion": "2.0.0",
 		"refresh_dynamic": 15,
-		"refresh_static": 300
+		"refresh_static": 300,
+		"autoLogout": false
+	},
+	"keystrokes": {
+		"log_on": "shift d t",
+		"log_off": "shift d f",
+		"log_toggle": "shift d space",
+		"download_bsky": "up down up down ctrl shift a",
+		"custom_function": "ctrl shift z x"
 	},
 	"bluesky": {
 		"token_expiration_threshold": 10
@@ -28,15 +36,21 @@
 		"dashboard_localhost": "http://localhost/bluesky/dashboard.html",
 		"redirect_delay": 3
 	},
+	"crypto": {
+		"JWK_DB_KEY": "jwkBluesky",
+		"JWK_EXPORT_FORMAT": "jwk",
+		"SIGNING_ALGORITM": "ECDSA",
+		"KEY_ALGORITM": "ES256",
+		"CURVE_ALGORITM": "P-256",
+		"HASHING_ALGORITM": "SHA-256"
+	},
 	"localStorageKeys": {
 		"BSKYDATA": "BSKYDATA",
 		"CALLBACK_DATA": "CALLBACK_DATA",
 		"CALLBACK_URL": "CALLBACK_URL",
 		"LOGOUT": "LOGOUT",
 		"ROOT_URL": "ROOT_URL",
-		"crypto": {
-			"jwk": "jwk"
-		},
+		"ERROR_DATA": "ERROR_DATA",
 		"request": {
 			"access_token": "access_token",
 			"authentication": "authentication",
@@ -53,9 +67,11 @@
 			"profile": {
 				"root": "https://bsky.app",
 				"url": "https://bsky.app/profile/",
-				"pld": "https://web.plc.directory/did/"
+				"pld": "https://plc.directory/",
+				"pldWeb": "https://web.plc.directory/did/"
 			},
 			"NSID": {
+				"status": "xyz.statusphere.status",
 				"follow": "app.bsky.graph.follow",
 				"block": "app.bsky.graph.block",
 				"mute": "app.bsky.graph.mute"
@@ -68,25 +84,30 @@
 						"resolveHandle": "/com.atproto.identity.resolveHandle"
 					},
 					"pds": {
+						"getActorFeeds": "/app.bsky.feed.getActorFeeds",
+						"getActorLikes": "/app.bsky.feed.getActorLikes",
+						"getAuthorFeed": "/app.bsky.feed.getAuthorFeed",
 						"getBlocks": "/app.bsky.graph.getBlocks",
 						"getConvoForMembers": "/chat.bsky.convo.getConvoForMembers",
+						"getFollowers": "/app.bsky.graph.getFollowers",
+						"getFollows": "/app.bsky.graph.getFollows",
+						"getLikes": "/app.bsky.feed.getLikes",
 						"getListBlocks": "/app.bsky.graph.getListBlocks",
 						"getListMutes": "/app.bsky.graph.getListMutes",
+						"getList": "/app.bsky.graph.getList",
 						"getLists": "/app.bsky.graph.getLists",
 						"getMutes": "/app.bsky.graph.getMutes",
+						"getProfile": "/app.bsky.actor.getProfile",
+						"getProfiles": "/app.bsky.actor.getProfiles",
 						"getTrendingTopics": "/app.bsky.unspecced.getTrendingTopics",
 						"getUnreadCount": "/app.bsky.notification.getUnreadCount",
 						"listNotifications": "/app.bsky.notification.listNotifications",
 						"listRecords": "/com.atproto.repo.listRecords",
+						"searchActorsTypeahead": "/app.bsky.actor.searchActorsTypeahead",
 						"sendMessage": "/chat.bsky.convo.sendMessage"
 					},
 					"public": {
-						"getFollowers": "/app.bsky.graph.getFollowers",
-						"getFollows": "/app.bsky.graph.getFollows",
-						"getPosts": "/app.bsky.feed.getPosts",
-						"getProfile": "/app.bsky.actor.getProfile",
-						"getProfiles": "/app.bsky.actor.getProfiles",
-						"searchActorsTypeahead": "/app.bsky.actor.searchActorsTypeahead"
+						"getPosts": "/app.bsky.feed.getPosts"
 					},
 					"unused": {
 						"describeRepo": "/com.atproto.repo.describeRepo",
@@ -121,10 +142,49 @@
 				}
 			}
 		},
+		"clearSky": {
+			"url": {
+				"api": "https://api.clearsky.services",
+				"prefix": "/api/v1/anon",
+				"status": "https://status.clearsky.app"
+			},
+			"endpoints": {
+				"resolve": {
+					"did": "/get-did/[HANDLE]",
+					"handle": "/get-handle/[DID]",
+					"uri": "/at-uri/[URI]",
+					"validateHandle": "/validation/validate-handle/[HANDLE]"
+				},
+				"statistics": {
+					"uptime": "/status/time-behind",
+					"totalUsers": "/total-users",
+					"top20Blockers": "/lists/fun-facts",
+					"top20BlockersAndBloqued": "/lists/funer-facts",
+					"blockStats": "/lists/block-stats"
+				},
+				"user": {
+					"history": "/get-handle-history/[HANDLE/DID]",
+					"blockedBy": "/single-blocklist/[HANDLE/DID]",
+					"blockedByCount": "/single-blocklist/total/[HANDLE/DID]",
+					"modLists": "/get-list/[HANDLE/DID]",
+					"listsUserBlock": "/subscribe-blocks-blocklist/[HANDLE/DID]",
+					"listsUserBlocked": "/subscribe-blocks-single-blocklist/[HANDLE/DID]"
+				},
+				"lists": {
+					"search-by-name": "/get-moderation-list/[NAME]"
+				},
+				"pds": {
+					"users-count": "/lists/dids-per-pds"
+				},
+				"others": {
+					"logo": "/images/logo"
+				}
+			}
+		},
 		"geo": {
 			"bdc": {
 				"rootUrl": "https://api-bdc.net",
-				"reverse-geocode-client": "/data/reverse-geocode-client"
+				"reverseGeocodeClient": "/data/reverse-geocode-client"
 			},
 			"myIPio": {
 				"rootUrl": "https://api.my-ip.io",

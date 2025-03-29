@@ -75,3 +75,12 @@
 .theme-my-profile {
 }
 
+/* See: https://www.digitalocean.com/community/tutorials/how-to-change-a-css-background-images-opacity */
+.theme-my-profile .card-body {
+  height: var( --bsky-profile-height );
+  background-size: cover;
+  background-color: rgba(224, 224, 224, 0.5);
+  background-image: url('data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==');
+  background-blend-mode: lighten;
+}
+

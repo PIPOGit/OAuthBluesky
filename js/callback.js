@@ -1,8 +1,8 @@
 /**********************************************************
- * File Info:
+ * Module Info:
  *
  * This file contains all the operative related
- * specifically with the index/login page.
+ * specifically with the several callback pages.
  *
  **********************************************************/
 
@@ -10,12 +10,19 @@
 /**********************************************************
  * Module imports
  **********************************************************/
-// Global configuration
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
+// The application configuration
 import CONFIGURATION					from "./data/config.json" with { type: "json" };
+
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
-import * as COMMON						from "./modules/common.functions.js";
-// Common functions
-import * as TYPES						from "./modules/common.types.js";
+import * as COMMON						from "./modules/common/CommonFunctions.js";
+// Common Classes and Exceptions ("Types")
+import * as TYPES						from "./modules/common/CommonTypes.js";
 
 
 /**********************************************************
@@ -28,7 +35,6 @@ const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 const API								= CONFIGURATION.api;
 const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
-const CALLBACK_DEBUG					= true;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
@@ -63,15 +69,12 @@ let redirectURI							= APP_CALLBACK_URL;
 let dashboardURI						= APP_DASHBOARD_URL;
 
 
-
 /**********************************************************
  * BOOTSTRAP Functions
  **********************************************************/
-
-
-/**********************************************************
+/* --------------------------------------------------------
  * Module Load
- **********************************************************/
+ * -------------------------------------------------------- */
 ( ( parent, argument ) => {
 	if ( COMMON.getTypeOf( argument ) === 'function' ) {
 		parent.addEventListener( "DOMContentLoaded", argument );
@@ -84,58 +87,61 @@ let dashboardURI						= APP_DASHBOARD_URL;
 );
 
 
-/**********************************************************
+/* --------------------------------------------------------
  * Module BootStrap Loader Function
- **********************************************************/
+ * -------------------------------------------------------- */
 async function startUp() {
 	'use strict'
 
 	const STEP_NAME						= "startUp";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_INNER					= `${PREFIX}[INTERNAL] `;
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.groupCollapsed( PREFIX );
+	const PREFIX_MODULE_INFO			= `${PREFIX}[Module Info] `;
+
+	// ---------------------------------------------------------
+	// General default logging properties
+	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// ================================================================
-	// Module info.
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+	// Module INFO INI
 
-	// ================================================================
-	// Actualizamos el objeto raiz.
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_MODULE_INFO );
+	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + "MODULE_NAME:", MODULE_NAME, "import.meta.url:", import.meta.url );
+
+	// Root Object update.
+	// ---------------------------------------------------------
+	// + Properties
 	// + Functions
 	window.BSKY.analizeCallback			= fnAnalizeCallback;
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + `Updated object: [window.BSKY].`, window.BSKY );
 
+	// Module INFO END
 	// ================================================================
-	// Module END
+	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + `Updated object: [window.BSKY].`, window.BSKY );
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_MODULE_INFO + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+
+	// Page setup concrete actions.
+	// ---------------------------------------------------------
+
+
+	// ---------------------------------------------------------
+	// End of module setup
+	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
 
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-function checkIfWeAreInLocalhost() {
-	const STEP_NAME						= "checkIfWeAreInLocalhost";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Set, in localStorage, we come from "LOGOUT"
-	let thisURL							= new URL(window.location);
-	isLocalhost							= COMMON.areEquals(thisURL.host, "localhost");
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + `Are we in localhost:`, isLocalhost );
-
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
-	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupEnd();
-}
 
 
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
-
 /* --------------------------------------------------------
  * LOGIN PROCESS.
  *
@@ -144,7 +150,7 @@ function checkIfWeAreInLocalhost() {
 function fnAnalizeCallback(toLocalhost=false) {
 	const STEP_NAME						= "fnAnalizeCallback";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// By default...
 	redirectURI							= APP_DASHBOARD_URL;
@@ -166,19 +172,19 @@ function fnAnalizeCallback(toLocalhost=false) {
 	// Check whether we are in localhost or in the public website
 	// and going or not to localhost.
 	// ---------------------------------------------------------
-	checkIfWeAreInLocalhost();
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "isLocalhost:", isLocalhost );
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "toLocalhost:", toLocalhost );
+	const isLocalhost					= BSKY.checkIfWeAreInLocalhost();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "isLocalhost:", isLocalhost );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "toLocalhost:", toLocalhost );
 	if (isLocalhost) {
 		// We are in localhost.
 		// ---------------------------------------------------------
-		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We are in LOCALHOST." );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "We are in LOCALHOST." );
 
 		// Going to localhost.
 		// + isLocalhost==true
 		// + toLocalhost==true
 		// Current URL: [APP_CALLBACK_TO_LOCALHOST_URL]
-		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We has been CALLED FROM the PUBLIC WEBSITE." );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "We has been CALLED FROM the PUBLIC WEBSITE." );
 
 		// Retrieve the data from the query string.
 		iss							= parsedSearch.get("iss");
@@ -187,26 +193,26 @@ function fnAnalizeCallback(toLocalhost=false) {
 
 		// Prepare the object.
 		let callbackData			= new TYPES.CallbackData( iss, state, code, dpopNonce );
-		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
 
 		// Save the data in the localStorage.
 		localStorage.setItem(LSKEYS.CALLBACK_DATA, JSON.stringify( callbackData ));
-		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
 
 		redirectURI					= APP_LOCALHOST_DASHBOARD_URL;
 	} else {
 		// We are in the public website.
 		// ---------------------------------------------------------
-		if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We are in the PUBLIC WEBSITE." );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "We are in the PUBLIC WEBSITE." );
 
 		if (toLocalhost) {
 			// Going to localhost.
 			// + isLocalhost==false
 			// + toLocalhost==true
 			// Current URL: [APP_LOCALHOST_CALLBACK_URL]
-			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We have to REDIRECT to CALLBACK @ LOCALHOST." );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "We have to REDIRECT to CALLBACK @ LOCALHOST." );
 
-			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "Preparing the target URL.." );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "Preparing the target URL.." );
 			let url						= new URL( APP_CALLBACK_TO_LOCALHOST_URL );
 			url.search					= thisURL.search;
 			redirectURI					= url.toString();
@@ -215,7 +221,7 @@ function fnAnalizeCallback(toLocalhost=false) {
 			// + isLocalhost==false
 			// + toLocalhost==false
 			// Current URL: [APP_CALLBACK_URL]
-			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "We STAY in the PUBLIC WEBSITE." );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "We STAY in the PUBLIC WEBSITE." );
 
 			// Retrieve the data from the query string.
 			iss							= parsedSearch.get("iss");
@@ -224,17 +230,18 @@ function fnAnalizeCallback(toLocalhost=false) {
 
 			// Prepare the object.
 			let callbackData			= new TYPES.CallbackData( iss, state, code, dpopNonce );
-			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "callbackData:", COMMON.prettyJson( callbackData ) );
 
 			// Save the data in the localStorage.
 			localStorage.setItem(LSKEYS.CALLBACK_DATA, JSON.stringify( callbackData ));
-			if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "Saved callbackData into Local Storage:", LSKEYS.CALLBACK_DATA );
 		}
 
 	}
-	if (CALLBACK_DEBUG || window.BSKY.DEBUG) console.debug(PREFIX + "Redirecting to", redirectURI);
+	if (window.BSKY.DEBUG) console.debug(PREFIX + "Redirecting to", redirectURI);
 
-	if (CALLBACK_DEBUG || window.BSKY.GROUP_DEBUG) console.groupEnd();
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	window.location						= redirectURI;
 }
 
