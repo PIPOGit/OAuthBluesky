@@ -47,11 +47,7 @@ let listener							= null;
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
-
-
 /* --------------------------------------------------------
- * LOGIN PROCESS.
- *
  * Function to setup keystroke combinations.
  * -------------------------------------------------------- */
 export function setupKeypress() {
@@ -117,18 +113,11 @@ export function setupKeypress() {
 				"this"          		: myScope
 			}
 		]);
-	/*
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Registered listeners for" );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_LOG_TOGGLE}] Toggle DEBUG status` );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
-	 */
-		console.info( PREFIX + "Registered listeners for" );
-		console.info( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
-		console.info( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
-		console.info( PREFIX + `+ [${KEYSTROKES_LOG_TOGGLE}] Toggle DEBUG status` );
-		console.info( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
+		if (window.BSKY.DEBUG) console.info( PREFIX + "Registered listeners for" );
+		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
+		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
+		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_TOGGLE}] Toggle DEBUG status` );
+		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
 	} else {
 		console.warn( "NO KEYBOARD LISTENER DETECTED!" );
 	}

@@ -227,7 +227,7 @@ export async function call( step, url, fetchOptions=null, renderHTMLErrors=true 
 			return response;
 		}).catch( error => {
 			// Errors while parsing the HTTP Response!
-			if (window.BSKY.DEBUG) console.error( PREFIX + "Errors while parsing the HTTP Response!", error.toString() );
+			if (window.BSKY.DEBUG) console.warn( PREFIX + "Errors while parsing the HTTP Response!", error.toString() );
 			// HTML.updateHTMLError( error, renderHTMLErrors );
 			return error;
 		});
@@ -269,7 +269,7 @@ export async function apiCall( params, renderHTMLErrors=true ) {
 			return response;
 		}).catch( error => {
 			// Errors while parsing the HTTP Response!
-			if (window.BSKY.DEBUG) console.error( PREFIX + "Errors while parsing the HTTP Response!", error.toString() );
+			if (window.BSKY.DEBUG) console.warn( PREFIX + "Errors while parsing the HTTP Response!", error.toString() );
 			// HTML.updateHTMLError( error, renderHTMLErrors );
 			return error;
 		});
@@ -341,7 +341,7 @@ export async function authenticatedCall( params, renderHTMLErrors=true ) {
 
 
 		} else {
-			if (window.BSKY.DEBUG) console.error( PREFIX + "Errors while parsing the HTTP Response!", error );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "Errors while parsing the HTTP Response!", error );
 			HTML.updateHTMLError( error, renderHTMLErrors );
 			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();

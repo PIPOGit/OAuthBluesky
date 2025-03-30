@@ -117,7 +117,6 @@ async function performUserLogout() {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -204,7 +203,6 @@ async function refreshUserAccessToken() {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -308,7 +306,6 @@ async function retrieveUserAccessToken() {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -384,7 +381,6 @@ async function retrieveUserProfile( handle, renderHTMLErrors=true ) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -453,7 +449,6 @@ async function retrieveUnreadNotifications( renderHTMLErrors=true ) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -524,7 +519,6 @@ async function retrieveNotifications( renderHTMLErrors=true ) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -653,7 +647,6 @@ async function retrieveRepoListRecords( data ) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -722,7 +715,6 @@ async function retrieveRepoBlockOfRecords(queryString) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -795,7 +787,6 @@ async function retrieveUserFollowers(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -867,7 +858,6 @@ async function retrieveUserBlocks(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -939,7 +929,6 @@ async function retrieveUserMutes(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1012,7 +1001,6 @@ async function retrieveListDetails( list, cursor ) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1093,7 +1081,6 @@ async function retrieveUserLists(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1166,7 +1153,6 @@ async function retrieveUserMutingModerationLists(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1239,7 +1225,6 @@ async function retrieveUserBlockingModerationLists(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1312,7 +1297,6 @@ async function retrieveUserFeeds(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1385,7 +1369,6 @@ async function retrieveTrendingTopics(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1455,7 +1438,6 @@ async function searchProfile( searchedProfiles ) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -1528,7 +1510,6 @@ async function retrieveAuthorFeed(cursor) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );

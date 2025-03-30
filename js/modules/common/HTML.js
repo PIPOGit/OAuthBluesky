@@ -144,9 +144,9 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.message);
 		}
 	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
 
 	// Info on the error in the modal
 	const html							= {
@@ -204,11 +204,11 @@ export function updateHTMLFields(parsedSearch) {
 	}
 	dpopNonce							= BSKY.data.dpopNonce;
 
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ iss:", iss);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ state:", state);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code:", code);
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ dpopNonce:", dpopNonce);
+	// if (window.BSKY.DEBUG) console.debug(PREFIX + "Updating HTML Elements:");
+	// if (window.BSKY.DEBUG) console.debug(PREFIX + "+ iss:", iss);
+	// if (window.BSKY.DEBUG) console.debug(PREFIX + "+ state:", state);
+	// if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code:", code);
+	// if (window.BSKY.DEBUG) console.debug(PREFIX + "+ dpopNonce:", dpopNonce);
 
 	// Update HTML page element values.
 	// CSS Classes.

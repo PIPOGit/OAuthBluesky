@@ -98,7 +98,6 @@ async function callPLCDirectoryURL( step, endpoint, did=BSKY.user?.profile?.did,
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await APICall.authenticatedCall( requestParams );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
@@ -137,7 +136,6 @@ export async function plcResolveDID( did ) {
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
 		responseFromServer				= await callPLCDirectoryURL( STEP_NAME, ENDPOINTS.resolveDID, did );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );

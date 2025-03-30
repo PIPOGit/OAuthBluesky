@@ -330,6 +330,7 @@ async function checkUserAccessToken() {
 
 	// Second step: Retrieve, if any, the token.
 	// ---------------------------------------------------------
+	let errorMessage					= false;
 	let valid							= false;
 	if ( !COMMON.isNullOrEmpty( BSKY.data.userAccessToken ) ) {
 		try {
@@ -340,10 +341,12 @@ async function checkUserAccessToken() {
 				if (window.BSKY.DEBUG) console.debug( PREFIX + `We have a VALID user access token. Continue.` );
 				valid					= true;
 			} else {
-				if (window.BSKY.DEBUG) console.debug( PREFIX + `We have an INVALID user access token. Stop.` );
+				errorMessage			= "We have an INVALID user access token";
+				if (window.BSKY.DEBUG) console.debug( PREFIX + `${errorMessage}. Stop.` );
 			}
 		} catch ( error ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `We have no user access token. Stop.` );
+			errorMessage				= "We have no user access token";
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `${errorMessage}. Stop.` );
 		}
 	} else {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Nothing restored." );

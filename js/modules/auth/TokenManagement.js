@@ -100,11 +100,11 @@ function postProcessAccessToken() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Show some more information
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_RAWDATA );
-	if (window.BSKY.DEBUG) console.debug( PREFIX_RAWDATA + "Current jwk:", BSKY.data.jwk );
-	if (window.BSKY.DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", JWT.jwtToPrettyJSON( BSKY.data.userAccessToken ) );
-	if (window.BSKY.DEBUG) console.debug( PREFIX_RAWDATA + "Current BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	// if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_RAWDATA );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX_RAWDATA + "Current jwk:", BSKY.data.jwk );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX_RAWDATA + "Current userAccessToken:", JWT.jwtToPrettyJSON( BSKY.data.userAccessToken ) );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX_RAWDATA + "Current BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
+	// if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Let's backup the current data.
 	BSKY.saveRuntimeDataInLocalStorage();

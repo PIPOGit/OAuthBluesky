@@ -4,7 +4,7 @@
 		"debug_folded": true,
 		"show_info_step": false,
 		"appName": "BSKY Analyzer",
-		"appVersion": "2.0.3",
+		"appVersion": "2.0.4",
 		"loading_steps": 23,
 		"refresh_dynamic": 15,
 		"refresh_static": 300,
