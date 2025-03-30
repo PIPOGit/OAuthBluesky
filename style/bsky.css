@@ -9,6 +9,7 @@
 @import url("bsky.profile.css");			/* El perfil del usuario */
 @import url("bsky.notifications.css");		/* Las notificaciones */
 @import url("bsky.sidebar.css");			/* Para el OffCanvas */
+@import url("bsky.loader.css");				/* Para el loader */
 @import url("bsky.media.css");				/* Para cosas según medios */
 
 /* Bootstrap icons. */

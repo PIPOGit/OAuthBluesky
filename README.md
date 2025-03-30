@@ -42,6 +42,6 @@ But it should work "*ootb*": "*out-of-the-box*"
 ## Run
 And that's it!
 
-After that, it's as easy as to point to: http://localhost/neocities/index.html
+After that, it's as easy as to point to: http://localhost/bluesky/index.html
 
 Enjoy!

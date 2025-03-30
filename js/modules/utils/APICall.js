@@ -364,6 +364,7 @@ export async function authenticatedCall( params, renderHTMLErrors=true ) {
  * This module performs a "try-and-catch" call for a given
  * function.
  * -------------------------------------------------------- */
+/*
 export async function tryAndCatch( currentStep, callbackFunction, callbackOptions=null, show=true ) {
 	const STEP_NAME						= "tryAndCatch";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -484,5 +485,5 @@ export async function tryAndCatch( currentStep, callbackFunction, callbackOption
 	if (show && window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return apiCallResponse;
 }
-
+*/
 

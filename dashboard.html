@@ -71,7 +71,6 @@
 	</head>
 	<body>
 
-
 		<!-- Panel root. -->
 		<div id="rootPanel" class="container-lg p-0">
 
@@ -255,11 +254,20 @@
 				</nav>
 			</div>
 
+			<!-- El loader. -->
+			<div id="loaderPanel" name="loaderPanel" class="d-flex vh-75 center align-content-center align-items-center justify-content-center">
+				<div class="loader">
+					<div class="progress" role="progressbar" aria-label="Loading" aria-valuenow="0" aria-valuemin="0" aria-valuemax="25">
+						<div class="progress-bar" style="width: 0%"></div>
+					</div>
+				</div>
+			</div>
+
 			<!-- El panel de los contenidos -->
-			<div id="tabsPanel" name="tabsPanel" class="container p-0 center theme-tabs vh-80">
+			<div id="tabsPanel" name="tabsPanel" class="container p-0 center theme-tabs vh-80 hidden">
 
 				<!-- El div de los paneles -->
-				<div class="tab-content p-2" id="myTabContent" name="myTabContent">
+				<div id="myTabContent" name="myTabContent" class="tab-content p-2 ">
 
 					<!-- El panel de My Profile -->
 					<!--
@@ -1225,7 +1233,6 @@
 								<form id="userHandleForm" name="userHandleForm" class="row align-items-center theme-callback border border-2">
 
 									<div class="d-flex align-items-center mb-2">
-										<button id="buttonRefreshToken" name="buttonRefreshToken" class="btn btn-sm btn-success mx-3 my-1" type="button" onClick="BSKY.refreshAccessToken()">Refresh</button>
 										<a id="buttonClientId"     name="buttonClientId"     class="btn btn-sm btn-outline-success mx-3 my-1" target="client-id" title="Client ID Metatada" href="javascript:void(0); return false;">Client ID Metatada</a>
 										<a id="buttonDIDDocument"  name="buttonDIDDocument"  class="btn btn-sm btn-outline-success mx-3 my-1" target="did-document" title="User DID Document" href="javascript:void(0); return false;">User DID Document</a>
 									</div>
@@ -1329,6 +1336,7 @@
 						<a class="btn btn-sm btn-outline-secondary" target="github" title="GitHub" href="https://github.com/PIPOGit/OAuthBluesky"><i class="bi bi-github"></i></a>
 					</div>
 					<div class="col-auto ps-2">
+						<button id="buttonRefreshToken" name="buttonRefreshToken" class="btn btn-sm btn-success" type="button" data-bs-dismiss="offcanvas" onClick="BSKY.refreshAccessToken()">Refresh</button>
 						<button id="buttonLogout" name="buttonLogout" class="btn btn-sm btn-danger" type="button" title="Log-out the application" onClick="BSKY.logout()">Logout</button>
 					</div>
 				</div>

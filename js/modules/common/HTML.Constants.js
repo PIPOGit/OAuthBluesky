@@ -48,6 +48,10 @@ export const BTN_LOGIN					= "buttonLogin";
 
 // HTML Root Panel
 export const DIV_ROOT_PANEL				= "rootPanel";
+export const DIV_MAIN_PANEL				= "tabsPanel";
+
+// HTML Loader Panel
+export const DIV_LOADER_PANEL			= "loaderPanel";
 
 // HTML Info & Error Panels
 export const DIV_PANEL_INFO				= "panelInfo";

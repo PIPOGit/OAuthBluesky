@@ -87,6 +87,7 @@ const NSID								= BLUESKY.NSID;
 
 // Module constants
 const MAX_ITERATIONS					= 100;
+const MAX_LOADING_STEPS					= CONFIGURATION.global.loading_steps;
 
 
 /**********************************************************
@@ -98,6 +99,7 @@ let refreshDynamicTime					= 0;
 let timerIdStaticLoop					= 0;
 let refreshStaticSeconds				= 0;
 let refreshStaticTime					= 0;
+let timerIdLoader						= 0;
 
 
 /**********************************************************
@@ -145,6 +147,9 @@ async function startUp() {
 	// + Logging Properties
 	window.BSKY.refreshStaticSeconds	= CONFIGURATION.global.refresh_static;
 	window.BSKY.refreshDynamicSeconds	= CONFIGURATION.global.refresh_dynamic;
+	window.BSKY.steps					= {};
+	window.BSKY.steps.firstTime			= true;
+	window.BSKY.steps.total				= 0;
 	// + Functions
 	window.BSKY.searchUser				= fnSearchUser;
 	window.BSKY.updateDebug				= SETTINGS.fnUpdateDebug;
@@ -152,7 +157,6 @@ async function startUp() {
 	window.BSKY.filterFollowing			= HTML.fnFilterTable;
 	window.BSKY.filterFollowers			= HTML.fnFilterTable;
 	window.BSKY.showProfile				= fnShowUserProfile;
-
 	window.BSKY.dashboard				= fnDashboard;
 	window.BSKY.logout					= fnLogout;
 	window.BSKY.refreshAccessToken		= TOKEN.refreshAccessToken;
@@ -477,12 +481,14 @@ async function getTheUserNotifications() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving the user notifications...` );
 
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();
 
 	// The unread user's notifications.
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Let's retrieve the number of unread notifications...");
 	let unreadNotifications				= await APIBluesky.getUnreadNotifications( false );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current unreadNotifications:", unreadNotifications.count );
@@ -495,9 +501,17 @@ async function getTheUserNotifications() {
 
 		// Parse the response
 		await HTML.htmlRenderNotifications( notifications, BSKY.data.userAccessToken, APP_CLIENT_ID, BSKY.data.accessTokenHash );
+
+		// First time step
+		// ---------------------------------------------------------
+		if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 	} else {
 		HTML.htmlRenderNoNotifications();
 	}
+
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -515,9 +529,11 @@ async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[handle==${handle}]` );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving the user's profile...` );
 
 	// Now, the user's profile.
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the user's profile[${handle}]...` );
 	let userProfile						= await APIBluesky.getUserProfile( handle );
 
@@ -528,6 +544,10 @@ async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 		// Lo pintamos en su sitio.
 		HTML.htmlRenderUserProfile( userProfile );
 	}
+
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -552,6 +572,7 @@ async function getWhoTheUserFollows() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving who the user follows...` );
 	BSKY.user.following					= BSKY.user.following || {};
 
@@ -561,6 +582,10 @@ async function getWhoTheUserFollows() {
 
 	// The records.
 	let allData							= await getRepoRecordsOfNSIDType( nsid );
+
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
 	if ( COMMON.isNullOrEmpty( allData ) ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `No following detected.` );
@@ -681,6 +706,10 @@ async function getWhoTheUserFollows() {
 	// Save it.
 	BSKY.user.following.profiles		= allProfiles;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 
 	// Now, retrieve the missed profiles information.
 	// ---------------------------------------------------------
@@ -740,6 +769,10 @@ async function getWhoTheUserFollows() {
 	// Save it.
 	BSKY.user.missingProfiles			= missingProfiles;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	// Lo pintamos todo en su sitio.
 	HTML.htmlRenderUserFollows( BSKY.user.following, BSKY.user.missingProfiles );
 
@@ -758,6 +791,7 @@ async function getWhoAreTheUserFollowers() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user...` );
 
 	// Now, the user's followers.
@@ -795,6 +829,10 @@ async function getWhoAreTheUserFollowers() {
 	// Save it.
 	BSKY.user.followers					= allData;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserFollowers( allData );
 
@@ -813,9 +851,11 @@ async function getWhoTheUserIsBlocking() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving who the user is blocking...` );
 
 	// Now, the user's blocks.
+	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user is blocking...` );
 	let apiCallResponse					= null;
 	let cursor							= null;
@@ -825,6 +865,10 @@ async function getWhoTheUserIsBlocking() {
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
+	
+	// Retrieve first the list of blocks from ClearSky
+	allData.push(...BSKY.user.clearSky.userInfo.blockedBy.data.found);
+
 	do {
 		n++;
 		// Retrieve user's blocks
@@ -842,13 +886,25 @@ async function getWhoTheUserIsBlocking() {
 
 	} while ( hayCursor && (n<MAX_ITERATIONS) );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} blocks`, allData );
+	// As we previously added the blocks from ClearSky, we must make it unique.
+	const uniqueArray					= allData
+		.filter((value, index, self) =>
+			index === self.findIndex( b => ( COMMON.areEquals( b.did, value.did ) ))
+		)
+		.sort( (a,b) => a.handle.localeCompare( b.handle ) );
+	acumulado							= uniqueArray.length;
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} blocks`, uniqueArray );
 
 	// Save it.
-	BSKY.user.blocks					= allData;
+	BSKY.user.blocks					= uniqueArray;
+
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
 	// Lo pintamos en su sitio.
-	HTML.htmlRenderUserBlocks( allData );
+	HTML.htmlRenderUserBlocks( uniqueArray );
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -865,9 +921,11 @@ async function getWhoTheUserIsMuting() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving who the user is muting...` );
 
 	// Now, the user's mutes.
+	// ---------------------------------------------------------
 	let apiCallResponse					= null;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
 	let cursor							= null;
@@ -899,6 +957,10 @@ async function getWhoTheUserIsMuting() {
 	// Save it.
 	BSKY.user.mutes						= allData;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserMutes( allData );
 
@@ -917,9 +979,11 @@ async function getTheUserLists() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving the lists of the user...` );
 
-	// Now, the user's mutes.
+	// Now, the user's lists.
+	// ---------------------------------------------------------
 	let apiCallResponse					= null;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the lists of the user...` );
 	let cursor							= null;
@@ -951,6 +1015,10 @@ async function getTheUserLists() {
 	// Save it.
 	BSKY.user.lists						= allData;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	// Lo pintamos en su sitio.
 	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserLists( allData );
 
@@ -969,9 +1037,11 @@ async function getTheUserMutingModerationLists() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving the blocking moderation lists of the user...` );
 
 	// Now, the user's blocking mod lists.
+	// ---------------------------------------------------------
 	let apiCallResponse					= null;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the blocking moderation lists of the user...` );
 	let cursor							= null;
@@ -1004,6 +1074,10 @@ async function getTheUserMutingModerationLists() {
 	BSKY.user.moderation				= BSKY.user.moderation || {};
 	BSKY.user.moderation.muting			= allData;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	// Lo pintamos en su sitio.
 	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserModerationList( allData, HTML.DIV_TABLE_MY_MOD_M_LISTS );
 
@@ -1022,9 +1096,11 @@ async function getTheUserBlockingModerationLists() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving the muting moderation lists of the user...` );
 
 	// Now, the user's mute mod lists.
+	// ---------------------------------------------------------
 	let apiCallResponse					= null;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the muting moderation lists of the user...` );
 	let cursor							= null;
@@ -1056,6 +1132,10 @@ async function getTheUserBlockingModerationLists() {
 	BSKY.user.moderation				= BSKY.user.moderation || {};
 	BSKY.user.moderation.blocking		= allData;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserModerationList( allData, HTML.DIV_TABLE_MY_MOD_B_LISTS, true );
 
@@ -1074,9 +1154,11 @@ async function getTheUserFeeds() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving the user feeds...` );
 
-	// Now, the user's mute mod lists.
+	// Now, the user's feeds.
+	// ---------------------------------------------------------
 	let apiCallResponse					= null;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the user feeds...` );
 	let cursor							= null;
@@ -1107,6 +1189,10 @@ async function getTheUserFeeds() {
 	// Save it.
 	BSKY.user.feeds						= allData;
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserFeeds( allData );
 
@@ -1127,9 +1213,11 @@ async function getTheTrendingTopics() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving the Trending Topics...` );
 
 	// Now, the basic data.
+	// ---------------------------------------------------------
 	let apiCallResponse					= null;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the Trending Topics...` );
 	let cursor							= null;
@@ -1169,6 +1257,10 @@ async function getTheTrendingTopics() {
 		// throw( error );
 	}
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
@@ -1183,12 +1275,8 @@ async function getTheClearSkyInfo() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Retrieving ClearSky info...` );
-
-	// TODO: Cross-check following, followers, blocks and mutes with
-	// + [getKnownFollowers]	https://docs.bsky.app/docs/api/app-bsky-graph-get-known-followers
-	// + [getRelationships]		https://docs.bsky.app/docs/api/app-bsky-graph-get-relationships
-	// + [getProfiles]			https://docs.bsky.app/docs/api/app-bsky-actor-get-profiles
 
 	try {
 		const clearSky					= await APIClearSky.getClearSkyInfo();
@@ -1207,6 +1295,10 @@ async function getTheClearSkyInfo() {
 		// window.BSKY.faviconStandBy();
 	}
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
@@ -1221,6 +1313,7 @@ async function getTheRelations() {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Info step
+	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME, `Cross-checking relationships with the user...` );
 
 	if (window.BSKY.DEBUG) console.warn( PREFIX + "Under Development!" );
@@ -1230,7 +1323,8 @@ async function getTheRelations() {
 	// + [getProfiles]			https://docs.bsky.app/docs/api/app-bsky-actor-get-profiles
 
 
-	// Now, the basic data.
+	// Now, the relations.
+	// ---------------------------------------------------------
 	let apiCallResponse					= null;
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the relationships...` );
 	let cursor							= null;
@@ -1315,6 +1409,10 @@ async function getTheRelations() {
 		entre todas las cuentas que se tienen.
 	**************************************************************************** */
 
+	// First time step
+	// ---------------------------------------------------------
+	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
@@ -1335,8 +1433,9 @@ async function fnLogout() {
 	window.BSKY.faviconWorking();
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Stopping the timers..." );
-	if ( timerIdDynamicLoop ) clearTimeout( timerIdDynamicLoop );
-	if ( timerIdStaticLoop )  clearTimeout( timerIdStaticLoop );
+	if ( timerIdDynamicLoop )	clearTimeout( timerIdDynamicLoop );
+	if ( timerIdStaticLoop )	clearTimeout( timerIdStaticLoop );
+	if ( timerIdLoader )		clearTimeout( timerIdLoader );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Logging out from Bluesky..." );
 	let loggedOutInfo					= await APIBluesky.logout();
@@ -1428,6 +1527,9 @@ async function fnDashboard() {
 	// Los botones del userDid y el clientId Metadata
 	HTML.updateUserDIDInfo();
 
+	// For the first time
+	timerIdLoader						= setInterval( updateLoaderBar, 250 );
+
 	try {
 		// First, let's validate the access token.
 		// ---------------------------------------------------------
@@ -1482,11 +1584,40 @@ async function fnDashboard() {
 			await fnLogout();
 		}
 	} finally {
+
+		// Steps
+		// ---------------------------------------------------------
+		window.BSKY.steps.firstTime		= false;
+		if (window.BSKY.DEBUG) console.debug(PREFIX + `Total steps for first time: ${window.BSKY.steps.total}.` );
+
+		// Stop the execution of the refreshing function: ("updateLoaderBar")
+		clearTimeout( timerIdLoader );
+
+		// Hide the loader pane.
+		$( `#${HTML.DIV_LOADER_PANEL}` ).addClass( "hidden" )
+
+		// Show the main content
+		$( `#${HTML.DIV_MAIN_PANEL}` ).removeClass( "hidden" )
+
+		// The favicon to normal
 		window.BSKY.faviconStandBy();
 	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+
+function updateLoaderBar() {
+	
+	// Number of current completed steps
+	const percent						= 100 * window.BSKY.steps.total / MAX_LOADING_STEPS;
+	
+	// Hide the loader pane.
+	$( `#${HTML.DIV_LOADER_PANEL} .progress-bar` )
+		.css(  'width', parseInt( percent ) + "%")
+		.data( 'width', parseInt( percent ) )
+		.text( percent.toFixed(0) + "%" );
 }
 
 

@@ -287,6 +287,9 @@ export async function refreshAccessToken() {
 	// Info step
 	HTML.showStepInfo( STEP_NAME );
 
+	// El toast.
+	COMMON.showInfo( `Token refreshed` );
+
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
