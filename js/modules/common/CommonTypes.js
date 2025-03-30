@@ -199,6 +199,7 @@ export class HTTPResponseError extends Error {
 	step								= null;
 	url									= null;
 	fetchOptions						= null;
+
 	// From the response
 	contentType							= null;
 	headers								= null;
@@ -206,6 +207,7 @@ export class HTTPResponseError extends Error {
 	json								= null;
 	isJson								= false;
 	isError								= false;
+
 	// Others
 	isDPoPNonceError					= false;
 
@@ -245,7 +247,7 @@ export class HTTPResponseError extends Error {
 		// From Error
 		object.name						= this.name;
 		object.message					= this.message;
-		object.stack					= this.stack;
+		object.stack					= this.stack.split( '\n' );
 		object.cause					= this.cause;
 		// From HTTPResponseError
 		object.code						= this.code;

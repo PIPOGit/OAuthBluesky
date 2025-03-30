@@ -70,6 +70,7 @@ export function updateHighlight() {
 	$( '#'+HTMLConstants.DIV_GIT_INFO_JSON ).removeAttr('data-highlighted');
 	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JSON ).removeAttr('data-highlighted');
 	$( '#'+HTMLConstants.DIV_ACCESS_TOKEN_JWT ).removeAttr('data-highlighted');
+	$( '#'+HTMLConstants.DIV_MODAL_ERROR_CODE ).removeAttr('data-highlighted');
 	hljs.highlightAll();
 }
 
@@ -95,6 +96,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.AccessTokenError]` );
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -105,6 +107,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.HTTPResponseError]` );
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -115,6 +118,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.HTMLError]` );
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -126,6 +130,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		// Puede venir también un: "{"error":"InternalServerError","message":"Internal Server Error"}"
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error.......:", error.error);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -142,6 +147,15 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
+
+	// Info on the error in the modal
+	const html							= {
+		version: CONFIGURATION.global.appVersion,
+		date: new Date(),
+		error: error
+	}
+	$( `#${HTMLConstants.DIV_MODAL_ERROR_CODE}` ).text( COMMON.prettyJson( html ) );
+	updateHighlight();
 
 	// HTML L&F
 	if ( renderHTMLErrors ) {

@@ -115,7 +115,7 @@
 				</div>
 
 				<!-- El panel de errores -->
-				<div id="panelError" name="panelError" class="justify-content-between align-items-start p-1 px-2 theme-error hidden">
+				<div id="panelError" name="panelError" class="justify-content-between align-items-start p-1 px-2 theme-error hidden" onClick="BSKY.showError();">
 					<div class="col-12 input-group input-group-sm">
 
 						<!-- Título. -->
@@ -1183,6 +1183,30 @@
 									<pre><code id="accessTokenJwt"  name="accessTokenJwt"  class="language-json mb-2"></code></pre>
 									<pre><code id="accessTokenJson" name="accessTokenJson" class="language-json"></code></pre><hr/>
 								</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">Cerrar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Modal: Error -->
+			<div class="modal theme-modal fade" id="modalError" tabindex="-1" aria-labelledby="modalErrorLabel" aria-hidden="true">
+				<div class="modal-dialog modal-dialog-scrollable">
+					<div class="modal-content">
+						<div class="modal-header">
+							<img src="./images/BSKY Analyzer.Logo.png">
+							<h1 class="modal-title fs-5" id="modalErrorLabel">Error:</h1>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body">
+							<div>
+								<div>Latest error detected:</div>
+							</div>
+							<div class="mt-2">
+								<pre><code id="jsonError" name="jsonError" class="language-json"></code></pre><hr/>
 							</div>
 						</div>
 						<div class="modal-footer">

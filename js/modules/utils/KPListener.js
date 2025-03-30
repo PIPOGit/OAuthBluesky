@@ -29,6 +29,7 @@ const KEYSTROKES_LOG_ON					= KEYSTROKES.log_on;			// onKeyUpShiftDT, SETTINGS.a
 const KEYSTROKES_LOG_OFF				= KEYSTROKES.log_off;			// onKeyUpShiftDF, SETTINGS.deactivateLogSystem
 const KEYSTROKES_LOG_TOGGLE				= KEYSTROKES.log_toggle;		// onKeyUpShiftDSpace, SETTINGS.toggleLogSystem
 const KEYSTROKES_DOWNLOAD_BSKY			= KEYSTROKES.download_bsky;		// onKeySeqDownloadBSKY, download_BSKY
+const KEYSTROKES_SHOW_ERROR				= KEYSTROKES.show_error;		// onKeySeqShowError, show_error
 const KEYSTROKES_CUSTOM_FUNCTION		= KEYSTROKES.custom_function;	// onKeySeqCustomFunction, BSKY.customFunction
 
 /**********************************************************
@@ -102,6 +103,13 @@ export function setupKeypress() {
 				"this"          		: myScope
 			},
 			{
+				// KEYSTROKES_SHOW_ERROR => Shows the error modal.
+				"keys"          		: KEYSTROKES_SHOW_ERROR,
+				"is_sequence"  			: true,
+				"on_keyup"      		: onKeySeqShowError,
+				"this"          		: myScope
+			},
+			{
 				// KEYSTROKES_CUSTOM_FUNCTION => Launches a custom function.
 				"keys"          		: KEYSTROKES_CUSTOM_FUNCTION,
 				"is_sequence"  			: true,
@@ -109,10 +117,18 @@ export function setupKeypress() {
 				"this"          		: myScope
 			}
 		]);
+	/*
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Registered listeners for" );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_LOG_TOGGLE}] Toggle DEBUG status` );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
+	 */
+		console.info( PREFIX + "Registered listeners for" );
+		console.info( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
+		console.info( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
+		console.info( PREFIX + `+ [${KEYSTROKES_LOG_TOGGLE}] Toggle DEBUG status` );
+		console.info( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
 	} else {
 		console.warn( "NO KEYBOARD LISTENER DETECTED!" );
 	}
@@ -185,6 +201,11 @@ function onKeySeqDownloadBSKY( event ) {
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+function onKeySeqShowError( event ) {
+	BSKY.showError();
+	return true
 }
 
 function onKeySeqCustomFunction( event ) {

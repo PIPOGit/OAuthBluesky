@@ -254,6 +254,7 @@ export async function call( step, url, fetchOptions=null, renderHTMLErrors=true 
  * The "params" parameter is an instance of: "Types.HTTPRequest".
  *
  * Returns an object of type: "TYPES.HTTPResponse".
+ * or an error of type: "TYPES.HTTPResponseError".
  * -------------------------------------------------------- */
 export async function apiCall( params, renderHTMLErrors=true ) {
 	const STEP_NAME						= "apiCall";

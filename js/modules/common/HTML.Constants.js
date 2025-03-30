@@ -98,6 +98,10 @@ export const DIV_PROFILE_NAME			= "profileName";
 export const DIV_PROFILE_NAME_TOP		= "profileNameTop";
 export const DIV_PROFILE_POSTS			= "profilePosts";
 
+// HTML Modal Error
+export const DIV_MODAL_ERROR			= "modalError";
+export const DIV_MODAL_ERROR_CODE		= "jsonError";
+
 // HTML Modal Constants
 export const DIV_MODAL_SETTINGS			= "modalSettings";
 export const DIV_MODAL_VERSION			= "modalVersion";

@@ -4,7 +4,7 @@
 		"debug_folded": true,
 		"show_info_step": false,
 		"appName": "BSKY Analyzer",
-		"appVersion": "2.0.2",
+		"appVersion": "2.0.3",
 		"loading_steps": 23,
 		"refresh_dynamic": 15,
 		"refresh_static": 300,
@@ -15,6 +15,7 @@
 		"log_off": "shift d f",
 		"log_toggle": "shift d space",
 		"download_bsky": "up down up down ctrl shift a",
+		"show_error": "ctrl shift e",
 		"custom_function": "ctrl shift z x"
 	},
 	"bluesky": {

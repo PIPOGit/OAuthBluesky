@@ -1386,7 +1386,7 @@ async function retrieveTrendingTopics(cursor) {
 	let responseFromServer				= null;
 	try {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
 		responseFromServer				= error;

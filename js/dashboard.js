@@ -162,6 +162,7 @@ async function startUp() {
 	window.BSKY.refreshAccessToken		= TOKEN.refreshAccessToken;
 	window.BSKY.getUserProfile			= getTheUserProfile;
 	window.BSKY.getRepoRecordsOfNSIDType	= getRepoRecordsOfNSIDType;
+	window.BSKY.showError				= fnShowError;
 
 	// Module INFO END
 	// ================================================================
@@ -626,6 +627,12 @@ async function getWhoTheUserFollows() {
 			}
 		}
 		startAt++;
+
+		// Sanity Check
+		if ( search.length==0 ) {
+			break;
+		}
+
 		let queryString					= "?" + search.join("").substring(1);
 
 		// Update the info panel
@@ -633,40 +640,8 @@ async function getWhoTheUserFollows() {
 
 		// Now, retrieve the block of profiles.
 		// ---------------------------------------------------------
-		// Received an array of profiles of this type:
-		//
-		//		{
-		//		    "did": "did:plc:rfdm4kde7l4uic6opx6bqcy2",
-		//		    "handle": "fumatron.bsky.social",
-		//		    "displayName": "FUMATRÓN",
-		//		    "avatar": "https://cdn.bsky.app/img/avatar/plain/did:plc:rfdm4kde7l4uic6opx6bqcy2/bafkreibi3hk7dstj5mg4o63a5ucjunl2zc2uf4udoy5d5aiitosu5dmsvu@jpeg",
-		//		    "associated": {
-		//		        "lists": 0,
-		//		        "feedgens": 0,
-		//		        "starterPacks": 0,
-		//		        "labeler": false
-		//		    },
-		//		    "viewer": {
-		//		        "muted": false,
-		//		        "blockedBy": false,
-		//		        "following": "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lifiak24z423",
-		//		        "knownFollowers": {
-		//		            "count": 19,
-		//		            "followers": [...]
-		//		        }
-		//		    },
-		//		    "labels": [],
-		//		    "createdAt": "2025-02-14T18:42:47.014Z",
-		//		    "indexedAt": "2025-02-14T18:45:11.112Z",
-		//		    "followersCount": 456,
-		//		    "followsCount": 70,
-		//		    "postsCount": 4
-		//		}
-		//
-		// if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + `Let's retrieve the user's profile...` );
 
 		blockOfProfiles					= await APIBluesky.getBlockOfRecords( queryString );
-		// if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + "Block of profiles:", blockOfProfiles );
 
 		// Add to global var
 		if ( blockOfProfiles && blockOfProfiles.profiles ) {
@@ -862,7 +837,11 @@ async function getWhoTheUserIsBlocking() {
 	let subTotal						= 0;
 	
 	// Retrieve first the list of blocks from ClearSky
-	allData.push(...BSKY.user.clearSky.userInfo.blockedBy.data.found);
+	const dataFromClearSky				= !COMMON.isNullOrEmpty( BSKY.user?.clearSky?.userInfo?.blockedBy?.data?.found );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Data from ClearSky? [${dataFromClearSky}]` );
+	if ( dataFromClearSky ) {
+		allData.push(...BSKY.user.clearSky.userInfo.blockedBy.data.found);
+	}
 
 	do {
 		n++;
@@ -1417,6 +1396,15 @@ async function getTheRelations() {
  * PUBLIC Functions
  **********************************************************/
 /* --------------------------------------------------------
+ * To display the errors modal.
+ * -------------------------------------------------------- */
+function fnShowError() {
+	const errorModal					= bootstrap.Modal.getOrCreateInstance( `#${HTML.DIV_MODAL_ERROR}` );
+	errorModal.show();
+}
+
+
+/* --------------------------------------------------------
  * Logout.
  * -------------------------------------------------------- */
 async function fnLogout() {
@@ -1562,6 +1550,8 @@ async function fnDashboard() {
 	} catch (error) {
 		// Show the error and update the HTML fields
 		window.BSKY.faviconStandBy();
+
+		// Info on the error in the pane
 		HTML.updateHTMLError(error);
 
 		// Info step
@@ -1589,10 +1579,10 @@ async function fnDashboard() {
 		clearTimeout( timerIdLoader );
 
 		// Hide the loader pane.
-		$( `#${HTML.DIV_LOADER_PANEL}` ).addClass( "hidden" )
+		$( `#${HTML.DIV_LOADER_PANEL}` ).addClass( "hidden" );
 
 		// Show the main content
-		$( `#${HTML.DIV_MAIN_PANEL}` ).removeClass( "hidden" ).addClass( "fade-in" )
+		$( `#${HTML.DIV_MAIN_PANEL}` ).removeClass( "hidden" ).addClass( "fade-in" );
 
 		// The favicon to normal
 		window.BSKY.faviconStandBy();
@@ -1778,4 +1768,3 @@ async function updateStaticInfo() {
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
-
