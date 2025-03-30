@@ -343,10 +343,10 @@ async function retrieveUserAccessToken() {
 /* --------------------------------------------------------
  * PDS: Atomic function to retrieve the user's profile
  * -------------------------------------------------------- */
-async function retrieveUserProfile( userHandle, renderHTMLErrors=true ) {
+async function retrieveUserProfile( handle, renderHTMLErrors=true ) {
 	const STEP_NAME						= "retrieveUserProfile";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + userHandle + "]" );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [handle " + handle + "]" );
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
@@ -355,7 +355,7 @@ async function retrieveUserProfile( userHandle, renderHTMLErrors=true ) {
 
 	// The URL is protected, so... PDS Server
 	let root							= getServerURL();
-	let url								= root + endpoint + "?actor=" + userHandle;
+	let url								= root + endpoint + "?actor=" + handle;
 
     // The DPoPProof.
 	// ---------------------------------------------------------

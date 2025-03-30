@@ -168,7 +168,7 @@ async function callClearSkyURL( step, endpoint, did=BSKY.user?.profile?.did, han
 	let responseFromServer				= null;
 	try {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Performing the call..." );
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
 		responseFromServer				= error;

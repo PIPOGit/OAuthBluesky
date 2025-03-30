@@ -82,18 +82,17 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}]` );
 
 	let isInstanceOfAccessTokenError	= error instanceof TYPES.AccessTokenError;
-	let isInstanceOfAPICallError		= error instanceof TYPES.APICallError;
 	let isInstanceOfHTTPResponseError	= error instanceof TYPES.HTTPResponseError;
 	let isInstanceOfHTMLError			= error instanceof TYPES.HTMLError;
 
-	if (window.BSKY.DEBUG) console.warn( PREFIX + "ERROR:", error.toString() );
-
-	// HTML L&F
-	if ( renderHTMLErrors ) {
-		COMMON.show( HTMLConstants.DIV_PANEL_ERROR );
+	const errorsList					= error.stack.split('\n');
+	if (window.BSKY.DEBUG) console.warn( PREFIX + `ERROR: [${error.toString()}]` );
+	for ( const stack of errorsList ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ MESSAGE: [${stack}]` );
 	}
 
 	if ( isInstanceOfAccessTokenError ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.AccessTokenError]` );
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
 
@@ -103,6 +102,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.message);
 		}
 	} else if ( isInstanceOfHTTPResponseError ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.HTTPResponseError]` );
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
 
@@ -112,6 +112,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.cause);
 		}
 	} else if ( isInstanceOfHTMLError ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.HTMLError]` );
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
 
@@ -120,37 +121,8 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$( '#'+HTMLConstants.DIV_ERROR ).html(error.title);
 			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.cause);
 		}
-	} else if ( isInstanceOfAPICallError ) {
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ step........:", error.step);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ status......:", error.status);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ statusText..:", error.statusText);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ contentType.:", error.contentType);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ ok..........:", error.ok);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bodyUsed....:", error.bodyUsed);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ redirected..:", error.redirected);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ body........:", error.body);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ type........:", error.type);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ url.........:", error.url);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ isJson......:", error.isJson);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ json........:", error.json);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ text........:", error.text);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ stack.......:", error.stack);
-
-		// Update the error fields
-		if ( renderHTMLErrors ) {
-			$( '#'+HTMLConstants.DIV_ERROR ).html(error.message);
-			if ( error.isJson ) {
-				let msg					= ( error.json.error ) ? error.json.error + ": " : "";
-				msg						+= ( error.json.message ) ? error.json.message : "";
-				msg						+= ( error.json.error_description ) ? error.json.error_description : "";
-				$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(msg);
-			} else {
-				let msg					= `[${error.step}] Error [${error.statusText}] invocando a: [${error.url}]`;
-				$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(msg);
-			}
-		}
 	} else if ( error.error && error.message ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [${typeof error}]` );
 		// Puede venir también un: "{"error":"InternalServerError","message":"Internal Server Error"}"
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error.......:", error.error);
 		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
@@ -170,6 +142,11 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
+
+	// HTML L&F
+	if ( renderHTMLErrors ) {
+		COMMON.show( HTMLConstants.DIV_PANEL_ERROR );
+	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -532,18 +509,25 @@ export function htmlRenderUserProfile( profile ) {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 
+	// The banner, if any
 	if (profile?.banner) {	// DIV_PROFILE_CARD
 		$( '#'+HTMLConstants.DIV_PROFILE_CARD ).css( "background-image", `url(${profile.banner})` );
 	} else {
 		$( '#'+HTMLConstants.DIV_PROFILE_CARD ).css( "background-image", `url(${HTMLConstants.BLANK_IMAGE})` );
 	}
 
+	// The avatar, if any
 	if (profile?.avatar) {
 		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR ).prop( "src", profile.avatar );
 		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR_TOP ).prop( "src", profile.avatar );
 	} else {
 		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR ).prop( "src", HTMLConstants.BLANK_IMAGE );
 		$( '#'+HTMLConstants.DIV_PROFILE_AVATAR_TOP ).prop( "src", HTMLConstants.BLANK_IMAGE );
+	}
+
+	// The StatuSphere, if any
+	if (profile?.statuSphere) {
+		// TODO: See where to put the info
 	}
 
 	$( '#'+HTMLConstants.DIV_PROFILE_NAME ).html( profile.displayName || profile.handle );

@@ -106,7 +106,7 @@ export function modalEventForVersionWhenInvoked( event ) {
 /* --------------------------------------------------------
  * Invoked when modal for "User Search" is displayed.
  * -------------------------------------------------------- */
-export function modalEventForSearchUsersWhenShowed( event ) {
+export function modalEventForSearchUsersWhenInvoked( event ) {
 
 	// Clear "Search user" field
 	// ---------------------------------------------------------

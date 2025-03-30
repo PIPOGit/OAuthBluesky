@@ -195,12 +195,12 @@ async function startUp() {
 	$( `#${HTML.DIV_GEOLOCATION}` ).val( place.name );
 
 	// Bootstrap Modals events
-	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER ).addEventListener( 'shown.bs.modal',  EVENTS.modalEventForSearchUsersWhenShowed );
-	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER ).addEventListener( 'hidden.bs.modal', EVENTS.modalEventForSearchUsersWhenClosed );
-	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'show.bs.modal',   EVENTS.modalEventForSettingsWhenInvoked );
-	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'hidden.bs.modal', EVENTS.modalEventForSettingsWhenClosed );
-	COMMON.getById(HTML.DIV_MODAL_VERSION     ).addEventListener( 'show.bs.modal',   EVENTS.modalEventForVersionWhenInvoked );
-	COMMON.getById(HTML.DIV_MODAL_USER_PROFILE).addEventListener( 'hidden.bs.modal', EVENTS.modalEventForUserProfileWhenClosed );
+	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER ).addEventListener( 'show.bs.modal',		EVENTS.modalEventForSearchUsersWhenInvoked );
+	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER ).addEventListener( 'hidden.bs.modal',	EVENTS.modalEventForSearchUsersWhenClosed );
+	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'show.bs.modal',		EVENTS.modalEventForSettingsWhenInvoked );
+	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'hidden.bs.modal',	EVENTS.modalEventForSettingsWhenClosed );
+	COMMON.getById(HTML.DIV_MODAL_VERSION     ).addEventListener( 'show.bs.modal',		EVENTS.modalEventForVersionWhenInvoked );
+	COMMON.getById(HTML.DIV_MODAL_USER_PROFILE).addEventListener( 'hidden.bs.modal',	EVENTS.modalEventForUserProfileWhenClosed );
 
 	// "User Profile" events
 	COMMON.getById( HTML.RELATION_FOLLOW  ).addEventListener( 'click',  EVENTS.eventRelationFollow );
@@ -240,23 +240,21 @@ async function startUp() {
  * Retrieves the "user status", from the user PDS Repo.
  * This value comes from the "StatuSphere" application.
  * -------------------------------------------------------- */
-async function getUserStatus( handle ) {
-	const STEP_NAME						= "getUserStatus";
+async function getUserStatuSphere( handle ) {
+	const STEP_NAME						= "getUserStatuSphere";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[handle==${handle}]` );
 
 	// Retrieve the list of records of a given type from the repo.
 	// ---------------------------------------------------------
-	const nsid							= NSID.status;
 
 	// The records.
 	let allData							= null;
 	try {
-		allData							= await BSKY.getRepoRecordsOfNSIDType( nsid, false );
+		allData							= await BSKY.getRepoRecordsOfNSIDType( NSID.status, false );
 		if ( COMMON.isNullOrEmpty( allData ) ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `No data received.` );
 		} else {
-			// TODO: Explore the results
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `Received:`, allData );
 		}
 	} catch( error ) {
@@ -316,14 +314,8 @@ async function fnSearchUser( source ) {
 			actors.forEach( actor => {
 				html					= `<li class="list-group-item">`;
 
-				// TODO: Incorporar un enlace (<a...) para cerrar el modal: DIV_MODAL_SEARCH_USER
-				// <a data-bs-toggle="modal" data-bs-target="#remote_modal_frame" data-bs-dismiss="modal">...</a>
-
-
 				// La imagen de perfil...
 				html					+= `<a href="javascript:void(0)" onClick="BSKY.showProfile('${actor.handle}', '${actor.did}')" data-bsky-handle="${actor.handle}" data-bsky-did="${actor.did}" data-bs-toggle="modal" data-bs-target="#${HTML.DIV_MODAL_SEARCH_USER}" data-bs-dismiss="modal">`;
-				// html					+= `<a href="javascript:void(0)" onClick="BSKY.showProfile('${actor.handle}', '${actor.did}')" data-bs-toggle="modal" data-bs-target="#${HTML.DIV_MODAL_SEARCH_USER}" data-bs-dismiss="modal">`;
-				// html					+= `<a href="${BLUESKY.profile.url}${actor.handle || actor.did}" target="_blank">`;
 				html					+= (actor.avatar) ? `<img src="${actor.avatar}" height="24">` : `<i class="bi bi-person"></i>`;
 				html					+= `</a>&nbsp;`;
 
@@ -359,9 +351,8 @@ async function fnShowUserProfile( handle, did ) {
 	const profileFromBlocks				= BSKY.user.blocks.find( x => COMMON.areEquals( did, x.did ) ) || null;
 	const profileFromMutes				= BSKY.user.mutes.find( x => COMMON.areEquals( did, x.did ) ) || null;
 	const userProfile					= await BSKY.getUserProfile( handle );
-	// const userStatus					= await getUserStatus( handle );
-	HTML.showStepInfo( STEP_NAME );
 
+	HTML.showStepInfo( STEP_NAME );
 
 	// Las imágenes
 	$( '.theme-profile-images-banner' ).prop( 'src', userProfile.banner );
@@ -539,6 +530,10 @@ async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 
 	// Save it.
 	if ( COMMON.areEquals( handle, BSKY.user.userHandle ) ) {
+		// The "statusPhere".
+		const userStatus				= await getUserStatuSphere( handle );
+		userProfile.statuSphere			= userStatus;
+
 		BSKY.user.profile				= userProfile;
 
 		// Lo pintamos en su sitio.
@@ -1597,7 +1592,7 @@ async function fnDashboard() {
 		$( `#${HTML.DIV_LOADER_PANEL}` ).addClass( "hidden" )
 
 		// Show the main content
-		$( `#${HTML.DIV_MAIN_PANEL}` ).removeClass( "hidden" )
+		$( `#${HTML.DIV_MAIN_PANEL}` ).removeClass( "hidden" ).addClass( "fade-in" )
 
 		// The favicon to normal
 		window.BSKY.faviconStandBy();

@@ -134,20 +134,6 @@
 			<div class="nav-scroller bg-body shadow-sm px-1">
 				<nav class="nav nav-pills pt-2" aria-label="Secondary navigation">
 
-					<!--
-					<button class="btn nav-link d-flex align-items-baseline px-2"
-						id="pill-my-profile"
-						name="pill-my-profile"
-						data-bs-target="#panelMyProfile"
-						aria-controls="panelMyProfile"
-						type="button"
-						data-bs-toggle="pill"
-						role="tab"
-						aria-selected="true" aria-current="page">
-						<i class="bi bi-person-vcard px-1"></i>
-						User Profile
-					</button>
-					-->
 					<button class="btn nav-link d-flex align-items-baseline px-2 active"
 						id="pill-notifications"
 						name="pill-notifications"
@@ -268,86 +254,6 @@
 
 				<!-- El div de los paneles -->
 				<div id="myTabContent" name="myTabContent" class="tab-content p-2 ">
-
-					<!-- El panel de My Profile -->
-					<!--
-					<div id="panelMyProfile" name="panelMyProfile" class="tab-pane fade theme-my-profile theme-table" role="tabpanel" aria-labelledby="pill-my-profile" tabindex="0">
-
-						<!-- La tarjeta. -- >
-						<div class="card bg-transparent border-0 mb-2">
-							<div class="row">
-								<div class="col-2">
-									<img id="profileAvatar" name="profileAvatar" class="img-fluid rounded-circle" width="96px" height="96px" src="https://cdn.bsky.app/img/avatar/plain/did:plc:z72i7hdynmk6r22z27h6tvur/bafkreihagr2cmvl2jt4mgx3sppwe2it3fwolkrbtjrhcnwjk4jdijhsoze@jpeg">
-								</div>
-								<div class="col-10">
-									<div id="profileCard" class="card-body p-1">
-										<h5 class="card-title mb-0"><span id="profileName" name="profileName">Account Display Name</span></h5>
-										<div class="card-text"><a href="javascript:void(0);" id="profileHandleLink" name="profileHandleLink" class="link-primary" target="_blank">@<span id="profileHandle" name="profileHandle">handle</span></a></div>
-										<div class="card-text">
-											<small class="text-body-secondary">
-												<span id="profileFollowers" name="profileFollowers" class="fw-semibold">----</span> followers,
-												<span id="profileFollowing" name="profileFollowing" class="fw-semibold">----</span> following,
-												<span id="profilePosts"     name="profilePosts"     class="fw-semibold">----</span> posts
-											</small>
-										</div>
-										<div class="card-text border-top border-2 bg-body-secondary">
-											<span id="profileDescription" name="profileDescription" class="px-2">Description of the Bluesky account</span>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-
-						<form id="userHandleForm" name="userHandleForm" class="row align-items-center theme-callback border border-2 m-1 p-1">
-
-							<div class="d-flex align-items-center mb-2">
-								<button id="buttonRefreshToken" name="buttonRefreshToken" class="btn btn-sm btn-success mx-3 my-1" type="button" onClick="BSKY.refreshAccessToken()">Refresh</button>
-								<a id="buttonClientId"     name="buttonClientId"     class="btn btn-sm btn-outline-success mx-3 my-1" target="client-id" title="Client ID Metatada" href="javascript:void(0); return false;">Client ID Metatada</a>
-								<a id="buttonDIDDocument"  name="buttonDIDDocument"  class="btn btn-sm btn-outline-success mx-3 my-1" target="did-document" title="User DID Document" href="javascript:void(0); return false;">User DID Document</a>
-							</div>
-
-							<div class="row">
-								<label for="clientId" class="col-2 col-form-label fw-semibold">Client ID:</label>
-								<div class="col-10">
-									<input type="text" class="form-control form-control-plaintext theme-smaller" id="clientId" name="clientId" placeholder="Received clientId" readonly>
-								</div>
-							</div>
-
-							<div class="row">
-								<label for="iss" class="col-2 col-form-label fw-semibold">ISS:</label>
-								<div class="col-10">
-									<input type="text" class="form-control form-control-plaintext theme-smaller" id="iss" name="iss" placeholder="Received iss" readonly>
-								</div>
-							</div>
-
-							<div class="row">
-								<label for="state" class="col-2 col-form-label fw-semibold">State:</label>
-								<div class="col-10">
-									<input type="text" class="form-control form-control-plaintext theme-smaller" id="state" name="state" placeholder="Received state" readonly>
-								</div>
-							</div>
-
-							<div class="row">
-								<label for="code" class="col-2 col-form-label fw-semibold">Code:</label>
-								<div class="col-10">
-									<input type="text" class="form-control form-control-plaintext theme-smaller" id="code" name="code" placeholder="Received code" readonly>
-								</div>
-							</div>
-
-							<div class="row">
-								<label for="dpopNonce" class="col-2 col-form-label fw-semibold">DPoP Nonce:</label>
-								<div class="col-10">
-									<input type="text" class="form-control form-control-plaintext theme-smaller" id="dpopNonce" name="dpopNonce" placeholder="Received dpop-nonce" readonly>
-								</div>
-							</div>
-						</form>
-
-						<div class="mt-2">
-							<pre><code id="accessTokenJwt"  name="accessTokenJwt"  class="language-json mb-2"></code></pre>
-							<pre><code id="accessTokenJson" name="accessTokenJson" class="language-json"></code></pre><hr/>
-						</div>
-					</div>
-					-->
 
 					<!-- El panel de las notificaciones -->
 					<div id="panelNotifications" name="panelNotifications" class="tab-pane fade show active theme-notifications" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
@@ -1336,8 +1242,24 @@
 						<a class="btn btn-sm btn-outline-secondary" target="github" title="GitHub" href="https://github.com/PIPOGit/OAuthBluesky"><i class="bi bi-github"></i></a>
 					</div>
 					<div class="col-auto ps-2">
-						<button id="buttonRefreshToken" name="buttonRefreshToken" class="btn btn-sm btn-success" type="button" data-bs-dismiss="offcanvas" onClick="BSKY.refreshAccessToken()">Refresh</button>
-						<button id="buttonLogout" name="buttonLogout" class="btn btn-sm btn-danger" type="button" title="Log-out the application" onClick="BSKY.logout()">Logout</button>
+						<button class="btn btn-sm btn-success"
+							id="buttonRefreshToken"
+							name="buttonRefreshToken"
+							type="button"
+							data-bs-dismiss="offcanvas"
+							title="Refresh the access token"
+							onClick="BSKY.refreshAccessToken()">
+							Refresh
+						</button>
+						<button class="btn btn-sm btn-danger"
+							id="buttonLogout"
+							name="buttonLogout"
+							type="button"
+							data-bs-dismiss="offcanvas"
+							title="Log-out the application"
+							onClick="BSKY.logout()">
+							Logout
+						</button>
 					</div>
 				</div>
 
