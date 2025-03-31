@@ -2,6 +2,9 @@
  * Module imports
  *
  **********************************************************/
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
 

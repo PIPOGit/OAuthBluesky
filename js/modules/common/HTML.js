@@ -80,23 +80,26 @@ export function updateHighlight() {
 export function updateHTMLError(error, renderHTMLErrors=true) {
 	const STEP_NAME						= "updateHTMLError";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_STACK					= `${PREFIX}[STACK] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[renderHTMLErrors==${renderHTMLErrors}]` );
 
 	let isInstanceOfAccessTokenError	= error instanceof TYPES.AccessTokenError;
 	let isInstanceOfHTTPResponseError	= error instanceof TYPES.HTTPResponseError;
 	let isInstanceOfHTMLError			= error instanceof TYPES.HTMLError;
 
-	const errorsList					= error.stack.split('\n');
-	if (window.BSKY.DEBUG) console.warn( PREFIX + `ERROR: [${error.toString()}]` );
-	for ( const stack of errorsList ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ MESSAGE: [${stack}]` );
+	if ( renderHTMLErrors ) {
+		const errorsList					= error.stack.split('\n');
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR: [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_STACK );
+		for ( const stack of errorsList ) {
+			if (window.BSKY.DEBUG) console.debug( PREFIX_STACK + `+ MESSAGE: [${stack}]` );
+		}
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	}
 
 	if ( isInstanceOfAccessTokenError ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.AccessTokenError]` );
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -105,9 +108,6 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		}
 	} else if ( isInstanceOfHTTPResponseError ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.HTTPResponseError]` );
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -116,9 +116,6 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		}
 	} else if ( isInstanceOfHTMLError ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [TYPES.HTMLError]` );
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ code........:", error.code);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -128,9 +125,6 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 	} else if ( error.error && error.message ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [${typeof error}]` );
 		// Puede venir también un: "{"error":"InternalServerError","message":"Internal Server Error"}"
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ error.......:", error.error);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ message.....:", error.message);
-		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ cause.......:", error.cause);
 
 		// Update the error fields
 		if ( renderHTMLErrors ) {
@@ -144,22 +138,23 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 			$( '#'+HTMLConstants.DIV_ERROR_DESCRIPTION ).val(error.message);
 		}
 	}
-	// if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonce........:", BSKY.data.dpopNonce );
-	// if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceUsed....:", BSKY.data.dpopNonceUsed );
-	// if (window.BSKY.DEBUG) console.debug( PREFIX + "ERROR dpopNonceReceived:", BSKY.data.dpopNonceReceived );
 
 	// Info on the error in the modal
-	const html							= {
-		version: CONFIGURATION.global.appVersion,
-		date: new Date(),
-		error: error
-	}
-	$( `#${HTMLConstants.DIV_MODAL_ERROR_CODE}` ).text( COMMON.prettyJson( html ) );
-	updateHighlight();
-
 	// HTML L&F
 	if ( renderHTMLErrors ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Passing the info into the error's modal..." );
+		const html							= {
+			version: CONFIGURATION.global.appVersion,
+			date: new Date(),
+			stack: error.stack.split('\n'),
+			error: error
+		}
+		$( `#${HTMLConstants.DIV_MODAL_ERROR_CODE}` ).text( COMMON.prettyJson( html ) );
+		updateHighlight();
+
 		COMMON.show( HTMLConstants.DIV_PANEL_ERROR );
+	} else {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Nothing else to do." );
 	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
@@ -233,6 +228,9 @@ export function updateUserDIDInfo() {
 	let $linkDIDDocument				= $( '#'+HTMLConstants.DIV_BTN_DID_DOCUMENT );
 	$linkClientID.prop("href",  CLIENT_APP.client_id);
 	$linkDIDDocument.prop("href",  BLUESKY.profile.pld + BSKY.user.userDid);
+
+	// "User Profile" links
+	$( 'a[target="pdsls"]' ).prop( 'href', BLUESKY.pds.url + "at://" + BSKY.user.userDid );
 }
 
 
@@ -275,12 +273,18 @@ async function getReferredBluit( notiURI ) {
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ headers:", COMMON.prettyJson( headers ) );
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ fetchOptions:", COMMON.prettyJson( fetchOptions ) );
 
-	let callResponse					= await APICall.call( STEP_NAME, bluitUrl, fetchOptions )
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
-	let bluits							= callResponse.json.posts;
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
-	let bluit							= bluits[0];
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
+	let callResponse					= null;
+	let bluit							= null;
+	try {
+		callResponse					= await APICall.call( STEP_NAME, bluitUrl, fetchOptions );
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ callResponse:", callResponse);
+		let bluits						= callResponse.json.posts;
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluits:", bluits);
+		bluit							= bluits[0];
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "+ bluit:", bluit);
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug(PREFIX + "  ERROR bluit:", error);
+	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -398,35 +402,37 @@ async function htmlRenderNotification( idx, notification, userAccessToken, clien
 			try {
 				bluit					= await getReferredBluit( notiURI );
 
-				// Agregamos la info al html...
-				let referredText		= `Not detected yet for ${notiReason}!`;
-				let referredTextExtra	= "";
+				if ( !COMMON.isNullOrEmpty( bluit ) ) {
+					// Agregamos la info al html...
+					let referredText		= `Not detected yet for ${notiReason}!`;
+					let referredTextExtra	= "";
 
-				// The "proper" text.
-				referredText			= "<blockquote>";
-				referredText			+= bluit?.record?.text ? bluit.record.text : "nothing in <code>bluit.record.text</code>";
-				referredText			+= "</blockquote>";
+					// The "proper" text.
+					referredText			= "<blockquote>";
+					referredText			+= bluit?.record?.text ? bluit.record.text : "nothing in <code>bluit.record.text</code>";
+					referredText			+= "</blockquote>";
 
-				// The "related" text.
-				referredTextExtra		= bluit?.embed?.record?.value?.text ? `<em>${bluit.embed.record.value.text}</em>`
-											: bluit?.record?.embed?.external?.title ? `<em>${bluit.record.embed.external.title}</em>`
-											: bluit?.embed?.external?.title ? `<em>${bluit.embed.external.title}</em>`
-											: bluit?.embed?.record?.text ? `<em>${bluit.embed.record.text}</em>`
-											: "";
-											// : "<strong>no referred bluit in <code>bluit.embed.record.value.text</code> or <code>bluit.record.embed.external.title</code> or <code>bluit.embed.external.title</code> or <code>bluit.embed.record.text</code></strong>";
-				referredText			+= ( referredTextExtra.trim().length>0 ) ? `Referred to bluit: <blockquote>${referredTextExtra}</blockquote>` : "";
+					// The "related" text.
+					referredTextExtra		= bluit?.embed?.record?.value?.text ? `<em>${bluit.embed.record.value.text}</em>`
+												: bluit?.record?.embed?.external?.title ? `<em>${bluit.record.embed.external.title}</em>`
+												: bluit?.embed?.external?.title ? `<em>${bluit.embed.external.title}</em>`
+												: bluit?.embed?.record?.text ? `<em>${bluit.embed.record.text}</em>`
+												: "";
+												// : "<strong>no referred bluit in <code>bluit.embed.record.value.text</code> or <code>bluit.record.embed.external.title</code> or <code>bluit.embed.external.title</code> or <code>bluit.embed.record.text</code></strong>";
+					referredText			+= ( referredTextExtra.trim().length>0 ) ? `Referred to bluit: <blockquote>${referredTextExtra}</blockquote>` : "";
 
-				// HTML Tune-up
-				referredText			= referredText.replaceAll( '\n', '<br/>' );
-				if (window.BSKY.DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
+					// HTML Tune-up
+					referredText			= referredText.replaceAll( '\n', '<br/>' );
+					if (window.BSKY.DEBUG) console.debug(PREFIX + "+ referredText:", referredText);
 
-				// Add the text to the "body"
-				if (replyText) {
-					htmlBody				+= `:<blockquote><i class="text-primary">${replyText}</i></blockquote>to `;
-				} else {
-				htmlBody				+= ` `;
+					// Add the text to the "body"
+					if (replyText) {
+						htmlBody				+= `:<blockquote><i class="text-primary">${replyText}</i></blockquote>to `;
+					} else {
+					htmlBody				+= ` `;
+					}
+					htmlBody				+= `<a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
 				}
-				htmlBody				+= `<a href="${userProfileURL}" target="post-${cid}">this post</a>: ${referredText}`;
 			} catch (error) {
 				if (window.BSKY.DEBUG) console.debug(PREFIX + `ERROR retrieving the referred bluit[@${notiURI}]:`, error);
 			}
@@ -463,8 +469,8 @@ export async function htmlRenderNotifications( notifications, userAccessToken, c
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + "[Response data]" );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current notifications:", notifications );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current notifications:", COMMON.prettyJson( notifications ) );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Current notifications: [${notifications.length}]` );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Current notifications:", COMMON.prettyJson( notifications ) );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Clear and hide error fields and panel
@@ -604,7 +610,7 @@ export function htmlRenderUserProfile( profile ) {
 			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		} else {
-			if (window.BSKY.DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}[${following}] - Followers: ${diffFollowers}[${followers}]` );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_COMPARE + `Following: ${diffFollowing}-[${following}] - Followers: ${diffFollowers}-[${followers}]` );
 		}
 	}
 
@@ -628,7 +634,7 @@ function htmlRenderMissedProfile( idx, data, flags = { follower: false, block: f
 	let html							= "";
 	let handle							= ( didDoc?.alsoKnownAs && didDoc.alsoKnownAs[0]) ? didDoc.alsoKnownAs[0]?.substring(5) : "";
 	html								+= '<tr class="align-top">';
-	html								+= `<td>&nbsp;</td>`;
+	html								+= `<td>&nbsp;${idx}</td>`;
 	html								+= `<td><i class="bi bi-ban-fill text-danger" title="Profile not found"></i></td>`;
 	html								+= `<td><a href="${BLUESKY.profile.url}${handle}" target="_blank" title="${handle}">${handle}</a></td>`;
 	html								+= `<td class="text-danger fw-medium theme-smaller">${profile.error || "Error"}: ${profile.message || "unknown"}</td>`;
@@ -984,7 +990,8 @@ function htmlRenderSingleList( table, data ) {
 		// Add data.
 		data.forEach( list => {
 			index++;
-			id							= list.uri.split("/")[4];
+			// id							= list.uri.split("/")[4];
+			id							= COMMON.getRKeyFromURL( list.uri );
 			htmlContent					= htmlRenderSingleListEntry( index, list, id );
 			$tableBody.append( htmlContent );
 		});
@@ -1034,7 +1041,8 @@ export function htmlRenderUserModerationList( data, table, danger=false ) {
 		data.forEach( list => {
 			index++;
 			url							= list?.uri || list?.url;
-			id							= url.split("/")[4];
+			// id							= url.split("/")[4];
+			id							= COMMON.getRKeyFromURL( url );
 			htmlContent					= htmlRenderSingleModListEntry( index, list, id, danger );
 			$tableBody.append( htmlContent );
 		});

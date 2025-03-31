@@ -34,6 +34,8 @@ import * as APICall						from "./modules/utils/APICall.js";
 import * as DB							from "./modules/utils/BrowserDB.js";
 // Common Events functions
 import * as EVENTS						from "./modules/utils/Events.js";
+// Common Keyboard Listener functions
+import * as KPListener					from "./modules/utils/KPListener.js";
 // Common Settings functions
 import * as SETTINGS					from "./modules/utils/Settings.js";
 
@@ -156,12 +158,11 @@ async function startUp() {
 	window.BSKY.updateCurrentRefresh	= SETTINGS.fnUpdateCurrentRefreshTime;
 	window.BSKY.filterFollowing			= HTML.fnFilterTable;
 	window.BSKY.filterFollowers			= HTML.fnFilterTable;
-	window.BSKY.showProfile				= fnShowUserProfile;
+	window.BSKY.showProfile				= EVENTS.showUserProfile;
 	window.BSKY.dashboard				= fnDashboard;
 	window.BSKY.logout					= fnLogout;
 	window.BSKY.refreshAccessToken		= TOKEN.refreshAccessToken;
 	window.BSKY.getUserProfile			= getTheUserProfile;
-	window.BSKY.getRepoRecordsOfNSIDType	= getRepoRecordsOfNSIDType;
 	window.BSKY.showError				= fnShowError;
 
 	// Module INFO END
@@ -174,6 +175,9 @@ async function startUp() {
 
 	// Page setup concrete actions.
 	// ---------------------------------------------------------
+
+	// KeyPress configuration
+	KPListener.setupKeypress();
 
 	// Crypto Key to Database
 	await DB.checkCryptoKeyInDB();
@@ -201,6 +205,7 @@ async function startUp() {
 	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'show.bs.modal',		EVENTS.modalEventForSettingsWhenInvoked );
 	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'hidden.bs.modal',	EVENTS.modalEventForSettingsWhenClosed );
 	COMMON.getById(HTML.DIV_MODAL_VERSION     ).addEventListener( 'show.bs.modal',		EVENTS.modalEventForVersionWhenInvoked );
+	COMMON.getById(HTML.DIV_MODAL_USER_PROFILE).addEventListener( 'show.bs.modal',		EVENTS.modalEventForUserProfileWhenInvoked );
 	COMMON.getById(HTML.DIV_MODAL_USER_PROFILE).addEventListener( 'hidden.bs.modal',	EVENTS.modalEventForUserProfileWhenClosed );
 
 	// "User Profile" events
@@ -248,11 +253,12 @@ async function getUserStatuSphere( handle ) {
 
 	// Retrieve the list of records of a given type from the repo.
 	// ---------------------------------------------------------
+	const nsid							= NSID.status;
 
 	// The records.
 	let allData							= null;
 	try {
-		allData							= await BSKY.getRepoRecordsOfNSIDType( NSID.status, false );
+		allData							= await getRepoRecordsOfNSIDType( nsid, false );
 		if ( COMMON.isNullOrEmpty( allData ) ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `No data received.` );
 		} else {
@@ -267,7 +273,7 @@ async function getUserStatuSphere( handle ) {
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return allData;
+	return COMMON.isNullOrEmpty( allData ) ? null : allData[0];
 }
 
 
@@ -332,83 +338,6 @@ async function fnSearchUser( source ) {
 			$list.append( `No profiles found for: [${searchString}]` );
 		}
 	}
-
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-}
-
-/* --------------------------------------------------------
- * "Display an user's profile"
- * -------------------------------------------------------- */
-async function fnShowUserProfile( handle, did ) {
-	const STEP_NAME						= "fnShowUserProfile";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[handle:${handle}] [did:${did}]` );
-
-	const profileFromKnownFollowers		= BSKY.user.profile.viewer.knownFollowers.followers.find( x => COMMON.areEquals( did, x.did ) ) || null;
-	const profileFromFollowers			= BSKY.user.followers.find( x => COMMON.areEquals( did, x.did ) ) || null;
-	const profileFromFollowing			= BSKY.user.following.profiles.find( x => COMMON.areEquals( did, x.did ) ) || null;
-	const profileFromMissingProfiles	= BSKY.user.missingProfiles.find( x => COMMON.areEquals( did, x.did ) ) || null;
-	const profileFromBlocks				= BSKY.user.blocks.find( x => COMMON.areEquals( did, x.did ) ) || null;
-	const profileFromMutes				= BSKY.user.mutes.find( x => COMMON.areEquals( did, x.did ) ) || null;
-	const userProfile					= await BSKY.getUserProfile( handle );
-
-	HTML.showStepInfo( STEP_NAME );
-
-	// Las imágenes
-	$( '.theme-profile-images-banner' ).prop( 'src', userProfile.banner );
-	$( '.theme-profile-images-avatar' ).prop( 'src', userProfile.avatar );
-
-	// Los datos
-	$( '.theme-profile-info .profile-name' ).html( userProfile.displayName );
-	$( '.theme-profile-info .profile-handle' ).html( userProfile.handle );
-	$( '.theme-profile-info .profile-handle-link' ).prop( 'href', `https://bsky.app/profile/${userProfile.handle}` );
-	$( '.theme-profile-info .profile-created' ).html( new Date( userProfile.createdAt ).toLocaleString( COMMON.DEFAULT_LOCALE, COMMON.DEFAULT_DATEFORMAT ) );
-	$( '.theme-profile-info .profile-following' ).html( userProfile.followsCount );
-	$( '.theme-profile-info .profile-followers' ).html( userProfile.followersCount );
-	$( '.theme-profile-info .profile-posts' ).html( userProfile.postsCount );
-	$( '.theme-profile-info .profile-description' ).val( userProfile.description );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `displayName...............:`, userProfile.displayName );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `description...............:`, userProfile.description );
-
-	// La relación y los datasets para la relación
-	let input							= null;
-
-	input								= COMMON.getById( 'relation-follow' );
-	input.checked						= !COMMON.isNullOrEmpty( profileFromFollowing );
-	input.dataset.bskyHandle			= userProfile.handle;
-	input.dataset.bskyDid				= userProfile.did;
-
-	input								= COMMON.getById( 'relation-blocked' );
-	input.checked						= !COMMON.isNullOrEmpty( profileFromBlocks );
-	input.dataset.bskyHandle			= userProfile.handle;
-	input.dataset.bskyDid				= userProfile.did;
-
-	input								= COMMON.getById( 'relation-muted' );
-	input.checked						= !COMMON.isNullOrEmpty( profileFromMutes );
-	input.dataset.bskyHandle			= userProfile.handle;
-	input.dataset.bskyDid				= userProfile.did;
-
-	input								= COMMON.getById( 'relation-follow-me' );
-	input.checked						= !COMMON.isNullOrEmpty( profileFromFollowers );
-
-	input								= COMMON.getById( 'relation-blocked-by' );
-	input.checked						= userProfile.viewer.blockedBy;
-
-	input								= COMMON.getById( 'relation-muted-by' );
-	input.checked						= userProfile.viewer.muted;
-
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Opening the 'User Profile' modal...` );
-	const userProfileModalOptions		= {
-		"backdrop": true,
-		"focus": true,
-		"keyboard": true
-	};
-	// const userProfileModal				= new bootstrap.Modal( `#${HTML.DIV_MODAL_USER_PROFILE}`, userProfileModalOptions );
-	const userProfileModal				= bootstrap.Modal.getOrCreateInstance( `#${HTML.DIV_MODAL_USER_PROFILE}`, userProfileModalOptions );
-	userProfileModal.show();
-	userProfileModal.handleUpdate();
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -533,7 +462,7 @@ async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 	if ( COMMON.areEquals( handle, BSKY.user.userHandle ) ) {
 		// The "statusPhere".
 		const userStatus				= await getUserStatuSphere( handle );
-		userProfile.statuSphere			= userStatus;
+		userProfile.statuSphere			= COMMON.isNullOrEmpty( userStatus ) ? null : userStatus;
 
 		BSKY.user.profile				= userProfile;
 
@@ -695,7 +624,7 @@ async function getWhoTheUserFollows() {
 		for ( let idx=0; idx<missing.length; idx++ ) {
 			userDid						= missing[ idx ];
 
-			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_MISSING + `Missed profile[${idx}] with did:`, userDid );
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_MISSING + `Missed profile[${idx}] with did: [${userDid}]` );
 			missingProfiles[userDid]	= {};
 			missed						= {};
 			missed.did					= userDid;
@@ -1208,16 +1137,11 @@ async function getTheTrendingTopics() {
 
 		// if ( !COMMON.isNullOrEmpty( data ) ) {
 		if ( data && ( data?.topics || data?.suggested ) ) {
-			// Topics
-			subTotal						= data.topics.length;
-
-			// Suggested
-			subTotal						= data.suggested.length;
-
 			// Save it.
 			BSKY.user.trendingTopics		= data;
 
 			// Lo pintamos en su sitio.
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `${data.topics.length} topics and ${data.suggested.length} suggested...` );
 			HTML.htmlRenderTrendingTopics( data );
 		}
 	} catch ( error ) {
@@ -1558,11 +1482,30 @@ async function fnDashboard() {
 		HTML.showStepInfo( STEP_NAME );
 
 		// Errors? Put the error in the localStorage.
-		localStorage.setItem( LSKEYS.ERROR_DATA, COMMON.prettyJson( error.toJSON() ) );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `Kept this error in the local storage[${LSKEYS.ERROR_DATA}]:`, COMMON.prettyJson( error.toJSON() ) );
+		localStorage.setItem( LSKEYS.ERROR_DATA, COMMON.prettyJson( error?.toJSON ? error.toJSON() : COMMON.prettyJson( error ) ) );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `Kept this error in the local storage[${LSKEYS.ERROR_DATA}]:`, COMMON.prettyJson( error?.toJSON ? error.toJSON() : error ) );
 
-		// Errors? LOGOUT.
-		if ( CONFIGURATION.global.autoLogout ) {
+		// Errors? LOGOUT?
+		// ---------------------------------------------------------
+
+		// Let's see whether it is an invalid grant
+		let goAutoLogout				= false;
+		let isAccessTokenError			= error instanceof TYPES.AccessTokenError;
+		let isHTTPResponseError			= error instanceof TYPES.HTTPResponseError;
+		let isHTMLError					= error instanceof TYPES.HTMLError;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR TYPE: [isAccessTokenError==${isAccessTokenError}] [isHTTPResponseError==${isHTTPResponseError}] [isHTMLError==${isHTMLError}]` );
+		if ( isAccessTokenError ) {
+			goAutoLogout				= true;
+		} else if ( error.isJson && ( error.code==400 ) ) {
+			const json					= error.json;
+			if ( COMMON.areEquals( json.error.toUpperCase(), HTML.HTTP_ERROR_INVALID_GRANT.toUpperCase() ) ) {
+				if ( COMMON.areEquals( json.error_description.toUpperCase(), "Invalid code".toUpperCase() ) ) {
+					goAutoLogout		= true;
+				}
+			}
+		}
+
+		if ( goAutoLogout || CONFIGURATION.global.autoLogout ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Errors found. Performing the auto-logout." );
 			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1720,11 +1663,11 @@ async function updateStaticInfo() {
 		// Later, retrieve the rest of things.
 		// ---------------------------------------------------------
 
-		// Retrieve the info from ClearSky...
-		apiCallResponse					= await getTheClearSkyInfo();
-
 		// Retrieve the user's profile to show
 		apiCallResponse					= await getTheUserProfile();
+
+		// Retrieve the info from ClearSky...
+		apiCallResponse					= await getTheClearSkyInfo();
 
 		// Retrieve who the user is following FROM THE PDS Repository
 		apiCallResponse					= await getWhoTheUserFollows();

@@ -121,7 +121,7 @@ export class HTTPRequest {
 	fetchOptions						= null;
 
 	static getInstance( step, url ) {				return new HTTPRequest( step, url, { method: HTTP_GET } ); }
-	static getInstanceWithFetch( step, url, fetchOptions ) {	return new HTTPRequest( step, url, fetchOptions ); }
+	static getInstanceWithFetch( step, url, fetchOptions ) {	return new HTTPRequest( step, url, fetchOptions, fetchOptions.method ); }
 	static getInstanceWithMethod( step, url, method ) {		return new HTTPRequest( step, url, { method: method } ); }
 
 	constructor( step, url, fetchOptions=null, method=null ) {

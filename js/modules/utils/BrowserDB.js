@@ -9,17 +9,29 @@
  * See: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
  *
  **********************************************************/
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
 // Global configuration
 import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
 // Common HTML functions
 import * as HTML						from "../common/HTML.js";
 
+/* --------------------------------------------------------
+ * Modules with Crypto and authentication functions
+ * -------------------------------------------------------- */
 // Common Crypto functions
 import * as CRYPT						from "../auth/Crypt.js";
 
+/* --------------------------------------------------------
+ * External Modules
+ * -------------------------------------------------------- */
 // IDB functions
 import { openDB, deleteDB }				from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 

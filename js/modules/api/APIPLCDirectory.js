@@ -13,9 +13,15 @@
 /**********************************************************
  * Module imports
  **********************************************************/
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
 // Global configuration
 import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
 // Common HTML functions
@@ -23,9 +29,15 @@ import * as HTML						from "../common/HTML.js";
 // Common Classes and Exceptions ("Types")
 import * as TYPES						from "../common/CommonTypes.js";
 
+/* --------------------------------------------------------
+ * Modules with Helper functions
+ * -------------------------------------------------------- */
 // To perform API calls
 import * as APICall						from "../utils/APICall.js";
 
+/* --------------------------------------------------------
+ * Modules with Crypto and authentication functions
+ * -------------------------------------------------------- */
 // Common DPOP functions
 import * as DPOP						from "../auth/DPoPProof.js";
 

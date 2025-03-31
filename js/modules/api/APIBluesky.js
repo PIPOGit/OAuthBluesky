@@ -16,9 +16,15 @@
  * See: https://gist.github.com/ahmetgeymen/a9dcd656a1527f6c73d9c712ea2d9d7e
  *
  **********************************************************/
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
 // Global configuration
 import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
 // Common HTML functions
@@ -26,9 +32,15 @@ import * as HTML						from "../common/HTML.js";
 // Common Classes and Exceptions ("Types")
 import * as TYPES						from "../common/CommonTypes.js";
 
+/* --------------------------------------------------------
+ * Modules with Helper functions
+ * -------------------------------------------------------- */
 // To perform API calls
 import * as APICall						from "../utils/APICall.js";
 
+/* --------------------------------------------------------
+ * Modules with Crypto and authentication functions
+ * -------------------------------------------------------- */
 // Common Crypto functions
 import * as CRYPT						from "../auth/Crypt.js";
 // Common DPOP functions
@@ -49,6 +61,7 @@ const LSKEYS							= CONFIGURATION.localStorageKeys;
 const CLIENT_APP						= CONFIGURATION.clientApp;
 const BLUESKY							= API.bluesky;
 const XRPC								= BLUESKY.XRPC;
+const NSID								= BLUESKY.NSID;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
@@ -71,6 +84,89 @@ function getServerURL() {
 }
 
 
+/* --------------------------------------------------------
+ * Preparesr a standarized call.
+ *
+ * Body can be: null, a JSON object or a FormData.
+ * -------------------------------------------------------- */
+// async function performCall( step, method, url, headersType, body=null ) {
+async function performCall( params ) {
+	const STEP_NAME						= "performCall";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[${params.step}] [${params.method}==${params.url}]` );
+
+    // The incoming data.
+	// ---------------------------------------------------------
+	let isWithATH						= !COMMON.isNullOrEmpty( params?.withATH );
+	let isBody							= !COMMON.isNullOrEmpty( params?.body );
+	let isRenderHTMLErrors				= !COMMON.isNullOrEmpty( params?.renderHTMLErrors );
+
+    // The DPoPProof.
+	// ---------------------------------------------------------
+	let dpopProof						= null;
+	if ( isWithATH && params.withATH ) {
+		dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstanceWithoutATH( params.url, params.method ) );
+	} else {
+		dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( params.url, params.method ) );
+	}
+
+    // The call headers.
+	// ---------------------------------------------------------
+    let headers							= APICall.getHeaders( params.headersType, dpopProof );
+
+    // The call fetch options.
+	// ---------------------------------------------------------
+    let fetchOptions					= {
+        method: params.method,
+        headers: headers
+    };
+
+    // The body.
+	// ---------------------------------------------------------
+	if ( isBody ) {
+		const contentType				= headers[ APICall.HTTP_HEADER_CONTENT_TYPE ];
+		const isOfTypeJSON				= COMMON.areEquals( contentType, APICall.CONTENT_TYPE_JSON ) || COMMON.areEquals( contentType, APICall.CONTENT_TYPE_JSON_UTF8 );
+		const isOfTypeFORM				= COMMON.areEquals( contentType, APICall.CONTENT_TYPE_FORM_ENCODED );
+		if ( isOfTypeJSON ) {
+			fetchOptions.body			= JSON.stringify( params.body );
+		} else if ( isOfTypeFORM ) {
+			fetchOptions.body			= new URLSearchParams( params.body );
+		} else {
+			fetchOptions.body			= params.body;
+		}
+	}
+
+    // The call params; with a typed format.
+	// ---------------------------------------------------------
+	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, params.url, fetchOptions );
+
+    // The call.
+	// ---------------------------------------------------------
+	let responseFromServer				= null;
+	const renderHTMLErrors				= isRenderHTMLErrors ? params.renderHTMLErrors : true;
+	try {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `On behalf of [${params.step}], calling: [<${params.method}> ${params.url}]...` );
+		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `Response from server:`, responseFromServer );
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+		responseFromServer				= error;
+	}
+
+	// Sanity check
+	// ---------------------------------------------------------
+	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw responseFromServer;
+	}
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return responseFromServer;
+}
+
+
 /**********************************************************
  * BUSINESS Functions
  **********************************************************/
@@ -89,46 +185,29 @@ async function performUserLogout() {
 	// Prepare the URL.
 	// ---------------------------------------------------------
 	// The URL comes from the Discovery doc.
+    let headersType						= APICall.HEADER_ENCODED_AUTH;
+	const method						= APICall.HTTP_POST;
     let url								= BSKY.auth.userRevocationEndPoint;
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_CONTENT_TYPE ]		= APICall.CONTENT_TYPE_FORM_ENCODED;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
 
 	// The data to send
 	// ---------------------------------------------------------
-    let body							= `token=${BSKY.data.userAccessToken}`;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-	let fetchOptions					= {
-        method: APICall.HTTP_POST,
-        headers: headers,
-        body: body
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
+	let body							= new FormData();
+	body.append( 'token', BSKY.data.userAccessToken );
 
     // The call.
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			body:				body
+		});
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
-	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
@@ -161,20 +240,11 @@ async function refreshUserAccessToken() {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_ENCODED_AUTH_DPOP;
 	const method						= APICall.HTTP_POST;
     let url								= BSKY.auth.userTokenEndPoint;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Access Token URL:", url );
-
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstanceWithoutATH( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_CONTENT_TYPE ]		= APICall.CONTENT_TYPE_FORM_ENCODED;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// The data to send
 	// ---------------------------------------------------------
@@ -183,66 +253,53 @@ async function refreshUserAccessToken() {
 	body.append( 'refresh_token', BSKY.data.userRefreshToken );		// Variable value
 	body.append( 'client_id', APP_CLIENT_ID );						// ClientAPP value
 	body.append( 'redirect_uri', redirectURL );						// ClientAPP value
-	const bodyAsURLSearchParams			= new URLSearchParams( body );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated [body]:", bodyAsURLSearchParams.toString() );
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers,
-        body: bodyAsURLSearchParams
-    }
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
 
     // The call.
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			body:				body,
+			withATH:			true
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
     // Post-Process the payload.
 	// ---------------------------------------------------------
+	if ( !COMMON.isNullOrEmpty( payload ) ) {
+		// Let's group log messages
+		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER );
 
-	// Let's group log messages
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER );
+		BSKY.data.userAuthentication		= payload;
+		BSKY.data.userAccessToken			= BSKY.data.userAuthentication.access_token;
+		BSKY.data.userRefreshToken			= BSKY.data.userAuthentication.refresh_token;
+		if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "userAuthentication:", BSKY.data.userAuthentication);
+		if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "userAccessToken:", BSKY.data.userAccessToken);
+		if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "userRefreshToken:", BSKY.data.userRefreshToken);
 
-	BSKY.data.userAuthentication		= payload;
-	BSKY.data.userAccessToken			= BSKY.data.userAuthentication.access_token;
-	BSKY.data.userRefreshToken			= BSKY.data.userAuthentication.refresh_token;
-	if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "userAuthentication:", BSKY.data.userAuthentication);
-	if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "userAccessToken:", BSKY.data.userAccessToken);
-	if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "userRefreshToken:", BSKY.data.userRefreshToken);
+		// Let's create also the access token HASH...
+		BSKY.data.accessTokenHash			= await CRYPT.createHash(BSKY.data.userAccessToken, true);
+		if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.accessTokenHash:", BSKY.data.accessTokenHash);
+		if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
-	// Let's create also the access token HASH...
-	BSKY.data.accessTokenHash			= await CRYPT.createHash(BSKY.data.userAccessToken, true);
-	if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.accessTokenHash:", BSKY.data.accessTokenHash);
-	if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "BSKY.data.dpopNonce:", BSKY.data.dpopNonce);
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return { userAuthentication: BSKY.data.userAuthentication, userAccessToken: BSKY.data.userAccessToken };
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		return { userAuthentication: BSKY.data.userAuthentication, userAccessToken: BSKY.data.userAccessToken };
+	} else {
+		return null;
+	}
 }
 
 /* --------------------------------------------------------
@@ -251,33 +308,26 @@ async function refreshUserAccessToken() {
 async function retrieveUserAccessToken() {
 	const STEP_NAME						= "retrieveUserAccessToken";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_PREFETCH				= `${PREFIX}[PREFETCH] `;
 
 	// The incoming data
 	// ---------------------------------------------------------
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Retrieving the access token...` );
 	let code							= BSKY.auth.callbackData.code;
 	let redirectURL						= BSKY.auth.redirectURL;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + "[redirectURL=="+redirectURL+"] [code=="+code+"]" );
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Received data:" );
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ code:", code );
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ redirectURL:", redirectURL );
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "+ dpopNonce:", BSKY.data.dpopNonce );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PREFETCH + "[redirectURL=="+redirectURL+"] [code=="+code+"]" );
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX_PREFETCH + "Received data:" );
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX_PREFETCH + "+ code:", code );
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX_PREFETCH + "+ redirectURL:", redirectURL );
+ 	if (window.BSKY.DEBUG) console.debug( PREFIX_PREFETCH + "+ dpopNonce:", BSKY.data.dpopNonce );
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_ENCODED_AUTH_DPOP;
 	const method						= APICall.HTTP_POST;
     let url								= BSKY.auth.userTokenEndPoint;
  	if (window.BSKY.DEBUG) console.debug( PREFIX + "Access Token URL:", url );
-
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_CONTENT_TYPE ]		= APICall.CONTENT_TYPE_FORM_ENCODED;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// The data to send
 	// ---------------------------------------------------------
@@ -287,54 +337,41 @@ async function retrieveUserAccessToken() {
 	body.append( 'code_verifier', BSKY.auth.codeVerifier );			// Variable value
 	body.append( 'client_id', APP_CLIENT_ID );						// ClientAPP value
 	body.append( 'redirect_uri', redirectURL );						// ClientAPP value
-	const bodyAsURLSearchParams			= new URLSearchParams( body );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated [body]:", COMMON.prettyJson( bodyAsURLSearchParams.toString() ) );
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers,
-        body: bodyAsURLSearchParams
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
 
     // The call.
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			body:				body
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
     // Post-Process the payload.
 	// ---------------------------------------------------------
+	if ( !COMMON.isNullOrEmpty( payload ) ) {
+		// Here, we gather the "access_token" item in the received json.
+		BSKY.data.userAuthentication		= payload;
+		BSKY.data.userAccessToken			= BSKY.data.userAuthentication.access_token;
+		BSKY.data.userRefreshToken			= BSKY.data.userAuthentication.refresh_token;
 
-	// Here, we gather the "access_token" item in the received json.
-	BSKY.data.userAuthentication		= payload;
-	BSKY.data.userAccessToken			= BSKY.data.userAuthentication.access_token;
-	BSKY.data.userRefreshToken			= BSKY.data.userAuthentication.refresh_token;
-
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return { userAuthentication: BSKY.data.userAuthentication, userAccessToken: BSKY.data.userAccessToken };
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		return { userAuthentication: BSKY.data.userAuthentication, userAccessToken: BSKY.data.userAccessToken };
+	} else {
+		return null;
+	}
 }
 
 /* --------------------------------------------------------
@@ -347,57 +384,31 @@ async function retrieveUserProfile( handle, renderHTMLErrors=true ) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getProfile;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint + "?actor=" + handle;
-
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-	let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
+	let url								= getServerURL() + endpoint + "?actor=" + handle;
 
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			renderHTMLErrors:	renderHTMLErrors
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -415,57 +426,30 @@ async function retrieveUnreadNotifications( renderHTMLErrors=true ) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getUnreadCount;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
-
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
+	let url								= getServerURL() + endpoint;
 
     // The call.
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			renderHTMLErrors:	renderHTMLErrors
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -483,63 +467,34 @@ async function retrieveNotifications( renderHTMLErrors=true ) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.listNotifications;
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting the unread notifications... Invoking endpoint:", endpoint );
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint + "?limit=" + MAX_NOTIS_TO_RETRIEVE;		// Not much; it's a test!
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-	let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
+	let url								= getServerURL() + endpoint + "?limit=" + MAX_NOTIS_TO_RETRIEVE;		// Not much; it's a test!
 
     // The call.
 	// ---------------------------------------------------------
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			renderHTMLErrors:	renderHTMLErrors
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return responseFromServer.json.notifications;
+	return payload.notifications;
 }
 
 /* --------------------------------------------------------
@@ -551,42 +506,36 @@ async function retrieveUserFollows(cursor) {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
 
 	// Prepare the URL.
+	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
+	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getFollows;
- 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Requesting who the user is following... Invoking endpoint:", endpoint );
-
-	// The URL is PDS, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
-    // Create the DPoP-Proof 'body' for this request.
+    // The call.
 	// ---------------------------------------------------------
-	let dpopRequest						= new TYPES.DPoPRequest(BSKY.data.cryptoKey.privateKey, BSKY.data.jwk, APP_CLIENT_ID, BSKY.data.userAccessToken, BSKY.data.accessTokenHash, url, BSKY.data.dpopNonce, APICall.HTTP_GET);
-	let dpopProof						= await DPOP.createDPoPProof(dpopRequest)
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
+	let responseFromServer				= null;
+	let payload							= null;
+	try {
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
 
-    // TuneUp the call
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    let fetchOptions					= {
-        method: APICall.HTTP_GET,
-        headers: headers
-    }
-
-    // Finally, perform the call
-	// ---------------------------------------------------------
- 	let responseFromServer				= await APICall.call( STEP_NAME, url, fetchOptions );
-	// Here, we gather the "access_token" item in the received json.
-	let payload						= responseFromServer.json;
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -603,12 +552,10 @@ async function retrieveRepoListRecords( data ) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.listRecords;
-
-	// The URL is PDS, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?repo=" + encodeURIComponent( BSKY.user.userDid );
 	if ( data.nsid && !COMMON.isNullOrEmpty(data.nsid) ) {
 		url								+= "&collection=" + data.nsid;
@@ -620,50 +567,25 @@ async function retrieveRepoListRecords( data ) {
 		url								+= "&cursor=" + data.cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -680,58 +602,31 @@ async function retrieveRepoBlockOfRecords(queryString) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getProfiles;
-
-	// The URL is PDS, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= queryString;
-
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
 
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -744,66 +639,39 @@ async function retrieveRepoBlockOfRecords(queryString) {
 async function retrieveUserFollowers(cursor) {
 	const STEP_NAME						= "retrieveUserFollowers";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[cursor==${cursor}]` );
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getFollowers;
-
-	// The URL is PDS, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -820,61 +688,34 @@ async function retrieveUserBlocks(cursor) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getBlocks;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -891,61 +732,34 @@ async function retrieveUserMutes(cursor) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getMutes;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -955,77 +769,43 @@ async function retrieveUserMutes(cursor) {
 /* --------------------------------------------------------
  * PDS: Atomic function to retrieve the details of a list
  * -------------------------------------------------------- */
-async function retrieveListDetails( list, cursor ) {
+async function retrieveListDetails( list, cursor, renderHTMLErrors=true ) {
 	const STEP_NAME						= "retrieveListDetails";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[atUri==${list.uri}]` );
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getList;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?list=" + list.uri;
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			renderHTMLErrors:	renderHTMLErrors
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
-
-	/*
-    // Finally, perform the call
-	// ---------------------------------------------------------
- 	let responseFromServer				= await APICall.call( STEP_NAME, url, fetchOptions );
-	// Here, we gather the "access_token" item in the received json.
-	let payload							= responseFromServer.json;
-	*/
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1042,62 +822,35 @@ async function retrieveUserLists(cursor) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getLists;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1114,62 +867,35 @@ async function retrieveUserMutingModerationLists(cursor) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getListMutes;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1186,62 +912,35 @@ async function retrieveUserBlockingModerationLists(cursor) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getListBlocks;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1258,62 +957,35 @@ async function retrieveUserFeeds(cursor) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getActorFeeds;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + encodeURIComponent( BSKY.user.userDid );
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1330,62 +1002,35 @@ async function retrieveTrendingTopics(cursor) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getTrendingTopics;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?viewer=" + encodeURIComponent( BSKY.user.userDid );
 	url									+= "&limit=25";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
-
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams, false );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1402,59 +1047,31 @@ async function searchProfile( searchedProfiles ) {
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_ENCODED_DPOP;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.searchActorsTypeahead;
-
-	// The URL is PDS, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint + "?q=" + searchedProfiles;
+	let url								= getServerURL() + endpoint + "?q=" + searchedProfiles;
 	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
-
-    // The DPoPProof.
-	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
-
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-    headers[ APICall.HTTP_HEADER_CONTENT_TYPE ]		= APICall.CONTENT_TYPE_FORM_ENCODED;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
-
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
-
-    // The call params; with a typed format.
-	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
 
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
-
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
-
-    // The response payload.
-	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1467,66 +1084,149 @@ async function searchProfile( searchedProfiles ) {
 async function retrieveAuthorFeed(cursor) {
 	const STEP_NAME						= "retrieveAuthorFeed";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[cursor==${cursor}]` );
 
 	// Prepare the URL.
 	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getAuthorFeed;
-
-	// The URL is protected, so... PDS Server
-	let root							= getServerURL();
-	let url								= root + endpoint;
+	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
 	if ( !COMMON.isNullOrEmpty(cursor) ) {
 		url								+= "&cursor=" + cursor;
 	}
 
-    // The DPoPProof.
+    // The call.
 	// ---------------------------------------------------------
-	let dpopProof						= await DPOP.createDPoPProof( TYPES.DPoPRequest.getInstance( url, method ) )
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
+	let responseFromServer				= null;
+	let payload							= null;
+	try {
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
 
-    // The call headers.
-	// ---------------------------------------------------------
-    let headers										= {};
-    headers[ APICall.HTTP_HEADER_ACCEPT ]			= APICall.CONTENT_TYPE_JSON;
-	headers[ APICall.HTTP_HEADER_AUTHORIZATION ]	= `${APICall.HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
-	headers[ APICall.HTTP_HEADER_DPOP ]				= dpopProof;
-	headers[ APICall.HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+	}
 
-    // The call fetch options.
-	// ---------------------------------------------------------
-    let fetchOptions					= {
-        method: method,
-        headers: headers
-    }
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return payload;
+}
 
-    // The call params; with a typed format.
+
+/**********************************************************
+ * SOCIAL Functions
+ *	+ followAccount( did )
+ *	+ unfollowAccount( did )
+ *	+ muteAccount( did )
+ *	+ unmuteAccount( did )
+ *	+ blockAccount( did )
+ *	+ unblockAccount( did )
+ **********************************************************/
+// Creates a record in the PDS Repo
+async function createRecord( nsid, did ) {
+	const STEP_NAME						= "createRecord";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[nsid==${nsid}] [did==${did}]` );
+
+	// Prepare the URL.
 	// ---------------------------------------------------------
-	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetch( STEP_NAME, url, fetchOptions );
+    let headersType						= APICall.HEADER_STANDARD_JSON_AUTH;
+	const method						= APICall.HTTP_POST;
+	let endpoint						= XRPC.api.pds.createRecord;
+	let url								= getServerURL() + endpoint;
+
+	// The data to send
+	// ---------------------------------------------------------
+	const body						= {
+		repo: BSKY.user.userDid,
+		collection: nsid,
+		record: {
+			"$type": nsid,
+			subject: did,
+			createdAt: new Date().toISOString()
+		}
+	};
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated [body]:", COMMON.prettyJson( body ) );
 
     // The call.
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
 	let responseFromServer				= null;
+	let payload							= null;
 	try {
-		responseFromServer				= await APICall.authenticatedCall( requestParams );
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			body:				body
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
-		responseFromServer				= error;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
 
-	// Sanity check
-	// ---------------------------------------------------------
-	if ( responseFromServer instanceof TYPES.HTTPResponseError ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw responseFromServer;
-	}
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return payload;
+}
 
-    // The response payload.
+// Deletes a record in the PDS Repo
+async function deleteRecord( nsid, rkey ) {
+	const STEP_NAME						= "deleteRecord";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[nsid==${nsid}] [rkey==${rkey}]` );
+
+	// Prepare the URL.
 	// ---------------------------------------------------------
-	const payload						= responseFromServer.json;
+    let headersType						= APICall.HEADER_STANDARD_JSON_AUTH;
+	const method						= APICall.HTTP_POST;
+	let endpoint						= XRPC.api.pds.deleteRecord;
+	let url								= getServerURL() + endpoint;
+
+	// The data to send
+	// ---------------------------------------------------------
+	const body							= {
+		repo: BSKY.user.userDid,
+		collection: nsid,
+		rkey: rkey
+	};
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated [body]:", COMMON.prettyJson( body ) );
+
+    // The call.
+	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
+	let responseFromServer				= null;
+	let payload							= null;
+	try {
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			body:				body
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -1542,24 +1242,35 @@ async function retrieveAuthorFeed(cursor) {
  * Each of them will perform a call to:
  * "APICall.authenticatedCall"
  **********************************************************/
-export async function getAccessToken() {								return await retrieveUserAccessToken(); }
-export async function getAuthorFeed( cursor ) {							return await retrieveAuthorFeed( cursor ); }
-export async function getBlockOfRecords( queryString ) {				return await retrieveRepoBlockOfRecords( queryString ); }
-export async function getBlocks( cursor ) {								return await retrieveUserBlocks( cursor ); }
-export async function getFollowers( cursor ) {							return await retrieveUserFollowers( cursor ); }
-export async function getListDetails( list, cursor ) {					return await retrieveListDetails( list, cursor ); }
-export async function getMutes( cursor ) {								return await retrieveUserMutes( cursor ); }
-export async function getNotifications(renderHTMLErrors=true) {			return await retrieveNotifications( renderHTMLErrors ); }
-export async function getProfile( searchString ) {						return await searchProfile( searchString ); }
-export async function getRecords( recordInfo ) {						return await retrieveRepoListRecords( recordInfo ); }
-export async function getTrendingTopics( cursor ) {						return await retrieveTrendingTopics( cursor ); }
-export async function getUnreadNotifications(renderHTMLErrors=true) {	return await retrieveUnreadNotifications( renderHTMLErrors ); }
-export async function getUserBlockModLists( cursor ) {					return await retrieveUserBlockingModerationLists( cursor ); }
-export async function getUserFeeds( cursor ) {							return await retrieveUserFeeds( cursor ); }
-export async function getUserLists( cursor ) {							return await retrieveUserLists( cursor ); }
-export async function getUserModLists( cursor ) {						return await retrieveUserMutingModerationLists( cursor ); }
-export async function getUserProfile( handle, renderHTMLErrors=true ) {	return await retrieveUserProfile( handle, renderHTMLErrors ); }
-export async function logout( code ) {									return await performUserLogout(); }
-export async function refreshAccessToken( code ) {						return await refreshUserAccessToken( code ); }
+export async function getAccessToken()									{ return await retrieveUserAccessToken(); }
+export async function getAuthorFeed( cursor )							{ return await retrieveAuthorFeed( cursor ); }
+export async function getBlockOfRecords( queryString )					{ return await retrieveRepoBlockOfRecords( queryString ); }
+export async function getBlocks( cursor )								{ return await retrieveUserBlocks( cursor ); }
+export async function getFollowers( cursor )							{ return await retrieveUserFollowers( cursor ); }
+export async function getListDetails( list, cursor, renderHTMLErrors=true )	{ return await retrieveListDetails( list, cursor, renderHTMLErrors ); }
+export async function getMutes( cursor )								{ return await retrieveUserMutes( cursor ); }
+export async function getNotifications(renderHTMLErrors=true)			{ return await retrieveNotifications( renderHTMLErrors ); }
+export async function getProfile( searchString )						{ return await searchProfile( searchString ); }
+export async function getRecords( recordInfo )							{ return await retrieveRepoListRecords( recordInfo ); }
+export async function getTrendingTopics( cursor )						{ return await retrieveTrendingTopics( cursor ); }
+export async function getUnreadNotifications(renderHTMLErrors=true)		{ return await retrieveUnreadNotifications( renderHTMLErrors ); }
+export async function getUserBlockModLists( cursor )					{ return await retrieveUserBlockingModerationLists( cursor ); }
+export async function getUserFeeds( cursor )							{ return await retrieveUserFeeds( cursor ); }
+export async function getUserLists( cursor )							{ return await retrieveUserLists( cursor ); }
+export async function getUserModLists( cursor )							{ return await retrieveUserMutingModerationLists( cursor ); }
+export async function getUserProfile( handle, renderHTMLErrors=true )	{ return await retrieveUserProfile( handle, renderHTMLErrors ); }
+export async function logout( code )									{ return await performUserLogout(); }
+export async function refreshAccessToken( code )						{ return await refreshUserAccessToken( code ); }
 
+// Follow
+export async function follow( did )										{ return await createRecord( NSID.follow, did ); }
+export async function unfollow( rkey )									{ return await deleteRecord( NSID.follow, rkey ); }
+
+// Mute
+export async function mute( did )										{ return await createRecord( NSID.mute, did ); }
+export async function unmute( rkey )									{ return await deleteRecord( NSID.mute, rkey ); }
+
+// Block
+export async function block( did )										{ return await createRecord( NSID.block, did ); }
+export async function unblock( rkey )									{ return await deleteRecord( NSID.block, rkey ); }
 

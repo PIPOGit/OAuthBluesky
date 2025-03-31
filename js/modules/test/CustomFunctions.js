@@ -114,17 +114,60 @@ async function startUp() {
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
+
 /* --------------------------------------------------------
- * LOGGED-IN PROCESS.
- *
- * "Custom Function"
- *
- * Put here the desired code to run, and launch the function
- * just pressing the keyboard combination binded to the:
- *     KPListener.KEYSTROKES_CUSTOM_FUNCTION ==
- *       config.keystrokes.custom_function
- * variable.
+ * Inner "Business function": Retrieve records from the
+ * user's PDS (the "repo"), of a given type ("NSID").
  * -------------------------------------------------------- */
+async function getRepoRecordsOfNSIDType( nsid, renderHTMLErrors=true ) {
+	const STEP_NAME						= "getRepoRecordsOfNSIDType";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[nsid=${nsid}]` );
+
+	let n								= 0;
+	let apiCallResponse					= null;
+	let cursor							= null;
+	let hayCursor						= false;
+	let data							= [];
+	let allData							= [];
+	let subTotal						= 0;
+	let acumulado						= 0;
+
+	try {
+		do {
+			n++;
+			// Retrieve the user's repo records of type 'NSID'
+			// ---------------------------------------------------------
+			apiCallResponse					= await APIBluesky.getRecords( { cursor: cursor, nsid: nsid, renderHTMLErrors: renderHTMLErrors } );
+
+			// Datos. Seguimos?
+			cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor						= !COMMON.isNullOrEmpty(cursor);
+
+			data							= apiCallResponse.records;
+			subTotal						= data.length;
+			allData.push(...data);
+			acumulado						= allData.length;
+
+			// Update the info panel
+			HTML.showStepInfo( STEP_NAME, `Retrieving who the user follows (${acumulado})...` );
+		} while ( hayCursor && (n<MAX_ITERATIONS) );
+	} catch ( error ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw( error );
+	}
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return allData;
+}
+
+
+/**********************************************************
+ * TEST Functions
+ **********************************************************/
+
 async function cfGetRecordsByNSID( event ) {
 	const STEP_NAME						= "cfGetRecordsByNSID";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -137,7 +180,7 @@ async function cfGetRecordsByNSID( event ) {
 	// The records.
 	let allData							= null;
 	try {
-		allData							= await BSKY.getRepoRecordsOfNSIDType( nsid, false );
+		allData							= await getRepoRecordsOfNSIDType( nsid, false );
 		if ( COMMON.isNullOrEmpty( allData ) ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `No data received.` );
 		} else {
@@ -284,6 +327,54 @@ async function cfGetUserFeeds( event ) {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
+async function cfTestArguments( event, parameters ) {
+	const STEP_NAME						= "cfTestArguments";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Received event.....:`, event );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Received parameters:`, parameters );
+	const profiles						= parameters?.profiles || null;
+	let profile							= null;
+	let unfollowed						= null;
+	if ( profiles ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `Exploring profiles...`, );
+		let entry						= null;
+		for ( let key in profiles ) {
+			entry						= profiles[key];
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `+ User[${key}]:`, entry );
+			profile						= await APIBluesky.getUserProfile( entry.handle, false )
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `  Profile[${key}]:`, profile );
+		}
+
+		// TEST: FOLLOW
+		const martis					= profiles.martis;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Profile[martis]:`, martis );
+		profile							= await APIBluesky.getUserProfile( martis.handle, false )
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Profile[martis][before]:`, profile );
+		const followed					= await APIBluesky.follow( martis.did );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Profile[martis][followed]:`, followed );
+		profile							= await APIBluesky.getUserProfile( martis.handle, false )
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Profile[martis][hydrated]:`, profile );
+		
+		// The "rkey"
+		const record					= profile?.viewer?.following || null;
+		// const rkey						= record ? record.split('/')[4] : null;
+		const rkey						= record ? COMMON.getRKeyFromURL( record ) : null;
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `  Profile[martis][rkey==${rkey}]` );
+
+		// TEST: UNFOLLOW
+		if ( rkey ) {
+			unfollowed					= await APIBluesky.unfollow( rkey );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `  Profile[martis][unfollowed]:`, unfollowed );
+		}
+	}
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return { profile: profile, unfollowed: unfollowed };
+}
+
 
 /**********************************************************
  * PUBLIC Functions
@@ -306,20 +397,32 @@ export async function runCustomFunction( event ) {
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
 	// Run a concrete custom function
+	// (CHOOSE one function to run)
 	// ---------------------------------------------------------
 	// const customFunction					= cfGetRecordsByNSID;
 	// const customFunction					= cfGetClearSkyInfo;
-	const customFunction					= cfGetUserFeeds;
+	// const customFunction					= cfGetUserFeeds;
+	const customFunction					= cfTestArguments;
+	const parameters						= {
+		sample: "Hello!",
+		profiles: {
+			martis: { did: "did:plc:fhcznawyz2o7o6gt43fx2tcc", handle: "martismar.bsky.social" },
+			oscar: { did: "did:plc:5is5ee4fqposxdsvel3vw623", handle: "soyoscarsintilde.bsky.social" }
+		}
+	};
+
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Invoking the custom function: [${customFunction.name}]` );
 
 	// Info step
+	window.BSKY.faviconWorking();
 	HTML.showStepInfo( STEP_NAME, `Invoking the custom function: [${customFunction.name}]...` );
 
-	const result						= await customFunction();
+	const result						= await customFunction( event, parameters );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Retrieved result:", result );
 
 	// Info step
 	HTML.showStepInfo( STEP_NAME );
+	window.BSKY.faviconStandBy();
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();

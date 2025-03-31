@@ -212,3 +212,4 @@ export const convertUrlToATUri			= ( url, key ) => {
 	let uri								= `at://${tokens[4]}/${key}/${tokens[6]}`;
 	return uri;
 }
+export const getRKeyFromURL				= ( url ) => isNullOrEmpty( url ) ? null : url.split("/")[4];

@@ -33,8 +33,6 @@ import * as HTML						from "./modules/common/HTML.js";
  * -------------------------------------------------------- */
 // Common Favicon functions
 import * as FAVICON						from "./modules/utils/Favicon.js";
-// Common Keyboard Listener functions
-import * as KPListener					from "./modules/utils/KPListener.js";
 
 /* --------------------------------------------------------
  * Modules with Crypto and authentication functions
@@ -148,9 +146,6 @@ async function startUp() {
 
 	// Auto-detect the fallback URL from current...
 	setupRootContext();
-
-	// KeyPress configuration
-	KPListener.setupKeypress();
 
 	// HighlightJS configuration
 	hljs.configure({ ignoreUnescapedHTML: true });

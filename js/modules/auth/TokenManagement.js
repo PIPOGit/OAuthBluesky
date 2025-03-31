@@ -208,22 +208,29 @@ export async function validateAccessToken() {
 	} else {
 		// YES. Let's see if it's valid.
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "GET userAccessToken" );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + "GET userAccessToken" );
+		
+		try {
+			tokenValidationInfo			= OAuth2.validateAccessToken( BSKY.data.userAccessToken, BSKY.auth.userAuthServerDiscovery, BSKY.data.userAuthentication, BSKY.auth.userDidDocument, BSKY.auth.userPDSMetadata );
+			isAccessTokenValid			= tokenValidationInfo.isValid;
+			isTokenCloseToExpire		= tokenValidationInfo.needsToRefresh;
 
-		tokenValidationInfo				= OAuth2.validateAccessToken( BSKY.data.userAccessToken, BSKY.auth.userAuthServerDiscovery, BSKY.data.userAuthentication, BSKY.auth.userDidDocument, BSKY.auth.userPDSMetadata );
-		isAccessTokenValid				= tokenValidationInfo.isValid;
-		isTokenCloseToExpire			= tokenValidationInfo.needsToRefresh;
+			if ( isAccessTokenValid ) {
+				if (window.BSKY.DEBUG) console.debug( PREFIX + `We have a VALID user access token. Continue` );
+			} else {
+				if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+				throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_07 );
+			}
 
-		if ( isAccessTokenValid ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `We have a VALID user access token. Continue` );
-		} else {
-			throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_07 );
+			if ( isTokenCloseToExpire ) {
+				if (window.BSKY.DEBUG) console.debug( PREFIX + `We need to REFRESH the user access token.` );
+				await refreshAccessToken();
+			}
+		} catch ( error ) {
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 		}
 
-		if ( isTokenCloseToExpire ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `We need to REFRESH the user access token.` );
-			refreshAccessToken();
-		}
 	}
 
 	// Do something with the token information: Post Process the access token

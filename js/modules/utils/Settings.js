@@ -2,11 +2,21 @@
  * Module imports
  *
  **********************************************************/
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
 // Global configuration
 import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
+
+/* --------------------------------------------------------
+ * Modules with Helper functions
+ * -------------------------------------------------------- */
 // To perform API calls
 import * as APICall						from "./APICall.js";
 

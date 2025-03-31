@@ -1042,6 +1042,7 @@
 								</div>
 								<div id="modal-body-info" class="row py-2 mt-5 theme-profile-info">
 									<div><span class="profile-name fs-5 fw-medium">displayName</span> [<a href="" class="profile-handle-link" target="_blank">@<span class="profile-handle">handle</span></a>]</div>
+									<div class="mt-2 theme-smaller">did: [<a href="" class="profile-did-link" target="_blank"><span class="profile-did">did</span></a>]</div>
 									<div class="mt-2 theme-smaller">Desde: <span class="profile-created">created</span></div>
 									<div class="theme-smaller">Following: <span class="profile-following">000</span>, followers: <span class="profile-followers">000</span>, bluits: <span class="profile-posts">000</span></div>
 									<textarea class="form-control-plaintext m-2 p-1 profile-description theme-smaller" rows="4" readonly disabled>description</textarea>
@@ -1262,8 +1263,24 @@
 				<!-- Los botones de acción general -->
 				<div class="row d-flex justify-content-between mt-2">
 					<div class="col-auto pe-2">
-						<a class="btn btn-sm btn-outline-secondary link-secondary" target="dev_to" title="Dev.to" href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h">Dev.to</a>
-						<a class="btn btn-sm btn-outline-secondary" target="github" title="GitHub" href="https://github.com/PIPOGit/OAuthBluesky"><i class="bi bi-github"></i></a>
+						<a	class="btn btn-sm btn-outline-secondary link-secondary"
+							target="dev_to"
+							title="Dev.to"
+							href="https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h">
+							Dev.to
+						</a>
+						<a	class="btn btn-sm btn-outline-secondary"
+							target="github"
+							title="GitHub"
+							href="https://github.com/PIPOGit/OAuthBluesky">
+							<i class="bi bi-github"></i>
+						</a>
+						<a	class="btn btn-sm btn-outline-secondary link-secondary bg-secondary-subtle"
+							target="pdsls"
+							title="PDSls: Viewer for My PDS"
+							href="javascript:void(0);">
+							<span class="theme-pdsls">PDSls</span>
+						</a>
 					</div>
 					<div class="col-auto ps-2">
 						<button class="btn btn-sm btn-success"

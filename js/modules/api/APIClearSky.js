@@ -43,6 +43,7 @@
 /* --------------------------------------------------------
  * Modules for Global configuration
  * -------------------------------------------------------- */
+// Global configuration
 import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 
 /* --------------------------------------------------------
@@ -210,7 +211,7 @@ async function callClearSkyURL( step, endpoint, did=BSKY.user?.profile?.did, han
 async function getStatistics() {
 	const STEP_NAME						= "getStatistics";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Retrieving Statistics..." );
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + "Retrieving Statistics..." );
 
 	let statistics						= {};
 	statistics.uptime					= await callClearSkyURL( STEP_NAME, ENDPOINTS.statistics.uptime );
@@ -223,7 +224,8 @@ async function getStatistics() {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Returning:", statistics );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return statistics;
 }
 
@@ -242,13 +244,16 @@ async function getStatistics() {
 async function getUserInfo( did, handle ) {
 	const STEP_NAME						= "getUserInfo";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	const PREFIX_HYDRATING				= `${PREFIX}[Hydrating Profiles] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[${did}/${handle}] Retrieving UserInfo...` );
+	const PREFIX_DATA					= `${PREFIX}[Raw Data] `;
+	const PREFIX_HYDRATING				= `${PREFIX}[Hydrating] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `Retrieving UserInfo...` );
 
 	let userInfo						= {};
 
 	// Retrieving the info
 	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_DATA + "Retrieving raw data..." );
+
 	// The user info history
 	// [/get-handle-history/[HANDLE]]
 	userInfo.history					= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.history, did, handle );
@@ -270,6 +275,8 @@ async function getUserInfo( did, handle ) {
 	// [blockedByLists]				[/subscribe-blocks-single-blocklist/[HANDLE/DID]]
 	userInfo.listsUserBlocked			= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.listsUserBlocked, did, handle );
 
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+
 
 	// Hydrating things
 	// ---------------------------------------------------------
@@ -290,14 +297,16 @@ async function getUserInfo( did, handle ) {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + "Hydrating blockedBy..." );
 		userInfo.blockedBy.data.found	= [];
 		for ( const account of blockedByAccounts ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "+ Profile for account:", account );
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + `+ Profile for account: [${account.did}]` );
 			try {
 				hydrated				= await APIBluesky.getUserProfile( account.did, false );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated:", hydrated );
-				userInfo.blockedBy.data.found.push( hydrated );
+				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated profile:", hydrated );
+				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.blockedBy.data.found.push( hydrated );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );
 			}
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -316,15 +325,17 @@ async function getUserInfo( did, handle ) {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + "Hydrating subscribedToLists..." );
 		userInfo.modLists.data.found	= [];
 		for ( const list of subscribedToLists ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "+ Subscribed to List:", list );
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + `+ Subscribed to List: [${list.did}] [${list.name}]` );
 			standardList				= TYPES.BSKYListDetails.getInstanceFromModList( list );
 			try {
-				hydrated				= await APIBluesky.getListDetails( standardList, cursor );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated:", hydrated );
-				userInfo.modLists.data.found.push( hydrated.list );
+				hydrated				= await APIBluesky.getListDetails( standardList, cursor, false );
+				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated subscribed to list:", hydrated );
+				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.modLists.data.found.push( hydrated.list );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );
 			}
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -343,15 +354,17 @@ async function getUserInfo( did, handle ) {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + "Hydrating subscribedToBlockLists..." );
 		userInfo.listsUserBlock.data.found	= [];
 		for ( const list of subscribedToBlockLists ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "+ Subscribed to Block List:", list );
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + `+ Subscribed to Block List: [${list.list_owner}] [${list.list_name}]` );
 			standardList				= TYPES.BSKYListDetails.getInstanceFromBlockList( list );
 			try {
-				hydrated				= await APIBluesky.getListDetails( standardList, cursor );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated:", hydrated );
-				userInfo.listsUserBlock.data.found.push( hydrated.list );
+				hydrated				= await APIBluesky.getListDetails( standardList, cursor, false );
+				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated subscribed to block list:", hydrated );
+				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.listsUserBlock.data.found.push( hydrated.list );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );
 			}
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -370,15 +383,17 @@ async function getUserInfo( did, handle ) {
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + "Hydrating blockedByLists..." );
 		userInfo.listsUserBlocked.data.found	= [];
 		for ( const list of blockedByLists ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "+ Blocked by List:", list );
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + `+ Blocked by List: [${list.list_owner}] [${list.list_name}]` );
 			standardList				= TYPES.BSKYListDetails.getInstanceFromBlockList( list );
 			try {
-				hydrated				= await APIBluesky.getListDetails( standardList, cursor );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated:", hydrated );
-				userInfo.listsUserBlocked.data.found.push( hydrated.list );
+				hydrated				= await APIBluesky.getListDetails( standardList, cursor, false );
+				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated member of block list:", hydrated );
+				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.listsUserBlocked.data.found.push( hydrated.list );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );
 			}
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_HYDRATING + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();

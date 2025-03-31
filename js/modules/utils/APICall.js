@@ -4,9 +4,15 @@
  * OAuth2 HELPER FUNCTIONS
  *
  **********************************************************/
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
 // Global configuration
 import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
 // Common Classes and Exceptions ("Types")
@@ -14,6 +20,9 @@ import * as TYPES						from "../common/CommonTypes.js";
 // Common HTML functions
 import * as HTML						from "../common/HTML.js";
 
+/* --------------------------------------------------------
+ * Modules with Crypto and authentication functions
+ * -------------------------------------------------------- */
 // Common DPOP functions
 import * as DPOP						from "../auth/DPoPProof.js";
 // Common JWT functions
@@ -227,7 +236,7 @@ export async function call( step, url, fetchOptions=null, renderHTMLErrors=true 
 			return response;
 		}).catch( error => {
 			// Errors while parsing the HTTP Response!
-			if (window.BSKY.DEBUG) console.warn( PREFIX + "Errors while parsing the HTTP Response!", error.toString() );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Errors while parsing the HTTP Response! [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 			// HTML.updateHTMLError( error, renderHTMLErrors );
 			return error;
 		});
@@ -269,7 +278,7 @@ export async function apiCall( params, renderHTMLErrors=true ) {
 			return response;
 		}).catch( error => {
 			// Errors while parsing the HTTP Response!
-			if (window.BSKY.DEBUG) console.warn( PREFIX + "Errors while parsing the HTTP Response!", error.toString() );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Errors while parsing the HTTP Response! [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 			// HTML.updateHTMLError( error, renderHTMLErrors );
 			return error;
 		});
@@ -317,7 +326,7 @@ export async function authenticatedCall( params, renderHTMLErrors=true ) {
 			// Let's try again...
 
 			const currentJwtPayload		= DPOP.getPayload( params.fetchOptions.headers.DPoP );
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Current DPoPProof(payload):", COMMON.prettyJson( currentJwtPayload ) );
+			// if (window.BSKY.DEBUG) console.debug( PREFIX + "Current DPoPProof(payload):", COMMON.prettyJson( currentJwtPayload ) );
 
 			// The new DPoPProof.
 			// ---------------------------------------------------------
@@ -334,14 +343,14 @@ export async function authenticatedCall( params, renderHTMLErrors=true ) {
 			try {
 				responseFromServer					= await apiCall( params, renderHTMLErrors );
 			} catch( error2 ) {
-				if (window.BSKY.DEBUG) console.error( PREFIX + "Errors while parsing, per second time, the HTTP Response!", error2 );
+				if (window.BSKY.DEBUG) console.warn( PREFIX + `Errors while parsing, per second time, the HTTP Response! [code==${error2.code}] [message==${error2.message}] [cause==${error2.cause}]` );
 				HTML.updateHTMLError( error2, renderHTMLErrors );
 				responseFromServer				= error2;
 			}
 
 
 		} else {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Errors while parsing the HTTP Response!", error );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Errors while parsing the HTTP Response! [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 			HTML.updateHTMLError( error, renderHTMLErrors );
 			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -354,4 +363,87 @@ export async function authenticatedCall( params, renderHTMLErrors=true ) {
 	return responseFromServer;
 }
 
+
+/* --------------------------------------------------------
+ * Helper function to prepare the headers call.
+ *
+ * "types" is an array of header types.
+ * -------------------------------------------------------- */
+export const HEADER_ENCODED_AUTH		= "HEADER_ENCODED_AUTH";
+export const HEADER_ENCODED_DPOP		= "HEADER_ENCODED_DPOP";
+export const HEADER_ENCODED_AUTH_DPOP	= "HEADER_ENCODED_AUTH_DPOP";
+export const HEADER_STANDARD_AUTH		= "HEADER_STANDARD_AUTH";
+export const HEADER_STANDARD_JSON_AUTH	= "HEADER_STANDARD_JSON_AUTH";
+export function getHeaders( type, dpopProof=null ) {
+
+    let headers										= {};
+	switch ( type ) {
+		case HEADER_ENCODED_AUTH:
+			if ( !headers.hasOwnProperty( HTTP_HEADER_CONTENT_TYPE ) ) {
+				headers[ HTTP_HEADER_CONTENT_TYPE ]		= CONTENT_TYPE_FORM_ENCODED;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_AUTHORIZATION ) ) {
+				headers[ HTTP_HEADER_AUTHORIZATION ]	= `${HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
+			}
+			break;
+		case HEADER_ENCODED_DPOP:
+			if ( !headers.hasOwnProperty( HTTP_HEADER_ACCEPT ) ) {
+				headers[ HTTP_HEADER_ACCEPT ]		= CONTENT_TYPE_JSON;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_CONTENT_TYPE ) ) {
+				headers[ HTTP_HEADER_CONTENT_TYPE ]		= CONTENT_TYPE_FORM_ENCODED;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_AUTHORIZATION ) ) {
+				headers[ HTTP_HEADER_AUTHORIZATION ]	= `${HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP ) ) {
+				headers[ HTTP_HEADER_DPOP ]				= dpopProof;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP_NONCE ) ) {
+				headers[ HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;;
+			}
+			break;
+		case HEADER_ENCODED_AUTH_DPOP:
+			if ( !headers.hasOwnProperty( HTTP_HEADER_CONTENT_TYPE ) ) {
+				headers[ HTTP_HEADER_CONTENT_TYPE ]		= CONTENT_TYPE_FORM_ENCODED;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP ) ) {
+				headers[ HTTP_HEADER_DPOP ]				= dpopProof;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP_NONCE ) ) {
+				headers[ HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;;
+			}
+			break;
+		case HEADER_STANDARD_AUTH:
+			if ( !headers.hasOwnProperty( HTTP_HEADER_ACCEPT ) ) {
+				headers[ HTTP_HEADER_ACCEPT ]		= CONTENT_TYPE_JSON;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_AUTHORIZATION ) ) {
+				headers[ HTTP_HEADER_AUTHORIZATION ]	= `${HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP ) ) {
+				headers[ HTTP_HEADER_DPOP ]				= dpopProof;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP_NONCE ) ) {
+				headers[ HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;;
+			}
+			break;
+		case HEADER_STANDARD_JSON_AUTH:
+			if ( !headers.hasOwnProperty( HTTP_HEADER_CONTENT_TYPE ) ) {
+				headers[ HTTP_HEADER_CONTENT_TYPE ]		= CONTENT_TYPE_JSON_UTF8;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_AUTHORIZATION ) ) {
+				headers[ HTTP_HEADER_AUTHORIZATION ]	= `${HTTP_HEADER_DPOP} ${BSKY.data.userAccessToken}`;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP ) ) {
+				headers[ HTTP_HEADER_DPOP ]				= dpopProof;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_DPOP_NONCE ) ) {
+				headers[ HTTP_HEADER_DPOP_NONCE ]		= BSKY.data.dpopNonce;;
+			}
+			break;
+	}
+
+	return headers;
+}
 

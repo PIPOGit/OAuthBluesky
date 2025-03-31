@@ -4,7 +4,7 @@
 		"debug_folded": true,
 		"show_info_step": false,
 		"appName": "BSKY Analyzer",
-		"appVersion": "2.0.4",
+		"appVersion": "2.1.0",
 		"loading_steps": 23,
 		"refresh_dynamic": 15,
 		"refresh_static": 300,
@@ -86,6 +86,8 @@
 						"resolveHandle": "/com.atproto.identity.resolveHandle"
 					},
 					"pds": {
+						"createRecord": "/com.atproto.repo.createRecord",
+						"deleteRecord": "/com.atproto.repo.deleteRecord",
 						"getActorFeeds": "/app.bsky.feed.getActorFeeds",
 						"getActorLikes": "/app.bsky.feed.getActorLikes",
 						"getAuthorFeed": "/app.bsky.feed.getAuthorFeed",
@@ -128,6 +130,7 @@
 				}
 			},
 			"pds": {
+				"url": "https://pdsls.dev/",
 				"api": {
 					"metadata": "/.well-known/oauth-protected-resource"
 				}

@@ -32,6 +32,8 @@ import * as HTML						from "./modules/common/HTML.js";
 import * as APICall						from "./modules/utils/APICall.js";
 // Common BrowserDB functions
 import * as DB							from "./modules/utils/BrowserDB.js";
+// Common Keyboard Listener functions
+import * as KPListener					from "./modules/utils/KPListener.js";
 
 /* --------------------------------------------------------
  * Modules with Crypto and authentication functions
@@ -129,6 +131,9 @@ async function startUp() {
 	// Page setup concrete actions.
 	// ---------------------------------------------------------
 
+	// KeyPress configuration
+	KPListener.setupKeypress( true );
+
 	// Check whether we come from LOGOUT.
 	let comeFromLogout					= checkIfComesFromLogout();
 
@@ -141,7 +146,7 @@ async function startUp() {
 		console.warn( "%c==== [warn] ENTERING DEVEL MODE ====", COMMON.CONSOLE_LOCAL );
 		redirectURI						= APP_LOCALHOST_CALLBACK_URL;
 	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `isLocalhost:${isLocalhost}, redirectURI:${redirectURI}, ` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `isLocalhost: ${isLocalhost}, redirectURI: [${redirectURI}]` );
 
 	// Check whether we are back from an error.
 	const errorFromPage					= checkIfThereHasBeenErrors();

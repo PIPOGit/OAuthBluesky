@@ -66,6 +66,9 @@ export const DIV_STATE					= "state";
 export const DIV_CODE					= "code";
 export const DIV_DPOP_NONCE				= "dpopNonce";
 
+// HTML Auth Errors
+export const HTTP_ERROR_INVALID_GRANT	= "invalid_grant";
+
 // HTML Token, Date/Time, Geo
 export const DIV_TOKEN_TIMEOUT			= "currentTokenTimeout";
 export const DIV_DATE_TIME				= "currentDateTime";

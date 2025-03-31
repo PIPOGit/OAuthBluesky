@@ -52,4 +52,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* For the button/link to PDSls */
+.theme-pdsls {
+  font-family: JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+  font-weight: 700;
+  text-align: center;
+}
 

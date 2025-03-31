@@ -4,14 +4,23 @@
  * See: https://dmauro.github.io/Keypress/
  *
  **********************************************************/
+/* --------------------------------------------------------
+ * Modules for Global configuration
+ * -------------------------------------------------------- */
 // Global configuration
 import CONFIGURATION					from "../../data/config.json" with { type: "json" };
 
+/* --------------------------------------------------------
+ * Modules with Base functions
+ * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
 // Common HTML Constants
 import * as HTMLConstants				from "../common/HTML.Constants.js";
 
+/* --------------------------------------------------------
+ * Modules with Helper functions
+ * -------------------------------------------------------- */
 // Common Settings functions
 import * as SETTINGS					from "./Settings.js";
 
@@ -50,7 +59,7 @@ let listener							= null;
 /* --------------------------------------------------------
  * Function to setup keystroke combinations.
  * -------------------------------------------------------- */
-export function setupKeypress() {
+export function setupKeypress( login=false ) {
 	const STEP_NAME						= "setupKeypress";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
@@ -63,7 +72,26 @@ export function setupKeypress() {
 	}
 
 	if ( !COMMON.isNullOrEmpty( listener ) ) {
-		let myCombos					= listener.register_many([
+		// ALL PAGES functionality
+		listener.simple_combo( KEYSTROKES_LOG_ON,					onKeyUpShiftDT );
+		listener.simple_combo( KEYSTROKES_LOG_OFF,					onKeyUpShiftDF );
+		listener.simple_combo( KEYSTROKES_LOG_TOGGLE,				onKeyUpShiftDSpace );
+		if (window.BSKY.DEBUG) console.info( PREFIX + "Registered listeners for" );
+		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
+		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
+		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_TOGGLE}] Toggle DEBUG status` );
+
+		// DASHBOARD functionality
+		if ( !login ) {
+			listener.sequence_combo( KEYSTROKES_DOWNLOAD_BSKY,		onKeySeqDownloadBSKY );
+			listener.simple_combo( KEYSTROKES_SHOW_ERROR,			onKeySeqShowError );
+			listener.sequence_combo( KEYSTROKES_CUSTOM_FUNCTION,	onKeySeqCustomFunction );
+			if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
+		}
+
+		/*
+		let myLoginCombos				= listener.register_many([
+			// LOGIN functionality
 			{
 				// KEYSTROKES_LOG_ON => Activates LOG
 				"keys"          		: KEYSTROKES_LOG_ON,
@@ -88,9 +116,11 @@ export function setupKeypress() {
 				"is_exclusive"  		: true,
 				"on_keyup"      		: onKeyUpShiftDSpace,
 				"this"          		: myScope
-			},
+			}
+		]);
 
-			// ADMIN functionality
+			// DASHBOARD functionality
+		let myCombos					= listener.register_many([
 			{
 				// KEYSTROKES_DOWNLOAD_BSKY => Download a JSON file with the contents of the BSKY.data object.
 				"keys"          		: KEYSTROKES_DOWNLOAD_BSKY,
@@ -113,11 +143,8 @@ export function setupKeypress() {
 				"this"          		: myScope
 			}
 		]);
-		if (window.BSKY.DEBUG) console.info( PREFIX + "Registered listeners for" );
-		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
-		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
-		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_TOGGLE}] Toggle DEBUG status` );
-		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
+		*/
+
 	} else {
 		console.warn( "NO KEYBOARD LISTENER DETECTED!" );
 	}
