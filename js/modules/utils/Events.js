@@ -60,6 +60,57 @@ const NSID								= BLUESKY.NSID;
  * PRIVATE Functions
  **********************************************************/
 /* --------------------------------------------------------
+ * Analizes the relationship between this profile
+ * and other, thru it's "viewer" key.
+ * -------------------------------------------------------- */
+function analyzeRelationship( viewer ) {
+	const STEP_NAME						= "analyzeRelationship";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	const followingThisAccount			= viewer?.following			? true : false;
+	const followedByThisAccount			= viewer?.followedBy		? true : false;
+	const blockingThisAccount			= viewer?.blocking			? true : false;
+	const blockedByThisAccount			= viewer?.blockedBy			? true : false;
+	const blockingThisAccountByList		= viewer?.blockingByList	? true : false;
+	const mutingThisAccount				= viewer?.muted				? true : false;
+
+	const rkeyFollowing					= followingThisAccount		? COMMON.getRKeyFromURL( viewer.following )		: null;
+	const rkeyFollowed					= followedByThisAccount		? COMMON.getRKeyFromURL( viewer.followedBy )	: null;
+	const rkeyBlocking					= blockingThisAccount		? COMMON.getRKeyFromURL( viewer.blocking )		: null;
+	const rkeyBlockingByList			= blockingThisAccountByList	? COMMON.getRKeyFromURL( viewer.blockingByList.uri ) : null;
+	
+	const relation						= {};
+
+	relation.follow						= {};
+	relation.follow.me					= followedByThisAccount;
+	relation.follow.meRkey				= rkeyFollowed;
+	relation.follow.it					= followingThisAccount;
+	relation.follow.itRkey				= rkeyFollowing;
+
+	relation.mute						= {};
+	relation.mute.it					= mutingThisAccount;
+
+	relation.block						= {};
+	relation.block.me					= blockedByThisAccount;
+	relation.block.it					= blockingThisAccount;
+	relation.block.itRkey				= rkeyBlocking;
+	relation.block.itByList				= blockingThisAccountByList;
+	relation.block.itByListRkey			= rkeyBlockingByList;
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ followingThisAccount.....: [${followingThisAccount}] [rkey==${rkeyFollowing}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ followedByThisAccount....: [${followedByThisAccount}] [rkey==${rkeyFollowed}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ mutingThisAccount........: [${mutingThisAccount}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ blockingThisAccount......: [${blockingThisAccount}] [rkey==${rkeyBlocking}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ blockedByThisAccount.....: [${blockedByThisAccount}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ blockingThisAccountByList: [${blockingThisAccountByList}] [rkey==${rkeyBlockingByList}]` );
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return relation;
+}
+
+/* --------------------------------------------------------
  * Manage events from the modal for "User Search".
  * -------------------------------------------------------- */
 async function eventRelationManage( event, type ) {
@@ -96,15 +147,14 @@ async function eventRelationManage( event, type ) {
 					break;
 				case EVENT_RELATION_MUTE:
 					// El toast.
-					COMMON.showInfo( `¡Aún en desarrollo!` );
+					// COMMON.showInfo( `¡Aún en desarrollo!` );
 
-					/*
 					if ( checked ) {
 						response		= await APIBluesky.mute( profile.did );
 					} else {
-						response		= await APIBluesky.unmute( relation.mute.xxxx );
+						response		= await APIBluesky.unmute( profile.did );
 					}
-					*/
+					relation.mute.it	= checked;
 					break;
 				case EVENT_RELATION_BLOCK:
 					if ( checked ) {
@@ -116,11 +166,42 @@ async function eventRelationManage( event, type ) {
 			}
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "response:", response );
 			
-			if ( !COMMON.isNullOrEmpty( response ) ) {
-				profile					= await BSKY.getUserProfile( profile.handle );
-				relation				= analyzeRelationship( profile.viewer, relation.mute.it );
-				window.BSKY.data.current.profile	= profile;
-				window.BSKY.data.current.relation	= relation;
+			// Update the profile
+			profile						= await BSKY.getUserProfile( profile.handle );
+			relation					= analyzeRelationship( profile.viewer );
+			window.BSKY.data.current.profile	= profile;
+			window.BSKY.data.current.relation	= relation;
+			
+			// Post-process the entry
+			switch ( type ) {
+				case EVENT_RELATION_FOLLOW:
+					// La colección: BSKY.user.following.raw / BSKY.user.following.profiles
+					// El renderizado: HTML.htmlRenderUserFollowing( xxxx )
+					if ( checked ) {
+						if (window.BSKY.DEBUG) console.debug( PREFIX + "Post-Processing the follow: ADD" );
+					} else {
+						if (window.BSKY.DEBUG) console.debug( PREFIX + "Post-Processing the follow: DEL" );
+					}
+					break;
+				case EVENT_RELATION_MUTE:
+					// La colección: BSKY.user.mutes
+					// El renderizado: HTML.htmlRenderUserMutes( xxxx )
+					if ( checked ) {
+						if (window.BSKY.DEBUG) console.debug( PREFIX + "Post-Processing the mute: ADD" );
+					} else {
+						if (window.BSKY.DEBUG) console.debug( PREFIX + "Post-Processing the mute: DEL" );
+					}
+					relation.mute.it	= checked;
+					break;
+				case EVENT_RELATION_BLOCK:
+					// La colección: BSKY.user.blocks
+					// El renderizado: HTML.htmlRenderUserBlocks( xxxx )
+					if ( checked ) {
+						if (window.BSKY.DEBUG) console.debug( PREFIX + "Post-Processing the block: ADD" );
+					} else {
+						if (window.BSKY.DEBUG) console.debug( PREFIX + "Post-Processing the block: DEL" );
+					}
+					break;
 			}
 		} catch ( error ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
@@ -129,139 +210,6 @@ async function eventRelationManage( event, type ) {
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-}
-
-/* --------------------------------------------------------
- * Analizes the relationship between this profile
- * and other, thru it's "viewer" key.
- * -------------------------------------------------------- */
-function analyzeRelationship( viewer, muted ) {
-	const STEP_NAME						= "analyzeRelationship";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	const followingThisAccount			= viewer?.following			? true : false;
-	const followedByThisAccount			= viewer?.followedBy		? true : false;
-	const blockingThisAccount			= viewer?.blocking			? true : false;
-	const blockedByThisAccount			= viewer?.blockedBy			? true : false;
-	const blockingThisAccountByList		= viewer?.blockingByList	? true : false;
-	const mutedByThisAccount			= viewer?.muted				? true : false;
-
-	const rkeyFollowing					= followingThisAccount		? COMMON.getRKeyFromURL( viewer.following )		: null;
-	const rkeyFollowed					= followedByThisAccount		? COMMON.getRKeyFromURL( viewer.followedBy )	: null;
-	const rkeyBlocking					= blockingThisAccount		? COMMON.getRKeyFromURL( viewer.blocking )		: null;
-	const rkeyBlockingByList			= blockingThisAccountByList	? COMMON.getRKeyFromURL( viewer.blockingByList.uri ) : null;
-	
-	const relation						= {};
-
-	relation.follow						= {};
-	relation.follow.me					= followedByThisAccount;
-	relation.follow.meRkey				= rkeyFollowed;
-	relation.follow.it					= followingThisAccount;
-	relation.follow.itRkey				= rkeyFollowing;
-
-	relation.mute						= {};
-	relation.mute.me					= mutedByThisAccount;
-	relation.mute.it					= muted;
-
-	relation.block						= {};
-	relation.block.me					= blockedByThisAccount;
-	relation.block.it					= blockingThisAccount;
-	relation.block.itRkey				= rkeyBlocking;
-	relation.block.itByList				= blockingThisAccountByList;
-	relation.block.itByListRkey			= rkeyBlockingByList;
-
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ followingThisAccount.....: [${followingThisAccount}] [rkey==${rkeyFollowing}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ followedByThisAccount....: [${followedByThisAccount}] [rkey==${rkeyFollowed}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ mutedByThisAccount.......: [${mutedByThisAccount}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ blockingThisAccount......: [${blockingThisAccount}] [rkey==${rkeyBlocking}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ blockedByThisAccount.....: [${blockedByThisAccount}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ blockingThisAccountByList: [${blockingThisAccountByList}] [rkey==${rkeyBlockingByList}]` );
-
-    // The relation status
-	// ---------------------------------------------------------
-
-	/*
-		[Chema Torrales]
-			did: did:plc:zzff7xikgohhuanfodxmuruw
-			handle: torraleschema.bsky.social
-			Viewer:
-				blockedBy: false
-				followedBy: "at://did:plc:zzff7xikgohhuanfodxmuruw/app.bsky.graph.follow/3lbpjx6ekdb2i"
-				following: "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.follow/3lbfazyjcp327"
-				muted: false
-			Log:
-				[Events:showUserProfile] + displayName..............: Chema Torrales
-				[Events:showUserProfile] + followingThisAccount.....: [true] [rkey==3lbfazyjcp327]
-				[Events:showUserProfile] + followedByThisAccount....: [true] [rkey==3lbpjx6ekdb2i]
-				[Events:showUserProfile] + mutedByThisAccount.......: [false]
-				[Events:showUserProfile] + blockingThisAccount......: [false] [rkey==null]
-				[Events:showUserProfile] + blockedByThisAccount.....: [false]
-				[Events:showUserProfile] + blockingThisAccountByList: [false] [rkey==null]
-		[Martis]			[MUTED]
-			did: did:plc:fhcznawyz2o7o6gt43fx2tcc
-			handle: martismar.bsky.social
-			Viewer:
-				blockedBy: false
-				muted: true
-			Log:
-				[Events:showUserProfile] + displayName..............: Martis
-				[Events:showUserProfile] + followingThisAccount.....: [false] [rkey==null]
-				[Events:showUserProfile] + followedByThisAccount....: [false] [rkey==null]
-				[Events:showUserProfile] + mutedByThisAccount.......: [true]
-				[Events:showUserProfile] + blockingThisAccount......: [false] [rkey==null]
-				[Events:showUserProfile] + blockedByThisAccount.....: [false]
-				[Events:showUserProfile] + blockingThisAccountByList: [false] [rkey==null]
-		[Oscar]				[BLOCKED] [BLOCKEDBY]
-			did: did:plc:5is5ee4fqposxdsvel3vw623
-			handle: soyoscarsintilde.bsky.social
-			Viewer:
-				blockedBy: true
-				blocking: "at://did:plc:tjc27aje4uwxtw5ab6wwm4km/app.bsky.graph.block/3llesttisuz2a"
-				muted: false
-			Log:
-				[Events:showUserProfile] + displayName..............: Oscar 🇨🇴
-				[Events:showUserProfile] + followingThisAccount.....: [false] [rkey==null]
-				[Events:showUserProfile] + followedByThisAccount....: [false] [rkey==null]
-				[Events:showUserProfile] + mutedByThisAccount.......: [false]
-				[Events:showUserProfile] + blockingThisAccount......: [true] [rkey==3llesttisuz2a]
-				[Events:showUserProfile] + blockedByThisAccount.....: [true]
-				[Events:showUserProfile] + blockingThisAccountByList: [false] [rkey==null]
-		[Miss Mangajojo]	[BLOCKED] [BLOCKEDBY] [BLOCKED THRU LIST]
-			did: did:plc:l5kihpf5ow3yiwerg7ornele
-			handle: msmangajojo.bsky.social
-			Viewer:
-				blockedBy: true
-				blocking: "at://did:plc:74dumyxhcc33gzm6jgaj76g6/app.bsky.graph.list/3l6s7olkplp2t"
-				blockingByList: {uri: 'at://did:plc:74dumyxhcc33gzm6jgaj76g6/app.bsky.graph.list/3l6s7olkplp2t', cid: 'bafyreih3pskmfawupbkfgacrqehfiv5e4rkcdasf7yzdtfe2u5vec2kewm', name: 'Nazis y mierdas', purpose: 'app.bsky.graph.defs#modlist', avatar: 'https://cdn.bsky.app/img/avatar/plain/did:plc:74du…yyejaxxb5zksmw2plequac7p4n332spyvlm5l7vezn3m@jpeg', …}
-				muted: false
-			Log:
-				[Events:showUserProfile] + displayName..............: 🌹💙Miss Mangajojo, Covid Cautious, Left-Wing & Coffee Lover.
-				[Events:showUserProfile] + followingThisAccount.....: [false] [rkey==null]
-				[Events:showUserProfile] + followedByThisAccount....: [false] [rkey==null]
-				[Events:showUserProfile] + mutedByThisAccount.......: [false]
-				[Events:showUserProfile] + blockingThisAccount......: [true] [rkey==3l6s7olkplp2t]
-				[Events:showUserProfile] + blockedByThisAccount.....: [true]
-				[Events:showUserProfile] + blockingThisAccountByList: [true] [rkey==3l6s7olkplp2t]
-		[Trinity Guinness]	[BLOCKEDBY]
-			did: did:plc:r6sahwxjoxxpp5rggqpyz6hp
-			handle: guinnessiana.bsky.social
-			Viewer:
-				blockedBy: true
-				muted: false
-			Log:
-				[Events:showUserProfile] + displayName..............:  Trinity Guinness 🏳️‍🌈🏳️‍⚧️Q+ #AltriNON
-				[Events:showUserProfile] + followingThisAccount.....: [false] [rkey==null]
-				[Events:showUserProfile] + followedByThisAccount....: [false] [rkey==null]
-				[Events:showUserProfile] + mutedByThisAccount.......: [false]
-				[Events:showUserProfile] + blockingThisAccount......: [false] [rkey==null]
-				[Events:showUserProfile] + blockedByThisAccount.....: [true]
-				[Events:showUserProfile] + blockingThisAccountByList: [false] [rkey==null]
-	 */
-
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-	return relation;
 }
 
 /**********************************************************
@@ -307,6 +255,7 @@ export function modalEventForSearchUsersWhenInvoked( event ) {
 	$( `#${HTML.DIV_MODAL_SEARCH_OUTPUT}` ).empty();
 	$( `#${HTML.DIV_MODAL_SEARCH_PATTERN}` ).val( '' );
 	$( `#${HTML.DIV_MODAL_SEARCH_PATTERN}` ).focus();
+	COMMON.getById( HTML.DIV_MODAL_SEARCH_PATTERN ).focus();
 }
 
 /* --------------------------------------------------------
@@ -403,9 +352,23 @@ export async function showUserProfile( handle, did ) {
 	$( '.theme-profile-info .profile-description' ).val( userProfile.description );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ displayName..............:`, userProfile.displayName );
 
+    // The profile labels
+	// ---------------------------------------------------------
+	if (userProfile.labels && userProfile.labels.length>0) {
+		const $labelsDiv				= $( `.theme-profile-labels` );
+		userProfile.labels.forEach( label => {
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `[LABEL ] Profile[${userProfile.displayName}/${userProfile.handle}/${userProfile.did}] | label(s)[${userProfile.labels.length}] | label:`, label.val );
+			if (label.val && !COMMON.areEquals( label.val, "!no-unauthenticated" ) ) {
+				$labelsDiv.append( `<span class="badge text-bg-warning me-1">${label.val}</span>` );
+			} else {
+				$labelsDiv.append( `<span class="badge text-bg-success me-1">${label.val}</span>` );
+			}
+		});
+	}
+
     // The relationship between profiles
 	// ---------------------------------------------------------
-	const relation						= analyzeRelationship( viewer, !COMMON.isNullOrEmpty( profileFromMutes ) );
+	const relation						= analyzeRelationship( viewer );
 
     // The dataset
 	// ---------------------------------------------------------
@@ -413,29 +376,37 @@ export async function showUserProfile( handle, did ) {
 	// La relación y los datasets para la relación
 	let input							= null;
 
+	// ¿Le sigo?
 	input								= COMMON.getById( 'relation-follow' );
 	input.checked						= relation.follow.it;
 	input.dataset.bskyHandle			= userProfile.handle;
 	input.dataset.bskyDid				= userProfile.did;
 
+	// ¿Le tengo block?
 	input								= COMMON.getById( 'relation-blocked' );
 	input.checked						= relation.block.it;
 	input.dataset.bskyHandle			= userProfile.handle;
 	input.dataset.bskyDid				= userProfile.did;
 
+	// ¿Le tengo muted?
 	input								= COMMON.getById( 'relation-muted' );
 	input.checked						= relation.mute.it;
 	input.dataset.bskyHandle			= userProfile.handle;
 	input.dataset.bskyDid				= userProfile.did;
 
+	// ¿Me sigue?
 	input								= COMMON.getById( 'relation-follow-me' );
 	input.checked						= relation.follow.me;
 
+	// ¿Me tiene block?
 	input								= COMMON.getById( 'relation-blocked-by' );
 	input.checked						= relation.block.me;
 
+	/*
+	// ¿Me tiene muted?
 	input								= COMMON.getById( 'relation-muted-by' );
 	input.checked						= relation.mute.me;
+	*/
 
 	// The modal itselft, to resize.
 	// ---------------------------------------------------------
@@ -489,7 +460,10 @@ export function modalEventForUserProfileWhenClosed( event ) {
 	$( '.theme-profile-relation #relation-blocked'    ).prop( 'checked', false );
 	$( '.theme-profile-relation #relation-blocked-by' ).prop( 'checked', false );
 	$( '.theme-profile-relation #relation-muted'      ).prop( 'checked', false );
-	$( '.theme-profile-relation #relation-muted-by'   ).prop( 'checked', false );
+	// $( '.theme-profile-relation #relation-muted-by'   ).prop( 'checked', false );
+
+	// Los labels
+	$( `.theme-profile-labels` ).html( "" );
 
     // The dataset
 	// ---------------------------------------------------------

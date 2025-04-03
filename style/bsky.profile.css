@@ -40,6 +40,8 @@
   background-color: var(--bs-tertiary-bg);
 }
 
-.theme-profile-relation {
+.theme-profile-relation,
+.theme-profile-labels {
   border-top: 2px solid navy;
 }
+

@@ -1022,7 +1022,8 @@ async function retrieveTrendingTopics(cursor) {
 			step:				STEP_NAME,
 			method:				method,
 			url:				url,
-			headersType:		headersType
+			headersType:		headersType,
+			renderHTMLErrors:	renderHTMLErrors
 		});
 
 		// The response payload.
@@ -1233,6 +1234,103 @@ async function deleteRecord( nsid, rkey ) {
 	return payload;
 }
 
+async function mutingActor( nsid, did ) {
+	const STEP_NAME						= "mutingActor";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[nsid==${nsid}] [did==${did}]` );
+
+	// Prepare the URL.
+	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_JSON_AUTH;
+	const method						= APICall.HTTP_POST;
+	let endpoint						= "/" + nsid;
+	let url								= getServerURL() + endpoint;
+
+	// The data to send
+	// ---------------------------------------------------------
+	const body						= { actor: did };
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Generated [body]:", COMMON.prettyJson( body ) );
+
+    // The call.
+	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
+	let responseFromServer				= null;
+	let payload							= null;
+	try {
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType,
+			body:				body
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+	}
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return payload;
+}
+
+/*
+	[Mute]
+	handle: [alannycr.bsky.social]
+	did: [did:plc:fom2o23kx6kzlrk76vhide2q]
+
+	[MUTE]
+	POST	https://velvetfoot.us-east.host.bsky.network/xrpc/app.bsky.graph.muteActor
+
+	{"actor":"did:plc:fom2o23kx6kzlrk76vhide2q"}
+
+	accept:						*//*
+	accept-encoding:			gzip, deflate, br, zstd
+	accept-language:			es-ES,es;q=0.9,en;q=0.8
+	atproto-accept-labelers:	did:plc:ar7c4by46qjdydhdevvrndac;redact
+	authorization:				Bearer eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NksifQ.eyJzY29wZSI6ImNvbS5hdHByb3RvLmFjY2VzcyIsInN1YiI6ImRpZDpwbGM6dGpjMjdhamU0dXd4dHc1YWI2d3dtNGttIiwiaWF0IjoxNzQzNDc4MDM0LCJleHAiOjE3NDM0ODUyMzQsImF1ZCI6ImRpZDp3ZWI6dmVsdmV0Zm9vdC51cy1lYXN0Lmhvc3QuYnNreS5uZXR3b3JrIn0.4UaXUUeFxqxX-dyoX3moNYIzeMM3kbtNysVH1scpq0dELmgJpLBjtkxegEHl5BigGE05s5eMTZ6LE3_EuC46RA
+	content-length:				44
+	content-type:				application/json
+	origin:						https://bsky.app
+	priority:					u=1, i
+	referer:					https://bsky.app/
+	sec-ch-ua:					"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"
+	sec-ch-ua-mobile:			?0
+	sec-ch-ua-platform:			"Windows"
+	sec-fetch-dest:				empty
+	sec-fetch-mode:				cors
+	sec-fetch-site:				cross-site
+	user-agent:					Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+
+
+
+	[UNMUTE]
+	POST	https://velvetfoot.us-east.host.bsky.network/xrpc/app.bsky.graph.unmuteActor
+
+	{"actor":"did:plc:fom2o23kx6kzlrk76vhide2q"}
+
+	accept:						*//*
+	accept-encoding:			gzip, deflate, br, zstd
+	accept-language:			es-ES,es;q=0.9,en;q=0.8
+	atproto-accept-labelers:	did:plc:ar7c4by46qjdydhdevvrndac;redact
+	authorization:				Bearer eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NksifQ.eyJzY29wZSI6ImNvbS5hdHByb3RvLmFjY2VzcyIsInN1YiI6ImRpZDpwbGM6dGpjMjdhamU0dXd4dHc1YWI2d3dtNGttIiwiaWF0IjoxNzQzNDc4MDM0LCJleHAiOjE3NDM0ODUyMzQsImF1ZCI6ImRpZDp3ZWI6dmVsdmV0Zm9vdC51cy1lYXN0Lmhvc3QuYnNreS5uZXR3b3JrIn0.4UaXUUeFxqxX-dyoX3moNYIzeMM3kbtNysVH1scpq0dELmgJpLBjtkxegEHl5BigGE05s5eMTZ6LE3_EuC46RA
+	content-length:				44
+	content-type:				application/json
+	origin:						https://bsky.app
+	priority:					u=1, i
+	referer:					https://bsky.app/
+	sec-ch-ua:					"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"
+	sec-ch-ua-mobile:			?0
+	sec-ch-ua-platform:			"Windows"
+	sec-fetch-dest:				empty
+	sec-fetch-mode:				cors
+	sec-fetch-site:				cross-site
+	user-agent:					Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+
+ */
 
 /**********************************************************
  * PUBLIC Functions
@@ -1267,8 +1365,8 @@ export async function follow( did )										{ return await createRecord( NSID.f
 export async function unfollow( rkey )									{ return await deleteRecord( NSID.follow, rkey ); }
 
 // Mute
-export async function mute( did )										{ return await createRecord( NSID.mute, did ); }
-export async function unmute( rkey )									{ return await deleteRecord( NSID.mute, rkey ); }
+export async function mute( did )										{ return await mutingActor(  NSID.mute,   did ); }
+export async function unmute( did )										{ return await mutingActor(  NSID.unmute, did ); }
 
 // Block
 export async function block( did )										{ return await createRecord( NSID.block, did ); }

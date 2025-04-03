@@ -4,7 +4,7 @@
 		"debug_folded": true,
 		"show_info_step": false,
 		"appName": "BSKY Analyzer",
-		"appVersion": "2.1.0",
+		"appVersion": "2.1.1",
 		"loading_steps": 23,
 		"refresh_dynamic": 15,
 		"refresh_static": 300,
@@ -76,7 +76,8 @@
 				"status": "xyz.statusphere.status",
 				"follow": "app.bsky.graph.follow",
 				"block": "app.bsky.graph.block",
-				"mute": "app.bsky.graph.muteActor"
+				"mute": "app.bsky.graph.muteActor",
+				"unmute": "app.bsky.graph.unmuteActor"
 			},
 			"XRPC": {
 				"public": "https://public.api.bsky.app/xrpc",

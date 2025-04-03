@@ -146,7 +146,7 @@ export function updateHTMLError(error, renderHTMLErrors=true) {
 		const html							= {
 			version: CONFIGURATION.global.appVersion,
 			date: new Date(),
-			stack: error.stack.split('\n'),
+			// stack: error.stack.split('\n'),
 			error: error
 		}
 		$( `#${HTMLConstants.DIV_MODAL_ERROR_CODE}` ).text( COMMON.prettyJson( html ) );
@@ -630,6 +630,8 @@ function htmlRenderMissedProfile( idx, data, flags = { follower: false, block: f
 	const did							= data.did;
 	const didDoc						= data.didDoc?.body;
 	const profile						= data.profile?.fetchError?.json || data;
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "+ Data:", data );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "+ Data:", COMMON.toJson( data ) );
 
 	let html							= "";
 	let handle							= ( didDoc?.alsoKnownAs && didDoc.alsoKnownAs[0]) ? didDoc.alsoKnownAs[0]?.substring(5) : "";
@@ -757,8 +759,8 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 	return html;
 }
 
-export function htmlRenderUserFollows( data, missingProfiles ) {
-	const STEP_NAME						= "htmlRenderUserFollows";
+export function htmlRenderUserFollowing( data ) {
+	const STEP_NAME						= "htmlRenderUserFollowing";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
@@ -769,22 +771,8 @@ export function htmlRenderUserFollows( data, missingProfiles ) {
 	let $tableMissedBody				= $( '#'+HTMLConstants.DIV_TABLE_IDLE + " tbody" );
 
 	// Clear the current content.
-	$( '#'+HTMLConstants.DIV_TAB_IDLE_BADGE ).html(missingProfiles.length);
-	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_BADGE ).html(missingProfiles.length + data.profiles.length);
-	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_TOTAL ).html(missingProfiles.length + data.profiles.length);
-
-	// Missed
-	$tableMissedBody.empty();
-	total								= missingProfiles.length;
-	index								= 0;
-	if ( total>0 ) {
-		// Add data.
-		missingProfiles.forEach( profile => {
-			index++;
-			htmlContent					= htmlRenderMissedProfile( index, profile );
-			$tableMissedBody.append( htmlContent );
-		});
-	}
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_BADGE ).html(data.profiles.length);
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_TOTAL ).html(data.profiles.length);
 
 	// Following
 	$tableBody.empty();
@@ -796,6 +784,36 @@ export function htmlRenderUserFollows( data, missingProfiles ) {
 			index++;
 			htmlContent					= htmlRenderSingleProfile( index, profile );
 			$tableBody.append( htmlContent );
+		});
+	}
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+}
+
+export function htmlRenderMissingProfiles( data ) {
+	const STEP_NAME						= "htmlRenderMissingProfiles";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
+
+	let total							= 0;
+	let index							= 0;
+	let htmlContent						= null;
+	let $tableMissedBody				= $( '#'+HTMLConstants.DIV_TABLE_IDLE + " tbody" );
+
+	// Clear the current content.
+	$( '#'+HTMLConstants.DIV_TAB_IDLE_BADGE ).html(data.length);
+
+	// Missed
+	$tableMissedBody.empty();
+	total								= data.length;
+	index								= 0;
+	if ( total>0 ) {
+		// Add data.
+		data.forEach( profile => {
+			index++;
+			htmlContent					= htmlRenderMissedProfile( index, profile );
+			$tableMissedBody.append( htmlContent );
 		});
 	}
 
@@ -985,13 +1003,17 @@ function htmlRenderSingleList( table, data ) {
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + `Badge Numbers: [total==${total}] [grandTotal==${grandTotal}]` );
 	$( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html( grandTotal + total );
 
+	// Sort
+	const sorted						= data.sort( (a,b) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime() );
+
 	// The rendering
 	if ( total>0 ) {
 		// Add data.
-		data.forEach( list => {
+		sorted.forEach( list => {
 			index++;
 			// id							= list.uri.split("/")[4];
 			id							= COMMON.getRKeyFromURL( list.uri );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "+ List:", COMMON.toJson( list ) );
 			htmlContent					= htmlRenderSingleListEntry( index, list, id );
 			$tableBody.append( htmlContent );
 		});
@@ -1034,15 +1056,19 @@ export function htmlRenderUserModerationList( data, table, danger=false ) {
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + `Badge Numbers: [total==${total}] [grandTotal==${grandTotal}]` );
 	$( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html( grandTotal + total );
 
+	// Sort
+	const sorted						= data.sort( (a,b) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime() );
+
 	// The rendering
 	if ( total>0 ) {
 		// Add data.
 		let url							= "";
-		data.forEach( list => {
+		sorted.forEach( list => {
 			index++;
 			url							= list?.uri || list?.url;
 			// id							= url.split("/")[4];
 			id							= COMMON.getRKeyFromURL( url );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "+ List:", COMMON.toJson( list ) );
 			htmlContent					= htmlRenderSingleModListEntry( index, list, id, danger );
 			$tableBody.append( htmlContent );
 		});

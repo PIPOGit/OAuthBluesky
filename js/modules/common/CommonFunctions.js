@@ -105,6 +105,7 @@ export const lsGet						= ( key ) => localStorage.getItem( key );
 export const numberFormatter			= new Intl.NumberFormat( DEFAULT_LOCALE, {style: "decimal", MinimumIntegerDigits: 2});
 export const currencyFormatter			= new Intl.NumberFormat( DEFAULT_LOCALE, {style: "currency", currency: "EUR", MinimumIntegerDigits: 6});
 export const prettyJson					= obj => JSON.stringify( obj, null, "  " );
+export const toJson						= obj => JSON.stringify( obj );
 
 
 /**********************************************************

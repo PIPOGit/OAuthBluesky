@@ -200,7 +200,7 @@ async function startUp() {
 	$( `#${HTML.DIV_GEOLOCATION}` ).val( place.name );
 
 	// Bootstrap Modals events
-	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER ).addEventListener( 'show.bs.modal',		EVENTS.modalEventForSearchUsersWhenInvoked );
+	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER ).addEventListener( 'shown.bs.modal',		EVENTS.modalEventForSearchUsersWhenInvoked );
 	COMMON.getById(HTML.DIV_MODAL_SEARCH_USER ).addEventListener( 'hidden.bs.modal',	EVENTS.modalEventForSearchUsersWhenClosed );
 	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'show.bs.modal',		EVENTS.modalEventForSettingsWhenInvoked );
 	COMMON.getById(HTML.DIV_MODAL_SETTINGS    ).addEventListener( 'hidden.bs.modal',	EVENTS.modalEventForSettingsWhenClosed );
@@ -521,8 +521,8 @@ async function getWhoTheUserFollows() {
 	}
 
 	// Save it.
-	BSKY.user.following.raw				= allData;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${allData.length} records of type[${nsid}] in the repo` );
+	// BSKY.user.following.raw				= allData;
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${allData.length} records of type[${nsid}] in the repo` );
 
 	// Now, retrieve the profiles information for each cid.
 	// ---------------------------------------------------------
@@ -588,9 +588,9 @@ async function getWhoTheUserFollows() {
 				}
 				if (profile.labels && profile.labels.length>0) {
 					profile.labels.forEach( label => {
-						if (label.val && !COMMON.areEquals( label.val, "!no-unauthenticated" ) ) {
+						// if (label.val && !COMMON.areEquals( label.val, "!no-unauthenticated" ) ) {
 							if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + `[LABEL ] Profile[${profile.displayName}/${profile.handle}/${profile.did}] | label(s)[${profile.labels.length}] | label:`, label.val );
-						}
+						// }
 					});
 				}
 			}
@@ -673,7 +673,8 @@ async function getWhoTheUserFollows() {
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
 	// Lo pintamos todo en su sitio.
-	HTML.htmlRenderUserFollows( BSKY.user.following, BSKY.user.missingProfiles );
+	HTML.htmlRenderUserFollowing( BSKY.user.following );
+	HTML.htmlRenderMissingProfiles( BSKY.user.missingProfiles );
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
