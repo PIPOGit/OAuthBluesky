@@ -21,6 +21,8 @@ import CONFIGURATION					from "../../data/config.json" with { type: "json" };
  * -------------------------------------------------------- */
 // Common functions
 import * as COMMON						from "../common/CommonFunctions.js";
+// Common Classes and Exceptions ("Types")
+import * as TYPES						from "../common/CommonTypes.js";
 // Common HTML Constants
 import * as HTML						from "../common/HTML.js";
 
@@ -155,56 +157,67 @@ export async function validateAccessToken() {
 	if ( COMMON.isNullOrEmpty( BSKY.data.userAccessToken ) ) {
 		// NO. Let's see if this is the first time after login.
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "No userAccessToken." );
+		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER + "No userAccessToken." );
 
 		// Retrieve the "code"...
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "Let's see if we have a code to retrieve the userAccessToken." );
+		if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Let's see if we have a code to retrieve the userAccessToken." );
 
 		let lsCallbackData				= null;
 		// Let's see if there is something in the localStorage...
 		lsCallbackData					= localStorage.getItem(LSKEYS.CALLBACK_DATA) || null;
 		if (COMMON.isNullOrEmpty(lsCallbackData)) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `Nothing[${LSKEYS.CALLBACK_DATA}] in the localStorage.` );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + `Nothing[${LSKEYS.CALLBACK_DATA}] in the localStorage.` );
 		} else {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Something in the localStorage." );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Something in the localStorage." );
 			BSKY.auth.callbackData		= JSON.parse( lsCallbackData );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Detected:", COMMON.prettyJson( BSKY.auth.callbackData ) );
 		}
 
 		lsCallbackData					= localStorage.getItem(LSKEYS.CALLBACK_URL) || null;
 		if (COMMON.isNullOrEmpty(lsCallbackData)) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `Nothing[${LSKEYS.CALLBACK_URL}] in the localStorage.` );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + `Nothing[${LSKEYS.CALLBACK_URL}] in the localStorage.` );
 		} else {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Something in the localStorage." );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Something in the localStorage." );
 			BSKY.auth.redirectURL		= lsCallbackData;
 			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Detected:", BSKY.auth.redirectURL );
 		}
 
 		if ( !BSKY?.auth?.callbackData?.code || COMMON.isNullOrEmpty( BSKY.auth.callbackData.code ) ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `No "code" detected.` );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + `No "code" detected.` );
 			// NO. No token and no code. Throw an error.
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-			throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_02 );
+			throw TYPES.AccessTokenError.getError( 2 );
 		} else {
 			// YES. Let's retrieve the token
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Current code:", BSKY.auth.callbackData.code );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Current code:", BSKY.auth.callbackData.code );
 
 			// With the "code", let's retrieve the user access_token from the server.
 			apiCallResponse				= await APIBluesky.getAccessToken();
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "Current apiCallResponse:", apiCallResponse );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_AFTER + "Current apiCallResponse:", apiCallResponse );
+			
+			if ( COMMON.isNullOrEmpty( apiCallResponse ) ) {
+				if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+				if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+				throw TYPES.AccessTokenError.getError( 13 );
+			} else {
+				// Remove code information
+				localStorage.removeItem(LSKEYS.CALLBACK_DATA);
+				BSKY.auth.callbackData	= null;
+				// Parse the response
+				BSKY.data.userAuthentication	= apiCallResponse.userAuthentication;
+				BSKY.data.userAccessToken	= apiCallResponse.userAccessToken;
 
-			// Let's group log messages
-			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_AFTER );
-
-			// Parse the response
-			BSKY.data.userAuthentication	= apiCallResponse.userAuthentication;
-			BSKY.data.userAccessToken	= apiCallResponse.userAccessToken;
-
-			// Let's create also the access token HASH...
-			BSKY.data.accessTokenHash	= await CRYPT.createHash(BSKY.data.userAccessToken, true);
-			if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", BSKY.data.accessTokenHash);
-			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+				// Let's create also the access token HASH...
+				BSKY.data.accessTokenHash	= await CRYPT.createHash(BSKY.data.userAccessToken, true);
+				isAccessTokenValid		= true;
+				BSKY.saveRuntimeDataInLocalStorage();
+			}
 		}
+		if (window.BSKY.DEBUG) console.debug(PREFIX_AFTER + "accessTokenHash:", BSKY.data.accessTokenHash);
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	} else {
 		// YES. Let's see if it's valid.
 
@@ -220,7 +233,7 @@ export async function validateAccessToken() {
 			} else {
 				if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-				throw new TYPES.AccessTokenError( OAuth2.ERROR_CODE_07 );
+				throw TYPES.AccessTokenError.getError( 7 );
 			}
 
 			if ( isTokenCloseToExpire ) {
@@ -228,17 +241,23 @@ export async function validateAccessToken() {
 				await refreshAccessToken();
 			}
 		} catch ( error ) {
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+			localStorage.setItem( LSKEYS.ERROR_DATA, error );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [title==${error.title}] [cause==${error.cause}]` );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+			throw error;
 		}
 
 	}
+	
+	if ( isAccessTokenValid ) {
+		// Do something with the token information: Post Process the access token
+		postProcessAccessToken();
 
-	// Do something with the token information: Post Process the access token
-	postProcessAccessToken();
-
-	// Update some HTML fields
-	// Prepare an object to pass
-	HTML.updateHTMLFields(BSKY.auth.callbackData);
+		// Update some HTML fields
+		// Prepare an object to pass
+		// HTML.updateHTMLFields(BSKY.auth.callbackData);
+	}
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -280,8 +299,11 @@ export async function refreshAccessToken() {
 
 	// Let's refresh the user's access token.
 	// ---------------------------------------------------------
-	let refreshedAccessToken			= await APIBluesky.refreshAccessToken( BSKY.auth.callbackData.code );
+	let refreshedAccessToken			= await APIBluesky.refreshAccessToken();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + "Current refreshedAccessToken:", refreshedAccessToken );
+
+	// Let's backup the current data.
+	BSKY.saveRuntimeDataInLocalStorage();
 
 	// Clear and hide error fields and panel
 	HTML.clearHTMLError();

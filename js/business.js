@@ -36,6 +36,8 @@ import * as DB							from "./modules/utils/BrowserDB.js";
 import * as EVENTS						from "./modules/utils/Events.js";
 // Common Keyboard Listener functions
 import * as KPListener					from "./modules/utils/KPListener.js";
+// Common Relations functions
+import * as RELATIONS					from "./modules/utils/Relations.js";
 // Common Settings functions
 import * as SETTINGS					from "./modules/utils/Settings.js";
 
@@ -46,7 +48,7 @@ import * as SETTINGS					from "./modules/utils/Settings.js";
 import * as APIBluesky					from "./modules/api/APIBluesky.js";
 // Common ClearSky functions
 import * as APIClearSky					from "./modules/api/APIClearSky.js";
-// Common PLC Direvtory functions
+// Common PLC Directory functions
 import * as APIPLCDirectory				from "./modules/api/APIPLCDirectory.js";
 
 /* --------------------------------------------------------
@@ -90,6 +92,9 @@ const NSID								= BLUESKY.NSID;
 // Module constants
 const MAX_ITERATIONS					= 100;
 const MAX_LOADING_STEPS					= CONFIGURATION.global.loading_steps;
+const TYPE_POST							= "app.bsky.feed.post";
+const TYPE_REPOST						= "app.bsky.feed.defs#reasonRepost";
+const EXTENDED							= CONFIGURATION.global.extended;
 
 
 /**********************************************************
@@ -163,14 +168,15 @@ async function startUp() {
 	window.BSKY.logout					= fnLogout;
 	window.BSKY.refreshAccessToken		= TOKEN.refreshAccessToken;
 	window.BSKY.getUserProfile			= getTheUserProfile;
-	window.BSKY.showError				= fnShowError;
+	window.BSKY.downloadImage			= RELATIONS.downloadImage;
+	window.BSKY.canvasType				= RELATIONS.changeCanvasType;
 
 	// Module INFO END
 	// ================================================================
 	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + `Updated object: [window.BSKY].`, window.BSKY );
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_MODULE_INFO + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Page setup concrete actions.
@@ -227,7 +233,7 @@ async function startUp() {
 	// ---------------------------------------------------------
 	// End of module setup
 	// ---------------------------------------------------------
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Perform latest operations
@@ -239,7 +245,6 @@ async function startUp() {
 /**********************************************************
  * PRIVATE Functions
  **********************************************************/
-
 /* --------------------------------------------------------
  * "User Status"
  *
@@ -271,7 +276,7 @@ async function getUserStatuSphere( handle ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR:`, COMMON.prettyJson( error ) );
 	}
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return COMMON.isNullOrEmpty( allData ) ? null : allData[0];
 }
@@ -308,7 +313,7 @@ async function fnSearchUser( source ) {
 
 	if ( !COMMON.isNullOrEmpty( searchString ) && ( searchString.length>0 ) ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + "Searching for:", searchString );
-		let received					= await APIBluesky.getProfile( searchString );
+		let received					= await APIBluesky.getProfiles( searchString );
 		let actors						= received.actors;
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `Received ${actors.length} actor(s):`, actors );
 
@@ -339,7 +344,7 @@ async function fnSearchUser( source ) {
 		}
 	}
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -382,12 +387,12 @@ async function getRepoRecordsOfNSIDType( nsid, renderHTMLErrors=true ) {
 			HTML.showStepInfo( STEP_NAME, `Retrieving who the user follows (${acumulado})...` );
 		} while ( hayCursor && (n<MAX_ITERATIONS) );
 	} catch ( error ) {
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	}
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return allData;
 }
@@ -434,7 +439,7 @@ async function getTheUserNotifications() {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -474,7 +479,7 @@ async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return userProfile;
 }
@@ -491,6 +496,7 @@ async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 async function getWhoTheUserFollows() {
 	const STEP_NAME						= "getWhoTheUserFollows";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_PDS_PROFILE			= `${PREFIX}[PDS REPO Profile] `;
 	const PREFIX_PDS_PROFILES			= `${PREFIX}[PDS REPO Profiles] `;
 	const PREFIX_PDS_MISSING			= `${PREFIX}[PDS REPO MISSING Profiles] `;
 	const PREFIX_MISSING				= `${PREFIX}[MISSING] `;
@@ -515,9 +521,11 @@ async function getWhoTheUserFollows() {
 	if ( COMMON.isNullOrEmpty( allData ) ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `No following detected.` );
 
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return;
+	} else {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected following ${allData.length} accounts.` );
 	}
 
 	// Save it.
@@ -539,7 +547,9 @@ async function getWhoTheUserFollows() {
 	let blockOfProfiles					= null;
 	let bunch							= null;
 	let userDid							= null;
+	let didDoc							= null;
 	let profile							= null;
+	let avatarURL						= null;
 	let allProfiles						= [];
 	const MAX_PROFILES					= 25;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PDS_PROFILES );
@@ -575,7 +585,6 @@ async function getWhoTheUserFollows() {
 		// Add to global var
 		if ( blockOfProfiles && blockOfProfiles.profiles ) {
 			bunch						= blockOfProfiles.profiles;
-			allProfiles.push(...bunch);
 
 			// Sanity check: Detect which profiles have not been retrieved...
 			let position				= 0;
@@ -583,23 +592,40 @@ async function getWhoTheUserFollows() {
 				profile					= bunch[idx];
 				userDid					= profile.did;
 				position				= searched.indexOf( userDid );
+				if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PDS_PROFILE + `[${position}] [${userDid}] [${profile.handle}]` );
 				if (position>=0) {
+					// Retrieve the did doc of the did
+					if ( EXTENDED ) {
+						if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + "The didDoc..." );
+						profile.didDoc		= await APIPLCDirectory.resolveDid( userDid );
+
+						// Retrieve the avatar as Data URL
+						if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + "The avatar as Data URL..." );
+						avatarURL			= await APIBluesky.getAvatarURL( profile );
+						profile.avatarImage	= avatarURL ? await APIBluesky.getAvatar( avatarURL ) : null;
+					}
+
+					if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + "Push to array..." );
+					allProfiles.push( profile );
 					searched.splice( position, 1 );
 				}
 				if (profile.labels && profile.labels.length>0) {
 					profile.labels.forEach( label => {
 						// if (label.val && !COMMON.areEquals( label.val, "!no-unauthenticated" ) ) {
-							if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + `[LABEL ] Profile[${profile.displayName}/${profile.handle}/${profile.did}] | label(s)[${profile.labels.length}] | label:`, label.val );
+							if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + `[LABEL ] Profile[${profile.displayName}/${profile.handle}/${profile.did}] | label(s)[${profile.labels.length}] | label:`, label.val );
 						// }
 					});
 				}
+				if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + "-- END" );
+				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 			}
 			if (searched.length>0) {
-				if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILES + `[MISSED] Missed ${searched.length} profile(s)...`, searched );
+				if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + `[MISSED] Missed ${searched.length} profile(s)...`, searched );
 				missing.push(...searched);
 			}
 		}
 	} while ( startCurrent <= finishAt );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Save it.
@@ -634,7 +660,7 @@ async function getWhoTheUserFollows() {
 			try {
 				missed.didDoc			= {};
 				urlOfMissing			= `${BLUESKY.profile.pld}${userDid}`;
-				if (window.BSKY.GROUP_DEBUG) console.debug( "Requesting DIDDOC url:", urlOfMissing );
+				if (window.BSKY.DEBUG) console.debug( "Requesting DIDDOC url:", urlOfMissing );
 				didDocForMissing		= await APIPLCDirectory.resolveDid( userDid );
 				missed.didDoc.body		= didDocForMissing;
 				if (window.BSKY.GROUP_DEBUG) console.warn( "Examinar didDocForMissing:", didDocForMissing );
@@ -646,7 +672,7 @@ async function getWhoTheUserFollows() {
 			try {
 				missed.profile			= {};
 				urlOfMissing			= `${XRPC.public}/app.bsky.actor.getProfile?actor=${userDid}`;
-				if (window.BSKY.GROUP_DEBUG) console.debug( "Requesting PROFILE url:", urlOfMissing );
+				if (window.BSKY.DEBUG) console.debug( "Requesting PROFILE url:", urlOfMissing );
 				profileForMissing		= await APICall.call( STEP_NAME, urlOfMissing );
 				missed.profile.profile	= profileForMissing;
 				if (window.BSKY.GROUP_DEBUG) console.warn( "Examinar profileForMissing:", profileForMissing );
@@ -657,7 +683,7 @@ async function getWhoTheUserFollows() {
 			// Recap
 			missingProfiles.push( missed );
 
-			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_MISSING + "-- END" );
+			if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -673,10 +699,10 @@ async function getWhoTheUserFollows() {
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
 	// Lo pintamos todo en su sitio.
-	HTML.htmlRenderUserFollowing( BSKY.user.following );
+	HTML.htmlRenderUserFollowing( BSKY.user.following.profiles );
 	HTML.htmlRenderMissingProfiles( BSKY.user.missingProfiles );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -684,8 +710,8 @@ async function getWhoTheUserFollows() {
 /* --------------------------------------------------------
  * Retrieve who the user is following.
  * -------------------------------------------------------- */
-async function getWhoAreTheUserFollowers() {
-	const STEP_NAME						= "getWhoAreTheUserFollowers";
+async function getWhoFollowsTheUser() {
+	const STEP_NAME						= "getWhoFollowsTheUser";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	const PREFIX_ALL					= `${PREFIX}[ALL] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
@@ -704,6 +730,7 @@ async function getWhoAreTheUserFollowers() {
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
+	let avatarURL						= null;
 	do {
 		n++;
 		// Retrieve user's followers to show
@@ -736,7 +763,7 @@ async function getWhoAreTheUserFollowers() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserFollowers( allData );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -770,7 +797,20 @@ async function getWhoTheUserIsBlocking() {
 	const dataFromClearSky				= !COMMON.isNullOrEmpty( BSKY.user?.clearSky?.userInfo?.blockedBy?.data?.found );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Data from ClearSky? [${dataFromClearSky}]` );
 	if ( dataFromClearSky ) {
-		allData.push(...BSKY.user.clearSky.userInfo.blockedBy.data.found);
+		// allData.push(...BSKY.user.clearSky.userInfo.blockedBy.data.found);
+		for ( const blocked of BSKY.user.clearSky.userInfo.blockedBy.data.found ) {
+
+			if ( EXTENDED ) {
+				// Retrieve the did doc of the did
+				blocked.didDoc				= await APIPLCDirectory.resolveDid( blocked.did );
+
+				// Retrieve the avatar as Data URL
+				avatarURL					= APIBluesky.getAvatarURL( blocked );
+				blocked.avatarImage		= avatarURL ? await APIBluesky.getAvatar( avatarURL ) : null;
+			}
+
+			allData.push( blocked );
+		}
 	}
 
 	do {
@@ -810,7 +850,7 @@ async function getWhoTheUserIsBlocking() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserBlocks( uniqueArray );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -868,7 +908,7 @@ async function getWhoTheUserIsMuting() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserMutes( allData );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -926,7 +966,7 @@ async function getTheUserLists() {
 	// Lo pintamos en su sitio.
 	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserLists( allData );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -985,7 +1025,7 @@ async function getTheUserMutingModerationLists() {
 	// Lo pintamos en su sitio.
 	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserModerationList( allData, HTML.DIV_TABLE_MY_MOD_M_LISTS );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1043,7 +1083,7 @@ async function getTheUserBlockingModerationLists() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserModerationList( allData, HTML.DIV_TABLE_MY_MOD_B_LISTS, true );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1100,7 +1140,7 @@ async function getTheUserFeeds() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserFeeds( allData );
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1134,7 +1174,7 @@ async function getTheTrendingTopics() {
 	// Retrieve the Trending Topics
 	// ---------------------------------------------------------
 	try {
-		data								= await APIBluesky.getTrendingTopics( cursor );
+		data								= await APIBluesky.getTrendingTopics( cursor, false );
 
 		// if ( !COMMON.isNullOrEmpty( data ) ) {
 		if ( data && ( data?.topics || data?.suggested ) ) {
@@ -1151,7 +1191,7 @@ async function getTheTrendingTopics() {
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
 
-		// if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		// if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		// throw( error );
 	}
@@ -1160,7 +1200,7 @@ async function getTheTrendingTopics() {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1198,121 +1238,7 @@ async function getTheClearSkyInfo() {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-}
-
-
-/* --------------------------------------------------------
- * Cross-check relationships.
- * -------------------------------------------------------- */
-async function getTheRelations() {
-	const STEP_NAME						= "getTheRelations";
-	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
-
-	// Info step
-	// ---------------------------------------------------------
-	HTML.showStepInfo( STEP_NAME, `Cross-checking relationships with the user...` );
-
-	if (window.BSKY.DEBUG) console.warn( PREFIX + "Under Development!" );
-	// TODO: Cross-check following, followers, blocks and mutes with
-	// + [getKnownFollowers]	https://docs.bsky.app/docs/api/app-bsky-graph-get-known-followers
-	// + [getRelationships]		https://docs.bsky.app/docs/api/app-bsky-graph-get-relationships
-	// + [getProfiles]			https://docs.bsky.app/docs/api/app-bsky-actor-get-profiles
-
-
-	// Now, the relations.
-	// ---------------------------------------------------------
-	let apiCallResponse					= null;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the relationships...` );
-	let cursor							= null;
-	let hayCursor						= false;
-	let cursorDate						= null;
-	let outOfScope						= false;
-	let data							= null;
-	let authorFeed						= [];
-	let n								= 0;
-	let acumulado						= 0;
-	let subTotal						= 0;
-
-	const today							= new Date();
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Date of TODAY:`, today );
-	let oneMonthAgo					= new Date();
-	oneMonthAgo.setDate(0);
-	oneMonthAgo.setDate( today.getDate() );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Date of Month:`, oneMonthAgo );
-
-	// Retrieve the User's Author Feed
-	// ---------------------------------------------------------
-	do {
-		n++;
-		apiCallResponse					= await APIBluesky.getAuthorFeed( cursor );
-
-		// Datos. Seguimos?
-		// De haber cursos, es la fecha.
-		cursor							= apiCallResponse?.cursor || null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected(?) cursor: ${cursor} [hayCursor: ${hayCursor}]` );
-		// cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		// hayCursor						= !COMMON.isNullOrEmpty(cursor);
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + `  Detected cursor: ${cursor} [hayCursor: ${hayCursor}]` );
-		cursorDate						= new Date( cursor );
-		outOfScope						= COMMON.isBefore( cursorDate, oneMonthAgo );
-
-		data							= apiCallResponse.feed;
-		subTotal						= data.length;
-		authorFeed.push(...data);
-		acumulado						= authorFeed.length;
-	} while ( !outOfScope && hayCursor && (n<MAX_ITERATIONS) );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `Last[${n}] cursor date[${outOfScope}]:`, cursorDate );
-
-	/* ****************************************************************************
-	 * Tenemos que coger:
-	 *
-	 * + [POST] Del propio post
-	 *   item.post.author.did && item.post.author.handle
-	 *
-	 * + [REASON] Si hay un "reason" ( item?.reason ), es un "repost". POR MI.
-	 *
-	 * + [REPLY] Si hay un "reply" ( item?.reply ), es una "respuesta" a un post. POR MI.
-	 *   Cogemos:
-	 *
-	 *   + El autor del primer post: item.reply.root.author.did && item.reply.root.author.handle
-	 *   + El autor del post anterior al mio: item.reply.parent.author.did && item.reply.parent.author.handle
-	 *   + El autor del post anterior al anterior al mio: item.reply.grandparentAuthor.author.did && item.reply.grandparentAuthor.author.handle
-	 *
-	**************************************************************************** */
-
-	/*
-	n									= 1;
-	authorFeed.forEach(item => {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `+ Post[${n++}] [${item.post.indexedAt}] [${item.post.author.handle}]:`, item );
-	});
-	*/
-
-	/* ****************************************************************************
-		// TODO:
-		También hay que coger los "getActorLikes"
-		https://docs.bsky.app/docs/api/app-bsky-feed-get-actor-likes
-		y coger los "creadores" del post.
-
-		Y, finalmente, los likes a mis posts: "getLikes" por cada post (de la primera llamada).
-		https://docs.bsky.app/docs/api/app-bsky-feed-get-likes
-		y coger los usuarios a quienes les ha gustado cada post
-
-		Con todo esto, podríamos establecer el snapshot de las burbujitas
-		o un mapa de relaciones por haber habido una relación.
-
-		A parte de esto, podríamos crear otro mapa con las relaciones follow/follower
-		entre todas las cuentas que se tienen.
-	**************************************************************************** */
-
-	// First time step
-	// ---------------------------------------------------------
-	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
-
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1320,15 +1246,6 @@ async function getTheRelations() {
 /**********************************************************
  * PUBLIC Functions
  **********************************************************/
-/* --------------------------------------------------------
- * To display the errors modal.
- * -------------------------------------------------------- */
-function fnShowError() {
-	const errorModal					= bootstrap.Modal.getOrCreateInstance( `#${HTML.DIV_MODAL_ERROR}` );
-	errorModal.show();
-}
-
-
 /* --------------------------------------------------------
  * Logout.
  * -------------------------------------------------------- */
@@ -1365,7 +1282,7 @@ async function fnLogout() {
 	// Set, in localStorage, we come from "LOGOUT"
 	localStorage.setItem(LSKEYS.LOGOUT, true);
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_LOCALSTORAGE + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX_LOCALSTORAGE + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Remove the crypto key from the database and the database itself.
@@ -1404,7 +1321,7 @@ async function fnLogout() {
 	// Send to fallback URL.
 	window.BSKY.faviconStandBy();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Redirecting to: [${fallBackURLFromCurrent}]...` );
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	window.location						= fallBackURL;
 }
@@ -1508,7 +1425,7 @@ async function fnDashboard() {
 
 		if ( goAutoLogout || CONFIGURATION.global.autoLogout ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Errors found. Performing the auto-logout." );
-			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 			await fnLogout();
 		}
@@ -1532,7 +1449,7 @@ async function fnDashboard() {
 		window.BSKY.faviconStandBy();
 	}
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1573,7 +1490,7 @@ async function updateDynamicData() {
 	// ---------------------------------------------------------
 	window.BSKY.faviconStandBy();
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1601,7 +1518,7 @@ async function updateStaticData() {
 	// ---------------------------------------------------------
 	window.BSKY.faviconStandBy();
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1634,7 +1551,7 @@ async function updateDynamicInfo() {
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
 
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	} finally {
@@ -1643,7 +1560,7 @@ async function updateDynamicInfo() {
 		HTML.showStepInfo( STEP_NAME );
 	}
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1674,7 +1591,7 @@ async function updateStaticInfo() {
 		apiCallResponse					= await getWhoTheUserFollows();
 
 		// Retrieve the user's followers
-		apiCallResponse					= await getWhoAreTheUserFollowers();
+		apiCallResponse					= await getWhoFollowsTheUser();
 
 		// Retrieve who the user is blocking
 		apiCallResponse					= await getWhoTheUserIsBlocking();
@@ -1694,21 +1611,34 @@ async function updateStaticInfo() {
 		// Retrieve the user's lists
 		apiCallResponse					= await getTheUserFeeds();
 
-		// Now, check relationships...
-		apiCallResponse					= await getTheRelations();
 	} catch (error) {
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
 
-		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	} finally {
-
 		// Info step
 		HTML.showStepInfo( STEP_NAME );
 	}
 
-	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	// Finally, check relationships...
+	// apiCallResponse					= await getTheRelations();
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "Triggering the relations..." );
+	// setTimeout( getTheRelations(), 2000 );
+	new Promise( (resolve,reject) => {
+		setTimeout( () => {
+			// First time step
+			// ---------------------------------------------------------
+			if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
+
+			RELATIONS.getTheRelations();
+			resolve();
+		}, 1000 );
+	});
+
+	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
+

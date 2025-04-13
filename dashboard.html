@@ -55,19 +55,19 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<!-- JS KeyPress -->
-		<script src="./js/libs/keypress/keypress-2.1.5/keypress.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/keypress/2.1.5/keypress.min.js" integrity="sha512-JjqUcblrwIZTQBPL/azOhVHwq5uaeXkKzq7da3JZEP14Zg926vZZVhRhBBi+L2pWYquZ6r5P8OZYDYgOChtkOw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<!-- JS download.js -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js" integrity="sha512-WiGQZv8WpmQVRUFXZywo7pHIO0G/o3RyiAJZj8YXNN4AV7ReR1RYWVmZJ6y3H06blPcjJmG/sBpOVZjTSFFlzQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<!-- JS highlight.js -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js" integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<!-- JS Internal -->
 		<!-- + Global JavaScript -->
 		<script type="module" src="./js/bluesky.js"></script>
 		<!-- + Page related -->
-		<script type="module" src="./js/dashboard.js"></script>
+		<script type="module" src="./js/business.js"></script>
 	</head>
 	<body>
 
@@ -237,6 +237,18 @@
 						<span id="pill-clearsky-badge" name="pill-clearsky-badge" class="badge bg-success"></span>
 						ClearSky
 					</button>
+					<button class="btn nav-link d-flex align-items-baseline px-2"
+						id="pill-relations"
+						name="pill-relations"
+						data-bs-target="#panel-relations"
+						aria-controls="panel-relations"
+						type="button"
+						data-bs-toggle="pill"
+						role="tab"
+						aria-selected="false">
+						<span id="pill-relations-badge" name="pill-relations-badge" class="badge bg-success"></span>
+						Relations
+					</button>
 				</nav>
 			</div>
 
@@ -281,7 +293,7 @@
 					</div>
 
 					<!-- El panel de los following -->
-					<div id="panelFollowing" name="panelFollowing" class="tab-pane fade theme-following" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+					<div id="panelFollowing" name="panelFollowing" class="tab-pane fade theme-following" role="tabpanel" aria-labelledby="pill-following" tabindex="0">
 
 						<!-- Los filtros -->
 						<form id="formFollowing" class="d-flex justify-content-start align-items-start mb-2 gap-2 theme-smaller" data-bsky-target="tableFollowing" onInput="BSKY.filterFollowing(this)" onSubmit="return false;">
@@ -471,7 +483,7 @@
 					</div>
 
 					<!-- El panel de los followers -->
-					<div id="panelFollowers" name="panelFollowers" class="tab-pane fade theme-followers" role="tabpanel" aria-labelledby="pill-notifications" tabindex="0">
+					<div id="panelFollowers" name="panelFollowers" class="tab-pane fade theme-followers" role="tabpanel" aria-labelledby="pill-followers" tabindex="0">
 
 						<!-- Los filtros -->
 						<form id="formFollowers" class="d-flex justify-content-start align-items-start mb-2 gap-2 theme-smaller" data-bsky-target="tableFollowers" onInput="BSKY.filterFollowers(this)" onSubmit="return false;">
@@ -876,6 +888,36 @@
 
 						</div>
 					</div>
+
+					<!-- El panel de las relaciones -->
+					<div id="panel-relations" name="panel-relations" class="tab-pane fade theme-relations" role="tabpanel" aria-labelledby="pill-relations" tabindex="0">
+						<div id="relations" name="relations" class="relations">
+							<div class="row m-0">
+								<div class="col-2">
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="drawCanvas" id="drawCanvas1" value="likes" checked onClick="BSKY.canvasType(this);">
+										<label class="form-check-label" for="drawCanvas1">Likes</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="drawCanvas" id="drawCanvas2" value="replies" onClick="BSKY.canvasType(this);">
+										<label class="form-check-label" for="drawCanvas2">Replies</label>
+									</div>
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="drawCanvas" id="drawCanvas3" value="reposts" onClick="BSKY.canvasType(this);">
+										<label class="form-check-label" for="drawCanvas3">Reposts</label>
+									</div>
+									<div>
+										<i>When finished, click on the image to download</i>.
+									</div>
+								</div>
+								<div class="col-10">
+									<canvas id="canvas-relations" width="1000" height="400" class="border border-1 border-black m-0 p-0" onClick="BSKY.downloadImage();">
+										empty content
+									</canvas>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -1139,34 +1181,6 @@
 									<div class="d-flex align-items-center mb-2">
 										<a id="buttonClientId"     name="buttonClientId"     class="btn btn-sm btn-outline-success mx-3 my-1" target="client-id" title="Client ID Metatada" href="javascript:void(0); return false;">Client ID Metatada</a>
 										<a id="buttonDIDDocument"  name="buttonDIDDocument"  class="btn btn-sm btn-outline-success mx-3 my-1" target="did-document" title="User DID Document" href="javascript:void(0); return false;">User DID Document</a>
-									</div>
-
-									<div class="row">
-										<label for="clientId" class="col-4 col-form-label fw-semibold">Client ID:</label>
-										<div class="col-8">
-											<input type="text" class="form-control form-control-plaintext theme-smaller" id="clientId" name="clientId" placeholder="Received clientId" readonly>
-										</div>
-									</div>
-
-									<div class="row">
-										<label for="iss" class="col-4 col-form-label fw-semibold">ISS:</label>
-										<div class="col-8">
-											<input type="text" class="form-control form-control-plaintext theme-smaller" id="iss" name="iss" placeholder="Received iss" readonly>
-										</div>
-									</div>
-
-									<div class="row">
-										<label for="state" class="col-4 col-form-label fw-semibold">State:</label>
-										<div class="col-8">
-											<input type="text" class="form-control form-control-plaintext theme-smaller" id="state" name="state" placeholder="Received state" readonly>
-										</div>
-									</div>
-
-									<div class="row">
-										<label for="code" class="col-4 col-form-label fw-semibold">Code:</label>
-										<div class="col-8">
-											<input type="text" class="form-control form-control-plaintext theme-smaller" id="code" name="code" placeholder="Received code" readonly>
-										</div>
 									</div>
 
 									<div class="row">

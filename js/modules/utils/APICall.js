@@ -54,8 +54,12 @@ export const HTTP_POST					= "POST";
 export const HTTP_HEADER_DPOP			= "DPoP";
 export const HTTP_HEADER_DPOP_NONCE		= "DPoP-Nonce";
 export const HTTP_HEADER_ACCEPT			= "Accept";
+export const HTTP_HEADER_ACCEPT_ENCODING	= "Accept-Encoding";
 export const HTTP_HEADER_AUTHORIZATION	= "Authorization";
 export const HTTP_HEADER_CONTENT_TYPE	= "Content-Type";
+export const HTTP_HEADER_ALLOW_ORIGIN	= "Access-Control-Allow-Origin";
+export const HTTP_HEADER_REQ_HEADERS	= "Access-Control-Request-Headers";
+export const HTTP_HEADER_REQ_METHOD		= "Access-Control-Request-Method";
 export const HTTP_HEADER_WWW_AUTHENTICATE	= "www-authenticate";
 
 // HTML Content Type constants
@@ -64,12 +68,14 @@ export const CONTENT_TYPE_JSON_UTF8		= "application/json; charset=utf-8";
 export const CONTENT_TYPE_DID_JSON		= "application/did+ld+json";
 export const CONTENT_TYPE_DID_JSON_UTF8	= "application/did+ld+json; charset=utf-8";
 export const CONTENT_TYPE_FORM_ENCODED	= "application/x-www-form-urlencoded";
+export const CONTENT_TYPE_IMAGE			= "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7";
 export const JSON_CONTENT_TYPES			= [
 	CONTENT_TYPE_JSON.toUpperCase(),
 	CONTENT_TYPE_JSON_UTF8.toUpperCase(),
 	CONTENT_TYPE_DID_JSON.toUpperCase(),
 	CONTENT_TYPE_DID_JSON_UTF8.toUpperCase(),
-	CONTENT_TYPE_FORM_ENCODED.toUpperCase()
+	CONTENT_TYPE_FORM_ENCODED.toUpperCase(),
+	CONTENT_TYPE_IMAGE.toUpperCase()
 ];
 
 
@@ -273,12 +279,12 @@ export async function apiCall( params, renderHTMLErrors=true ) {
  	const httpResponse					= await fetch( params.url, params.fetchOptions )
 		.then( response => {
 			// Process the HTTP Response itself
-			return processHTTPResponse( params, response );
+			return ( params.blob ) ? response.blob() : processHTTPResponse( params, response );
 		}).then( response => {
 			return response;
 		}).catch( error => {
 			// Errors while parsing the HTTP Response!
-			if (window.BSKY.DEBUG) console.debug( PREFIX + `Errors while parsing the HTTP Response! [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Errors while parsing the HTTP Response! [code==${error?.code||-1}] [message==${error?.message||"<unknown>"}] [cause==${error?.cause||"<unknown>"}]`, error );
 			// HTML.updateHTMLError( error, renderHTMLErrors );
 			return error;
 		});
@@ -369,15 +375,40 @@ export async function authenticatedCall( params, renderHTMLErrors=true ) {
  *
  * "types" is an array of header types.
  * -------------------------------------------------------- */
+export const HEADER_AVATAR				= "HEADER_AVATAR";
 export const HEADER_ENCODED_AUTH		= "HEADER_ENCODED_AUTH";
 export const HEADER_ENCODED_DPOP		= "HEADER_ENCODED_DPOP";
 export const HEADER_ENCODED_AUTH_DPOP	= "HEADER_ENCODED_AUTH_DPOP";
 export const HEADER_STANDARD_AUTH		= "HEADER_STANDARD_AUTH";
 export const HEADER_STANDARD_JSON_AUTH	= "HEADER_STANDARD_JSON_AUTH";
-export function getHeaders( type, dpopProof=null ) {
+export function getHeaders( type, method, dpopProof=null ) {
 
     let headers										= {};
 	switch ( type ) {
+		case HEADER_AVATAR:
+			/*
+				access-control-request-headers:		access-control-allow-origin,content-type
+				access-control-request-method:		GET
+			 */
+			if ( !headers.hasOwnProperty( HTTP_HEADER_CONTENT_TYPE ) ) {
+				headers[ HTTP_HEADER_CONTENT_TYPE ]		= CONTENT_TYPE_IMAGE;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_ACCEPT ) ) {
+				headers[ HTTP_HEADER_ACCEPT ]			= '*/*';
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_ACCEPT_ENCODING ) ) {
+				headers[ HTTP_HEADER_ACCEPT_ENCODING ]	= 'gzip, deflate, br, zstd';
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_ALLOW_ORIGIN ) ) {
+				headers[ HTTP_HEADER_ALLOW_ORIGIN ]		= '*';
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_REQ_HEADERS ) ) {
+				headers[ HTTP_HEADER_REQ_HEADERS ]		= HTTP_HEADER_ALLOW_ORIGIN + ',' + HTTP_HEADER_CONTENT_TYPE;
+			}
+			if ( !headers.hasOwnProperty( HTTP_HEADER_REQ_METHOD ) ) {
+				headers[ HTTP_HEADER_REQ_METHOD ]		= method.toUpperCase();
+			}
+			break;
 		case HEADER_ENCODED_AUTH:
 			if ( !headers.hasOwnProperty( HTTP_HEADER_CONTENT_TYPE ) ) {
 				headers[ HTTP_HEADER_CONTENT_TYPE ]		= CONTENT_TYPE_FORM_ENCODED;

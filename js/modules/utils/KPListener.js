@@ -76,6 +76,7 @@ export function setupKeypress( login=false ) {
 		listener.simple_combo( KEYSTROKES_LOG_ON,					onKeyUpShiftDT );
 		listener.simple_combo( KEYSTROKES_LOG_OFF,					onKeyUpShiftDF );
 		listener.simple_combo( KEYSTROKES_LOG_TOGGLE,				onKeyUpShiftDSpace );
+		listener.simple_combo( KEYSTROKES_SHOW_ERROR,				onKeySeqShowError );
 		if (window.BSKY.DEBUG) console.info( PREFIX + "Registered listeners for" );
 		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_ON}] Activate DEBUG` );
 		if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_LOG_OFF}] Deactivate DEBUG` );
@@ -84,7 +85,6 @@ export function setupKeypress( login=false ) {
 		// DASHBOARD functionality
 		if ( !login ) {
 			listener.sequence_combo( KEYSTROKES_DOWNLOAD_BSKY,		onKeySeqDownloadBSKY );
-			listener.simple_combo( KEYSTROKES_SHOW_ERROR,			onKeySeqShowError );
 			listener.sequence_combo( KEYSTROKES_CUSTOM_FUNCTION,	onKeySeqCustomFunction );
 			if (window.BSKY.DEBUG) console.info( PREFIX + `+ [${KEYSTROKES_SHOW_ERROR}] Show Error Modal` );
 		}
@@ -195,7 +195,7 @@ function onKeySeqDownloadBSKY( event ) {
 	const REGEX_HARD_SPACE_1			= /&zwj;/gi;
 	const REGEX_HARD_SPACE_2			= /\u{200D}/giu;
 	const REGEX_EMOJI					= /\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Presentation}|\p{Emoji}\u{FE0F}/giu;
-	const objAsString					= COMMON.escapeUnicode( COMMON.prettyJson( obj ) )
+	const objAsString					= COMMON.escapeUnicode( COMMON.toJson( obj ) )
 											// .replace( REGEX_CTRL_CHARS, "" )
 											.replace( REGEX_EMOJI, "" )
 											.replace( REGEX_HARD_SPACE_1, "" )

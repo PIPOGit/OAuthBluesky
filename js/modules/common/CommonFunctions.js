@@ -113,8 +113,8 @@ export const toJson						= obj => JSON.stringify( obj );
  **********************************************************/
 export const getDateForFile				= param => {
 	const date							= new Date();
-	let formattedDate					=  `${date.getFullYear()}-`;
-	formattedDate						+= `${ ( "" + ( date.getMonth()   + 1 ) ).padStart( 2, "0" ) }-`;
+	let formattedDate					=  `${date.getFullYear()}.`;
+	formattedDate						+= `${ ( "" + ( date.getMonth()   + 1 ) ).padStart( 2, "0" ) }.`;
 	formattedDate						+= `${ ( "" + ( date.getDate()        ) ).padStart( 2, "0" ) } - `;
 	formattedDate						+= `${ ( "" + ( date.getHours()       ) ).padStart( 2, "0" ) }.`;
 	formattedDate						+= `${ ( "" + ( date.getMinutes()     ) ).padStart( 2, "0" ) }.`;

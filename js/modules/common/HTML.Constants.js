@@ -168,7 +168,13 @@ export const CLEARSKY_DIV_B_IN			= "table-in-lists";
 export const CLEARSKY_DIV_B_SUBS		= "table-subscribed-to-lists";
 export const CLEARSKY_DIV_B_MEMBER		= "table-member-of-lists";
 
+// HTML Relations constants
+export const DIV_PANEL_RELATIONS		= "panel-relations";
+export const DIV_RELATIONS				= "relations";
+export const DIV_CANVAS_RELATIONS		= "canvas-relations";
+
 // Common MIME Types
 export const MIME_TYPE_JSON				= MIMETYPES.filter( x => x.mime === "application/json" )[0];
+export const MIME_TYPE_PNG				= MIMETYPES.filter( x => x.mime === "image/png" )[0];
 
 

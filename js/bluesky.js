@@ -132,6 +132,7 @@ async function startUp() {
 	window.BSKY.checkUserAccessToken	= checkUserAccessToken;
 	window.BSKY.faviconStandBy			= FAVICON.toStandBy;
 	window.BSKY.faviconWorking			= FAVICON.toWorking;
+	window.BSKY.showError				= fnShowError;
 
 	// Module INFO END
 	// ================================================================
@@ -340,7 +341,7 @@ async function checkUserAccessToken() {
 				if (window.BSKY.DEBUG) console.debug( PREFIX + `${errorMessage}. Stop.` );
 			}
 		} catch ( error ) {
-			errorMessage				= "We have no user access token";
+			errorMessage				= `${error.title}[${error.code}]: [${error.message}]`;
 			if (window.BSKY.DEBUG) console.debug( PREFIX + `${errorMessage}. Stop.` );
 		}
 	} else {
@@ -351,4 +352,12 @@ async function checkUserAccessToken() {
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END-" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return valid;
+}
+
+/* --------------------------------------------------------
+ * To display the errors modal.
+ * -------------------------------------------------------- */
+function fnShowError() {
+	const errorModal					= bootstrap.Modal.getOrCreateInstance( `#${HTML.DIV_MODAL_ERROR}` );
+	errorModal.show();
 }

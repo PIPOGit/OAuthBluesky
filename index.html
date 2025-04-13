@@ -49,10 +49,10 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<!-- JS KeyPress -->
-		<script src="./js/libs/keypress/keypress-2.1.5/keypress.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/keypress/2.1.5/keypress.min.js" integrity="sha512-JjqUcblrwIZTQBPL/azOhVHwq5uaeXkKzq7da3JZEP14Zg926vZZVhRhBBi+L2pWYquZ6r5P8OZYDYgOChtkOw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<!-- JS highlight.js -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js" integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 		<!-- JS Internal -->
 		<!-- + Global JavaScript -->
@@ -164,6 +164,34 @@
 				</div>
 				<div class="toast-body">
 					Hello, world! This is a toast message.
+				</div>
+			</div>
+		</div>
+
+		<!-- Los modales -->
+		<div id="modalsContainer">
+
+			<!-- Modal: Error -->
+			<div class="modal modal-lg theme-modal fade" id="modalError" tabindex="-1" aria-labelledby="modalErrorLabel" aria-hidden="true">
+				<div class="modal-dialog modal-dialog-scrollable">
+					<div class="modal-content">
+						<div class="modal-header">
+							<img src="./images/BSKY Analyzer.Logo.png">
+							<h1 class="modal-title fs-5" id="modalErrorLabel">Error:</h1>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body">
+							<div>
+								<div>Latest error detected:</div>
+							</div>
+							<div class="mt-2">
+								<pre><code id="jsonError" name="jsonError" class="language-json"></code></pre><hr/>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">Cerrar</button>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

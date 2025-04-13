@@ -61,6 +61,8 @@ import * as TYPES						from "../common/CommonTypes.js";
  * -------------------------------------------------------- */
 // Common APIBluesky functions
 import * as APIBluesky					from "../api/APIBluesky.js";
+// Common PLC Directory functions
+import * as APIPLCDirectory				from "../api/APIPLCDirectory.js";
 
 /* --------------------------------------------------------
  * Modules with Helper functions
@@ -91,6 +93,7 @@ const ENDPOINTS							= CLEARSKY.endpoints;
 
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
+const EXTENDED							= CONFIGURATION.global.extended;
 
 // Module constants
 const QUERY_PARAM_DID					= "[DID]";
@@ -139,7 +142,7 @@ async function callClearSkyURL( step, endpoint, did=BSKY.user?.profile?.did, han
 
 	// The URL is PDS, so... PDS Server
 	const url							= URLS.api + URLS.prefix + finalEndpoint;
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+	// if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // The DPoPProof.
 	// ---------------------------------------------------------
@@ -173,7 +176,7 @@ async function callClearSkyURL( step, endpoint, did=BSKY.user?.profile?.did, han
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
 		responseFromServer				= error;
 	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "GOT responseFromServer:", responseFromServer );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "GOT responseFromServer:", responseFromServer );
 
 	// Sanity check
 	// ---------------------------------------------------------
@@ -186,7 +189,7 @@ async function callClearSkyURL( step, endpoint, did=BSKY.user?.profile?.did, han
     // The response payload.
 	// ---------------------------------------------------------
 	const payload						= responseFromServer.isJson ? responseFromServer.json : responseFromServer.txt;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Returning:", payload );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Returning:", payload );
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -256,25 +259,32 @@ async function getUserInfo( did, handle ) {
 
 	// The user info history
 	// [/get-handle-history/[HANDLE]]
+	if (window.BSKY.DEBUG) console.debug( PREFIX_DATA + "+ Retrieving user history..." );
 	userInfo.history					= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.history, did, handle );
 
 	// How many accounts is the user blocking and which ones.
 	// [/single-blocklist/[HANDLE/DID]] [/single-blocklist/total/[HANDLE/DID]]
+	if (window.BSKY.DEBUG) console.debug( PREFIX_DATA + "+ Retrieving blocked by count..." );
 	userInfo.blockedByCount				= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.blockedByCount, did, handle );
+	if (window.BSKY.DEBUG) console.debug( PREFIX_DATA + "+ Retrieving blocked by..." );
 	userInfo.blockedBy					= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.blockedBy, did, handle );
 
 	// Get what lists the user is on (someone has put the user there).
 	// [subscribedToLists]			[/get-list/[HANDLE/DID]]
+	if (window.BSKY.DEBUG) console.debug( PREFIX_DATA + "+ Retrieving lists..." );
 	userInfo.modLists					= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.modLists, did, handle );
 
 	// The lists of users that a person is blocking via a subscription to a list.
 	// [subscribedToBlockLists]		[/subscribe-blocks-blocklist/[HANDLE/DID]]
+	if (window.BSKY.DEBUG) console.debug( PREFIX_DATA + "+ Retrieving block lists..." );
 	userInfo.listsUserBlock				= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.listsUserBlock, did, handle );
 
 	// The lists of users that are blocking the user via a subscription to a list
 	// [blockedByLists]				[/subscribe-blocks-single-blocklist/[HANDLE/DID]]
+	if (window.BSKY.DEBUG) console.debug( PREFIX_DATA + "+ Retrieving blocked by lists..." );
 	userInfo.listsUserBlocked			= await callClearSkyURL( STEP_NAME, ENDPOINTS.user.listsUserBlocked, did, handle );
 
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_DATA + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 
@@ -301,6 +311,15 @@ async function getUserInfo( did, handle ) {
 			try {
 				hydrated				= await APIBluesky.getUserProfile( account.did, false );
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated profile:", hydrated );
+
+				if ( EXTENDED ) {
+					// Hack: Retrieve also the didDoc of this profile.
+					hydrated.didDoc			= await APIPLCDirectory.resolveDid( hydrated.did );
+
+					// Hack: Retrieve also the avatar image of this profile.
+					const avatarURL			= APIBluesky.getAvatarURL( hydrated );
+					hydrated.avatarImage	= avatarURL ? await APIBluesky.getAvatar( avatarURL, false ) : null;
+				}
 				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.blockedBy.data.found.push( hydrated );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );
@@ -387,7 +406,7 @@ async function getUserInfo( did, handle ) {
 			standardList				= TYPES.BSKYListDetails.getInstanceFromBlockList( list );
 			try {
 				hydrated				= await APIBluesky.getListDetails( standardList, cursor, false );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated member of block list:", hydrated );
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated member of block list:", hydrated );
 				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.listsUserBlocked.data.found.push( hydrated.list );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );

@@ -33,6 +33,12 @@ import * as HTML						from "../common/HTML.js";
 import * as TYPES						from "../common/CommonTypes.js";
 
 /* --------------------------------------------------------
+ * Modules with external, concrete API calls functions
+ * -------------------------------------------------------- */
+// Common PLC Directory functions
+import * as APIPLCDirectory				from "./APIPLCDirectory.js";
+
+/* --------------------------------------------------------
  * Modules with Helper functions
  * -------------------------------------------------------- */
 // To perform API calls
@@ -66,6 +72,7 @@ const NSID								= BLUESKY.NSID;
 // Bluesky constants
 const APP_CLIENT_ID						= CLIENT_APP.client_id;
 const MAX_NOTIS_TO_RETRIEVE				= 50;
+const EXTENDED							= CONFIGURATION.global.extended;
 
 
 /**********************************************************
@@ -112,7 +119,7 @@ async function performCall( params ) {
 
     // The call headers.
 	// ---------------------------------------------------------
-    let headers							= APICall.getHeaders( params.headersType, dpopProof );
+    let headers							= APICall.getHeaders( params.headersType, params.method, dpopProof );
 
     // The call fetch options.
 	// ---------------------------------------------------------
@@ -147,7 +154,7 @@ async function performCall( params ) {
 	try {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `On behalf of [${params.step}], calling: [<${params.method}> ${params.url}]...` );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `Response from server:`, responseFromServer );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + `Response from server:`, responseFromServer );
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 		responseFromServer				= error;
@@ -374,6 +381,102 @@ async function retrieveUserAccessToken() {
 	}
 }
 
+
+
+
+function generatePDSAvatarURL( profile ) {
+	const did							= profile?.did || null;
+	if ( COMMON.isNullOrEmpty( did ) ) {
+		return null;
+	}
+	const avatar						= profile?.avatar || null;
+	if ( COMMON.isNullOrEmpty( avatar ) ) {
+		return null;
+	}
+	const didDoc						= profile?.didDoc || null;
+	if ( COMMON.isNullOrEmpty( didDoc ) ) {
+		return null;
+	}
+	let pds								= didDoc.service[0]?.serviceEndpoint || null;
+	if ( COMMON.isNullOrEmpty( pds ) ) {
+		return null;
+	}
+	// Delete trailing '/', if any.
+	pds									= ( pds.charAt( pds.length-1 ) == '/' ) ? pds.substring( 0, pds.length-1 ) : pds;
+	const tokens						= avatar.split('/');
+	const cid							= tokens[7].replace( '@jpeg', '' );
+	const endPoint						= XRPC.api.pds.getBlob;
+	return `${pds}/xrpc${endPoint}?did=${did}&cid=${cid}`;
+}
+
+
+/* --------------------------------------------------------
+ * PDS: Atomic function to retrieve the user's avatar as
+ * an image.
+ * -------------------------------------------------------- */
+async function retrieveUserAvatar( url, renderHTMLErrors=true ) {
+	const STEP_NAME						= "retrieveUserAvatar";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	const PREFIX_PROMISE				= `${PREFIX}[Promise] `;
+	const PREFIX_DATAURL				= `${PREFIX_PROMISE}[Data URL] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [url " + url + "]" );
+
+	// Prepare the URL.
+	// ---------------------------------------------------------
+    const fetchOptions					= {
+        method: APICall.HTTP_GET,
+        headers: APICall.getHeaders( APICall.HEADER_AVATAR, APICall.HTTP_GET )
+    };
+
+    // The call params; with a typed format.
+	// ---------------------------------------------------------
+	const requestParams					= TYPES.HTTPRequest.getInstanceWithFetchAndBlob( STEP_NAME, url, fetchOptions );
+
+    // The call.
+	// ---------------------------------------------------------
+	let blob							= null;
+	try {
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + `Calling: [<${APICall.HTTP_GET}> ${url}]...` );
+		blob							= await APICall.apiCall( requestParams, renderHTMLErrors );
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+		blob							= error;
+	}
+
+	// Sanity check
+	// ---------------------------------------------------------
+	if ( blob instanceof TYPES.HTTPResponseError ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw blob;
+	}
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+
+	// Process the blob
+	// ---------------------------------------------------------
+	return new Promise( ( resolve, reject ) => {
+		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_PROMISE );
+		var reader							= new FileReader();
+		reader.onload						= function() {
+			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_DATAURL );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_DATAURL + "Read: ", reader.result );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_DATAURL + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+			return resolve( reader.result );
+		};
+		try {
+			reader.readAsDataURL(blob);
+		} catch ( error ) {
+			if (window.BSKY.DEBUG) console.debug( PREFIX_PROMISE + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+			return resolve( null );
+		} finally {
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_PROMISE + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		}
+	});
+}
+
 /* --------------------------------------------------------
  * PDS: Atomic function to retrieve the user's profile
  * -------------------------------------------------------- */
@@ -406,6 +509,15 @@ async function retrieveUserProfile( handle, renderHTMLErrors=true ) {
 		// The response payload.
 		// ---------------------------------------------------------
 		payload							= responseFromServer.json;
+
+		if ( EXTENDED ) {
+			// Hack: Retrieve also the didDoc of this profile.
+			payload.didDoc					= await APIPLCDirectory.resolveDid( payload.did );
+
+			// Hack: Retrieve also the avatar image of this profile.
+			const avatarURL					= getAvatarURL( payload );
+			payload.avatarImage				= avatarURL ? await retrieveUserAvatar( avatarURL, false ) : null;
+		}
 	} catch ( error ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
 	}
@@ -995,7 +1107,7 @@ async function retrieveUserFeeds(cursor) {
 /* --------------------------------------------------------
  * PDS: Atomic function to retrieve who are the user muting
  * -------------------------------------------------------- */
-async function retrieveTrendingTopics(cursor) {
+async function retrieveTrendingTopics(cursor, renderHTMLErrors=true) {
 	const STEP_NAME						= "retrieveTrendingTopics";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + " [userHandle " + BSKY.user.userHandle + "]" );
@@ -1092,6 +1204,51 @@ async function retrieveAuthorFeed(cursor) {
     let headersType						= APICall.HEADER_STANDARD_AUTH;
 	const method						= APICall.HTTP_GET;
 	let endpoint						= XRPC.api.pds.getAuthorFeed;
+	let url								= getServerURL() + endpoint;
+	url									+= "?actor=" + BSKY.user.userHandle;
+	url									+= "&limit=100";
+	if ( !COMMON.isNullOrEmpty(cursor) ) {
+		url								+= "&cursor=" + cursor;
+	}
+
+    // The call.
+	// ---------------------------------------------------------
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "Requesting the call..." );
+	let responseFromServer				= null;
+	let payload							= null;
+	try {
+		responseFromServer				= await performCall({
+			step:				STEP_NAME,
+			method:				method,
+			url:				url,
+			headersType:		headersType
+		});
+
+		// The response payload.
+		// ---------------------------------------------------------
+		payload							= responseFromServer.json;
+	} catch ( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}): [code==${error.code}] [message==${error.message}] [cause==${error.cause}]` );
+	}
+
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	return payload;
+}
+
+/* --------------------------------------------------------
+ * PDS: Atomic function to retrieve the user AuthorFeed
+ * -------------------------------------------------------- */
+async function retrieveAuthorLikes(cursor) {
+	const STEP_NAME						= "retrieveAuthorLikes";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[cursor==${cursor}]` );
+
+	// Prepare the URL.
+	// ---------------------------------------------------------
+    let headersType						= APICall.HEADER_STANDARD_AUTH;
+	const method						= APICall.HTTP_GET;
+	let endpoint						= XRPC.api.pds.getActorLikes;
 	let url								= getServerURL() + endpoint;
 	url									+= "?actor=" + BSKY.user.userHandle;
 	url									+= "&limit=100";
@@ -1277,61 +1434,6 @@ async function mutingActor( nsid, did ) {
 	return payload;
 }
 
-/*
-	[Mute]
-	handle: [alannycr.bsky.social]
-	did: [did:plc:fom2o23kx6kzlrk76vhide2q]
-
-	[MUTE]
-	POST	https://velvetfoot.us-east.host.bsky.network/xrpc/app.bsky.graph.muteActor
-
-	{"actor":"did:plc:fom2o23kx6kzlrk76vhide2q"}
-
-	accept:						*//*
-	accept-encoding:			gzip, deflate, br, zstd
-	accept-language:			es-ES,es;q=0.9,en;q=0.8
-	atproto-accept-labelers:	did:plc:ar7c4by46qjdydhdevvrndac;redact
-	authorization:				Bearer eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NksifQ.eyJzY29wZSI6ImNvbS5hdHByb3RvLmFjY2VzcyIsInN1YiI6ImRpZDpwbGM6dGpjMjdhamU0dXd4dHc1YWI2d3dtNGttIiwiaWF0IjoxNzQzNDc4MDM0LCJleHAiOjE3NDM0ODUyMzQsImF1ZCI6ImRpZDp3ZWI6dmVsdmV0Zm9vdC51cy1lYXN0Lmhvc3QuYnNreS5uZXR3b3JrIn0.4UaXUUeFxqxX-dyoX3moNYIzeMM3kbtNysVH1scpq0dELmgJpLBjtkxegEHl5BigGE05s5eMTZ6LE3_EuC46RA
-	content-length:				44
-	content-type:				application/json
-	origin:						https://bsky.app
-	priority:					u=1, i
-	referer:					https://bsky.app/
-	sec-ch-ua:					"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"
-	sec-ch-ua-mobile:			?0
-	sec-ch-ua-platform:			"Windows"
-	sec-fetch-dest:				empty
-	sec-fetch-mode:				cors
-	sec-fetch-site:				cross-site
-	user-agent:					Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
-
-
-
-	[UNMUTE]
-	POST	https://velvetfoot.us-east.host.bsky.network/xrpc/app.bsky.graph.unmuteActor
-
-	{"actor":"did:plc:fom2o23kx6kzlrk76vhide2q"}
-
-	accept:						*//*
-	accept-encoding:			gzip, deflate, br, zstd
-	accept-language:			es-ES,es;q=0.9,en;q=0.8
-	atproto-accept-labelers:	did:plc:ar7c4by46qjdydhdevvrndac;redact
-	authorization:				Bearer eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NksifQ.eyJzY29wZSI6ImNvbS5hdHByb3RvLmFjY2VzcyIsInN1YiI6ImRpZDpwbGM6dGpjMjdhamU0dXd4dHc1YWI2d3dtNGttIiwiaWF0IjoxNzQzNDc4MDM0LCJleHAiOjE3NDM0ODUyMzQsImF1ZCI6ImRpZDp3ZWI6dmVsdmV0Zm9vdC51cy1lYXN0Lmhvc3QuYnNreS5uZXR3b3JrIn0.4UaXUUeFxqxX-dyoX3moNYIzeMM3kbtNysVH1scpq0dELmgJpLBjtkxegEHl5BigGE05s5eMTZ6LE3_EuC46RA
-	content-length:				44
-	content-type:				application/json
-	origin:						https://bsky.app
-	priority:					u=1, i
-	referer:					https://bsky.app/
-	sec-ch-ua:					"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"
-	sec-ch-ua-mobile:			?0
-	sec-ch-ua-platform:			"Windows"
-	sec-fetch-dest:				empty
-	sec-fetch-mode:				cors
-	sec-fetch-site:				cross-site
-	user-agent:					Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
-
- */
-
 /**********************************************************
  * PUBLIC Functions
  *
@@ -1340,35 +1442,34 @@ async function mutingActor( nsid, did ) {
  * Each of them will perform a call to:
  * "APICall.authenticatedCall"
  **********************************************************/
-export async function getAccessToken()									{ return await retrieveUserAccessToken(); }
-export async function getAuthorFeed( cursor )							{ return await retrieveAuthorFeed( cursor ); }
-export async function getBlockOfRecords( queryString )					{ return await retrieveRepoBlockOfRecords( queryString ); }
-export async function getBlocks( cursor )								{ return await retrieveUserBlocks( cursor ); }
-export async function getFollowers( cursor )							{ return await retrieveUserFollowers( cursor ); }
+export async function getAccessToken()										{ return await retrieveUserAccessToken(); }
+export async function getAuthorFeed( cursor )								{ return await retrieveAuthorFeed( cursor ); }
+export async function getAuthorLikes( cursor )								{ return await retrieveAuthorLikes( cursor ); }
+export async function getAvatar( url, renderHTMLErrors=true )				{ return await retrieveUserAvatar( url, renderHTMLErrors ); }
+export async function getBlockOfRecords( queryString )						{ return await retrieveRepoBlockOfRecords( queryString ); }
+export async function getBlocks( cursor )									{ return await retrieveUserBlocks( cursor ); }
+export async function getFollowers( cursor )								{ return await retrieveUserFollowers( cursor ); }
 export async function getListDetails( list, cursor, renderHTMLErrors=true )	{ return await retrieveListDetails( list, cursor, renderHTMLErrors ); }
-export async function getMutes( cursor )								{ return await retrieveUserMutes( cursor ); }
-export async function getNotifications(renderHTMLErrors=true)			{ return await retrieveNotifications( renderHTMLErrors ); }
-export async function getProfile( searchString )						{ return await searchProfile( searchString ); }
-export async function getRecords( recordInfo )							{ return await retrieveRepoListRecords( recordInfo ); }
-export async function getTrendingTopics( cursor )						{ return await retrieveTrendingTopics( cursor ); }
-export async function getUnreadNotifications(renderHTMLErrors=true)		{ return await retrieveUnreadNotifications( renderHTMLErrors ); }
-export async function getUserBlockModLists( cursor )					{ return await retrieveUserBlockingModerationLists( cursor ); }
-export async function getUserFeeds( cursor )							{ return await retrieveUserFeeds( cursor ); }
-export async function getUserLists( cursor )							{ return await retrieveUserLists( cursor ); }
-export async function getUserModLists( cursor )							{ return await retrieveUserMutingModerationLists( cursor ); }
-export async function getUserProfile( handle, renderHTMLErrors=true )	{ return await retrieveUserProfile( handle, renderHTMLErrors ); }
-export async function logout( code )									{ return await performUserLogout(); }
-export async function refreshAccessToken( code )						{ return await refreshUserAccessToken( code ); }
+export async function getMutes( cursor )									{ return await retrieveUserMutes( cursor ); }
+export async function getNotifications(renderHTMLErrors=true)				{ return await retrieveNotifications( renderHTMLErrors ); }
+export async function getProfiles( searchString )							{ return await searchProfile( searchString ); }
+export async function getRecords( recordInfo )								{ return await retrieveRepoListRecords( recordInfo ); }
+export async function getTrendingTopics( cursor, renderHTMLErrors=true )	{ return await retrieveTrendingTopics( cursor, renderHTMLErrors ); }
+export async function getUnreadNotifications(renderHTMLErrors=true)			{ return await retrieveUnreadNotifications( renderHTMLErrors ); }
+export async function getUserBlockModLists( cursor )						{ return await retrieveUserBlockingModerationLists( cursor ); }
+export async function getUserFeeds( cursor )								{ return await retrieveUserFeeds( cursor ); }
+export async function getUserLists( cursor )								{ return await retrieveUserLists( cursor ); }
+export async function getUserModLists( cursor )								{ return await retrieveUserMutingModerationLists( cursor ); }
+export async function getUserProfile( handle, renderHTMLErrors=true )		{ return await retrieveUserProfile( handle, renderHTMLErrors ); }
+export async function logout( code )										{ return await performUserLogout(); }
+export async function refreshAccessToken()									{ return await refreshUserAccessToken(); }
 
-// Follow
-export async function follow( did )										{ return await createRecord( NSID.follow, did ); }
-export async function unfollow( rkey )									{ return await deleteRecord( NSID.follow, rkey ); }
+// Follow, Mute & Block
+export async function follow( did )											{ return await createRecord( NSID.follow, did ); }
+export async function unfollow( rkey )										{ return await deleteRecord( NSID.follow, rkey ); }
+export async function mute( did )											{ return await mutingActor(  NSID.mute,   did ); }
+export async function unmute( did )											{ return await mutingActor(  NSID.unmute, did ); }
+export async function block( did )											{ return await createRecord( NSID.block, did ); }
+export async function unblock( rkey )										{ return await deleteRecord( NSID.block, rkey ); }
 
-// Mute
-export async function mute( did )										{ return await mutingActor(  NSID.mute,   did ); }
-export async function unmute( did )										{ return await mutingActor(  NSID.unmute, did ); }
-
-// Block
-export async function block( did )										{ return await createRecord( NSID.block, did ); }
-export async function unblock( rkey )									{ return await deleteRecord( NSID.block, rkey ); }
-
+export function getAvatarURL( profile )										{ return generatePDSAvatarURL( profile ); }

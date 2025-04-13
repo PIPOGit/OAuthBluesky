@@ -4,10 +4,11 @@
 		"debug_folded": true,
 		"show_info_step": false,
 		"appName": "BSKY Analyzer",
-		"appVersion": "2.1.1",
-		"loading_steps": 23,
+		"appVersion": "2.2.0",
+		"loading_steps": 21,
 		"refresh_dynamic": 15,
 		"refresh_static": 300,
+		"extended": false,
 		"autoLogout": false
 	},
 	"keystrokes": {
@@ -29,6 +30,7 @@
 		"post": "https://dev.to/pipodev/bluesky-oauth2-client-with-vanilla-javascript-1f6h"
 	},
 	"clientApp": {
+		"url": "https://oauthbluesky.onrender.com/",
 		"client_id": "https://oauthbluesky.onrender.com/oauth/client-metadata.json",
 		"redirect_uri": "https://oauthbluesky.onrender.com/oauth/callback.html",
 		"localhost_redirect_uri": "http://localhost/bluesky/oauth/callback.html",
@@ -92,6 +94,7 @@
 						"getActorFeeds": "/app.bsky.feed.getActorFeeds",
 						"getActorLikes": "/app.bsky.feed.getActorLikes",
 						"getAuthorFeed": "/app.bsky.feed.getAuthorFeed",
+						"getBlob": "/com.atproto.sync.getBlob",
 						"getBlocks": "/app.bsky.graph.getBlocks",
 						"getConvoForMembers": "/chat.bsky.convo.getConvoForMembers",
 						"getFollowers": "/app.bsky.graph.getFollowers",

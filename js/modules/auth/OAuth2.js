@@ -25,16 +25,6 @@ import * as JWT							from "./JWT.js";
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 
 // Inner constants
-export const ERROR_CODE_01				= { "code":  1, "message": "No Auth Server Discovery" };
-export const ERROR_CODE_02				= { "code":  2, "message": "No code to retrieve an access token" };
-export const ERROR_CODE_03				= { "code":  3, "message": "No user authentication" };
-export const ERROR_CODE_04				= { "code":  4, "message": "No access token" };
-export const ERROR_CODE_05				= { "code":  5, "message": "No user DID Document received" };
-export const ERROR_CODE_06				= { "code":  6, "message": "No user PDS Metadata received" };
-export const ERROR_CODE_07				= { "code":  7, "message": "Invalid token" };
-export const ERROR_CODE_10				= { "code": 10, "message": "Auth Servers mismatch!" };
-export const ERROR_CODE_11				= { "code": 11, "message": "User did's mismatch!" };
-export const ERROR_CODE_12				= { "code": 12, "message": "Expired token!" };
 
 // Inner constants
 const LSKEYS							= CONFIGURATION.localStorageKeys;
@@ -73,35 +63,35 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	if ( COMMON.isNullOrEmpty( userAuthServerDiscovery ) ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_01 );
+		throw TYPES.AccessTokenError.getError( 1 );
 	}
 	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User Authentication Server Discovery information:", COMMON.prettyJson( userAuthServerDiscovery ) );
 
 	if ( COMMON.isNullOrEmpty( userAuthentication ) ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_03 );
+		throw TYPES.AccessTokenError.getError( 3 );
 	}
 	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User Access Authentication:", COMMON.prettyJson( userAuthentication ) );
 
 	if ( COMMON.isNullOrEmpty( accessToken ) ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_04 );
+		throw TYPES.AccessTokenError.getError( 4 );
 	}
 	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User Access Token:", JWT.jwtToPrettyJSON( accessToken ) );
 
 	if ( COMMON.isNullOrEmpty( userDidDocument ) ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_05 );
+		throw TYPES.AccessTokenError.getError( 5 );
 	}
 	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User DID Document:", COMMON.prettyJson( userDidDocument ) );
 
 	if ( COMMON.isNullOrEmpty( userPDSMetadata ) ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_06 );
+		throw TYPES.AccessTokenError.getError( 6 );
 	}
 	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Received User PDS Metadata:", COMMON.prettyJson( userPDSMetadata ) );
 
@@ -124,14 +114,14 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	if ( !COMMON.areEquals( payload.iss, userPDSMetadata.authorization_servers[0] ) ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_10 );
+		throw TYPES.AccessTokenError.getError( 10 );
 	}
 
 	// Let's see the DID
 	if ( !COMMON.areEquals(payload.sub,dataInLocalStorage.userDid) ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_11 );
+		throw TYPES.AccessTokenError.getError( 11 );
 	}
 
 	// Let's see the dates
@@ -150,7 +140,7 @@ export function validateAccessToken( accessToken, userAuthServerDiscovery, userA
 	if ( msTokenExpiresIn < msCurrentTime ) {
 		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
-		throw new TYPES.AccessTokenError( ERROR_CODE_12 );
+		throw TYPES.AccessTokenError.getError( 12 );
 	}
 
 	// Now that the checks are OK, let's see the

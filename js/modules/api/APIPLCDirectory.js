@@ -87,7 +87,7 @@ async function callPLCDirectoryURL( step, endpoint, did=BSKY.user?.profile?.did,
 
 	// The URL is PDS, so... PDS Server
 	const url							= PLC.url + endpoint + encodeURIComponent( did );
-	if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
+	// if (window.BSKY.DEBUG) console.debug(PREFIX + "Fetching data from the URL:", url);
 
     // The call headers, except the DPoP one, which will be included later.
 	// ---------------------------------------------------------
@@ -115,12 +115,12 @@ async function callPLCDirectoryURL( step, endpoint, did=BSKY.user?.profile?.did,
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
 		responseFromServer				= error;
 	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "GOT responseFromServer:", responseFromServer );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "GOT responseFromServer:", responseFromServer );
 
     // The response payload.
 	// ---------------------------------------------------------
 	const payload						= responseFromServer.json;
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "Returning:", payload );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + "Returning:", payload );
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -153,7 +153,7 @@ export async function plcResolveDID( did ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR(${typeof error}):`, error );
 		responseFromServer				= error;
 	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `  DID Doc: [${did}]`, responseFromServer );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `  DID Doc: [${did}]`, responseFromServer );
 
 	// Sanity check
 	// ---------------------------------------------------------

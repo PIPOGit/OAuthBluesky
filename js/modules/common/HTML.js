@@ -759,7 +759,7 @@ function htmlRenderSingleProfile( idx, data, flags = { follower: false, block: f
 	return html;
 }
 
-export function htmlRenderUserFollowing( data ) {
+export function htmlRenderUserFollowing( profiles ) {
 	const STEP_NAME						= "htmlRenderUserFollowing";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
@@ -771,16 +771,16 @@ export function htmlRenderUserFollowing( data ) {
 	let $tableMissedBody				= $( '#'+HTMLConstants.DIV_TABLE_IDLE + " tbody" );
 
 	// Clear the current content.
-	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_BADGE ).html(data.profiles.length);
-	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_TOTAL ).html(data.profiles.length);
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_BADGE ).html(profiles.length);
+	$( '#'+HTMLConstants.DIV_TAB_FOLLOWING_TOTAL ).html(profiles.length);
 
 	// Following
 	$tableBody.empty();
-	total								= data.profiles.length;
+	total								= profiles.length;
 	index								= 0;
 	if ( total>0 ) {
 		// Add data.
-		data.profiles.forEach( profile => {
+		profiles.forEach( profile => {
 			index++;
 			htmlContent					= htmlRenderSingleProfile( index, profile );
 			$tableBody.append( htmlContent );

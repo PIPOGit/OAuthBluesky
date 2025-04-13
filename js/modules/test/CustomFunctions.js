@@ -23,8 +23,11 @@ import * as HTML						from "../common/HTML.js";
 import * as APIBluesky					from "../api/APIBluesky.js";
 // Common ClearSky functions
 import * as APIClearSky					from "../api/APIClearSky.js";
-// Common PLC Direvtory functions
+// Common PLC Directory functions
 import * as APIPLCDirectory				from "../api/APIPLCDirectory.js";
+
+// Common Relations functions
+import * as RELATIONS					from "../utils/Relations.js";
 
 
 /**********************************************************
@@ -198,7 +201,6 @@ async function cfGetRecordsByNSID( event ) {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
-
 async function cfGetClearSkyInfo( event ) {
 	const STEP_NAME						= "cfGetClearSkyInfo";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
@@ -327,8 +329,8 @@ async function cfGetUserFeeds( event ) {
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
-async function cfTestArguments( event, parameters ) {
-	const STEP_NAME						= "cfTestArguments";
+async function cfFollowUnfollowTestArguments( event, parameters ) {
+	const STEP_NAME						= "cfFollowUnfollowTestArguments";
 	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
@@ -375,6 +377,31 @@ async function cfTestArguments( event, parameters ) {
 	return { profile: profile, unfollowed: unfollowed };
 }
 
+async function cfGetTheRelations() {
+	const STEP_NAME						= "cfGetTheRelations";
+	const PREFIX						= `[${MODULE_NAME}:${STEP_NAME}] `;
+
+	// Retrieve the user relations.
+	// ---------------------------------------------------------
+
+	// The records.
+	let allData							= null;
+	try {
+		allData							= await RELATIONS.getTheRelations();
+		if ( COMMON.isNullOrEmpty( allData ) ) {
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `No data received.` );
+		} else {
+			// TODO: Explore the results
+			if (window.BSKY.DEBUG) console.debug( PREFIX + `Received:`, allData );
+		}
+	} catch( error ) {
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR[${error?.error}==${error?.error}]` );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR[${error?.error?.json}==${error?.error?.json}]` );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR[${error?.error?.json?.error}==${error?.error?.json?.message}]` );
+		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR:`, COMMON.prettyJson( error ) );
+	}
+}
+
 
 /**********************************************************
  * PUBLIC Functions
@@ -402,7 +429,8 @@ export async function runCustomFunction( event ) {
 	// const customFunction					= cfGetRecordsByNSID;
 	// const customFunction					= cfGetClearSkyInfo;
 	// const customFunction					= cfGetUserFeeds;
-	const customFunction					= cfTestArguments;
+	// const customFunction					= cfFollowUnfollowTestArguments;
+	const customFunction					= cfGetTheRelations;
 	const parameters						= {
 		sample: "Hello!",
 		profiles: {

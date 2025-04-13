@@ -212,7 +212,12 @@ function checkIfThereHasBeenErrors() {
 
 	const errorFromPage					= localStorage.getItem( LSKEYS.ERROR_DATA );
 	if ( !COMMON.isNullOrEmpty( errorFromPage ) ) {
-		const error						= JSON.parse( errorFromPage );
+		let error						= null;
+		try {
+			error						= JSON.parse( errorFromPage );
+		} catch (err) {
+			error						= errorFromPage;
+		}
 		localStorage.removeItem( LSKEYS.ERROR_DATA );
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `Received this error:`, COMMON.prettyJson( error ) );
 		COMMON.showInfo( "Found an error!" );

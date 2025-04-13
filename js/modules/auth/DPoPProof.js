@@ -106,9 +106,6 @@ async function createDPoPProofWithParams(privateKey, jwk, clientId, accessTokenH
  * PUBLIC Functions
  **********************************************************/
 export async function createDPoPProof(dpopRequest) {
-	const PREFIX = `[${MODULE_NAME}:createDPoPProof] `;
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed(PREFIX + "[Resource=="+dpopRequest.url+"]");
-
 	let dpopProof = await createDPoPProofWithParams(
 		dpopRequest.privateKey,
 		dpopRequest.jwk,
@@ -118,8 +115,6 @@ export async function createDPoPProof(dpopRequest) {
 		dpopRequest.dpopNonce,
 		dpopRequest.method
 	);
-
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
     return dpopProof;
 }
 
