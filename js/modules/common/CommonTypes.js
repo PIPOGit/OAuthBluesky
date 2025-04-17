@@ -412,8 +412,10 @@ export class CanvasItem {
  */
 export class BSKYCanvas {
 	static CLASS_NAME					= "BSKYCanvas";
+	label								= "Love!";
 
-	#createStructure() {
+	#createStructure( label ) {
+		this.label						= label;
 		this.canvas						= new CanvasItem();
 		this.header						= {};
 		this.header.main				= new CanvasItem();
@@ -481,7 +483,7 @@ export class BSKYCanvas {
 			item						= this.header.hearts.main.label;
 			ctx.textAlign				= item.align;
 			ctx.fillStyle				= item.color.background;
-			ctx.fillText( 'Love!', item.offsetX, item.offsetY + item.paddingY );
+			ctx.fillText( this.label, item.offsetX, item.offsetY + item.paddingY );
 
 			// The copyright box
 			// ---------------------------------------------------------
@@ -494,12 +496,12 @@ export class BSKYCanvas {
 			ctx.fillText( CONFIGURATION.clientApp.url,  item.offsetX + item.paddingX, item.offsetY + 12 );
 			ctx.fillText( new Date().toUTCString(),     item.offsetX + item.paddingX, item.offsetY + 20 );
 
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		};
 	};
 
-	constructor( width, height, leftSide ) {
+	constructor( width, height, leftSide, label ) {
 		const STEP_NAME					= "constructor";
 		const PREFIX					= `[${MODULE_NAME}:${BSKYCanvas.CLASS_NAME}:${STEP_NAME}] `;
 		if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
@@ -507,7 +509,7 @@ export class BSKYCanvas {
 		// The canvas itself
 		// ---------------------------------------------------------
 		// The structure
-		this.#createStructure();
+		this.#createStructure( label );
 
 		// The dimensions
 		this.canvas.width								= width;
@@ -625,7 +627,7 @@ export class BSKYCanvas {
 		this.payload.small2.offsetX		= n => this.headerWidth + ( n-35 ) * this.payload.small2.width;
 		this.payload.small2.offsetY		= n => this.payload.big.height + this.payload.medium1.height + this.payload.medium2.height + this.payload.small1.height + top;
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	}
 	

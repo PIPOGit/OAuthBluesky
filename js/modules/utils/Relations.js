@@ -34,6 +34,12 @@ import * as APIPLCDirectory				from "../api/APIPLCDirectory.js";
 const MODULE_NAME						= COMMON.getModuleName( import.meta.url );
 
 // Inner constants
+const API								= CONFIGURATION.api;
+const LSKEYS							= CONFIGURATION.localStorageKeys;
+const CLIENT_APP						= CONFIGURATION.clientApp;
+const GLOBAL							= CONFIGURATION.global;
+const BLUESKY							= API.bluesky;
+
 const MAX_ITERATIONS					= 100;
 const MAX_PROFILES						= 46;
 const TYPE_POST							= "app.bsky.feed.post";
@@ -72,7 +78,7 @@ function getOneMonthAgo() {
 	oneMonthAgo.setDate( today.getDate() );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Date of Month:`, oneMonthAgo );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return oneMonthAgo;
 }
@@ -88,6 +94,7 @@ async function getFeed( oneMonthAgo ) {
 
 	let apiCallResponse					= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let cursorDate						= null;
 	let outOfScope						= false;
 	let data							= null;
@@ -107,18 +114,20 @@ async function getFeed( oneMonthAgo ) {
 		cursor							= apiCallResponse?.cursor || null;
 		hayCursor						= !COMMON.isNullOrEmpty(cursor);
 		if ( hayCursor ) {
-			data						= apiCallResponse.feed;
-			subTotal					= data.length;
-			authorFeed.push(...data);
-			acumulado					= authorFeed.length;
-
 			cursorDate					= new Date( cursor );
 			outOfScope					= COMMON.isBefore( cursorDate, oneMonthAgo );
 		}
-	} while ( !outOfScope && hayCursor && (n<MAX_ITERATIONS) );
+		data							= apiCallResponse.feed;
+		hayData							= !COMMON.isNullOrEmpty( data );
+		if ( hayData ) {
+			subTotal					= data.length;
+			authorFeed.push(...data);
+			acumulado					= authorFeed.length;
+		}
+	} while ( !outOfScope && hayCursor && hayData && (n<MAX_ITERATIONS) );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Last[${n}] cursor date[${outOfScope}]:`, cursorDate );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return authorFeed;
 }
@@ -134,6 +143,7 @@ async function getLikes( oneMonthAgo ) {
 
 	let apiCallResponse					= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let cursorDate						= null;
 	let outOfScope						= false;
 	let data							= null;
@@ -147,21 +157,23 @@ async function getLikes( oneMonthAgo ) {
 	do {
 		n++;
 		apiCallResponse					= await APIBluesky.getAuthorLikes( cursor );
-		cursor							= apiCallResponse?.cursor || null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
-		if ( hayCursor ) {
-			data						= apiCallResponse.feed;
+		data							= apiCallResponse.feed;
+		hayData							= !COMMON.isNullOrEmpty( data );
+		if ( hayData ) {
 			subTotal					= data.length;
 			authorLikes.push(...data);
 			acumulado					= authorLikes.length;
-
-			cursorDate					= new Date( data[0].post.indexedAt );
-			outOfScope					= COMMON.isBefore( cursorDate, oneMonthAgo );
+			cursor						= apiCallResponse?.cursor || null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			if ( hayCursor ) {
+				cursorDate				= new Date( data[0].post.indexedAt );
+				outOfScope				= COMMON.isBefore( cursorDate, oneMonthAgo );
+			}
 		}
-	} while ( !outOfScope && hayCursor && (n<MAX_ITERATIONS) );
+	} while ( !outOfScope && hayCursor && hayData && (n<MAX_ITERATIONS) );
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Last[${n}] cursor date[${outOfScope}]:`, cursorDate );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return authorLikes;
 }
@@ -199,7 +211,7 @@ function analyzeAuthorFeed( authorFeed ) {
 	const total							= authorFeed.length;
 	for ( const item of authorFeed ) {
 		// if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `+ Feed[${n++}/${total}] [${item.post.indexedAt}] [${item.post.author.handle}]:`, COMMON.toJson( item ) );
-		if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `+ Feed[${n++}/${total}] [${item.post.indexedAt}] [${item.post.author.handle}]:` );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `+ Feed[${n++}/${total}] [${item.post.indexedAt}] [${item.post.author.handle}]:` );
 
 		isMine							= COMMON.areEquals( item.post.author.did, BSKY.user.userDid );
 		isReason						= ( item?.reason && item?.reason?.$type ) || false;
@@ -208,8 +220,8 @@ function analyzeAuthorFeed( authorFeed ) {
 		isParent						= ( isReply && item?.reply?.parent?.author?.did ) || false;
 		isParentNotMe					= ( isParent && !COMMON.areEquals( item.reply.parent.author.did, BSKY.user.userDid ) ) || false;
 		notFound						= ( isParent && item.reply.parent?.notFound ) || false;
-		if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [item.post.author.did==${item?.post?.author?.did}] [item.reply.parent.author.did==${item?.reply?.parent?.author?.did}] [item.reply.parent.notFound==${item.reply?.parent?.notFound}]` );
-		if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [isMine==${isMine}] [isReason==${isReason}] [isRepost==${isRepost}] [isReply==${isReply}] [isParent==${isParent}] [isParentNotMe==${isParentNotMe}] [notFound==${notFound}]` );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [item.post.author.did==${item?.post?.author?.did}] [item.reply.parent.author.did==${item?.reply?.parent?.author?.did}] [item.reply.parent.notFound==${item.reply?.parent?.notFound}]` );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [isMine==${isMine}] [isReason==${isReason}] [isRepost==${isRepost}] [isReply==${isReply}] [isParent==${isParent}] [isParentNotMe==${isParentNotMe}] [notFound==${notFound}]` );
 		if ( isMine && !isReply ) {
 			// Mine?
 			BSKY.user.relations.feed.mine.push( item );
@@ -218,7 +230,7 @@ function analyzeAuthorFeed( authorFeed ) {
 			userDid						= item.post.author.did;
 			handle						= item.post.author.handle;
 			hasDid						= BSKY.user.relations.feed.reposts.findIndex( a => COMMON.areEquals( userDid, a.did ) );
-			if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [REPOST] [userDid==${userDid}] [handle==${handle}]` );
+			// if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [REPOST] [userDid==${userDid}] [handle==${handle}]` );
 			if ( hasDid>=0 ) {
 				found					= BSKY.user.relations.feed.reposts[ hasDid ];
 				avatar					= found.avatar;
@@ -232,7 +244,7 @@ function analyzeAuthorFeed( authorFeed ) {
 			userDid						= item.reply.parent.author.did || null;
 			handle						= item.reply.parent.author.handle;
 			hasDid						= BSKY.user.relations.feed.replys.findIndex( a => COMMON.areEquals( userDid, a.did ) );
-			if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [REPLY ] [userDid==${userDid}] [handle==${handle}]` );
+			// if (window.BSKY.DEBUG) console.debug( PREFIX_FEED + `  [REPLY ] [userDid==${userDid}] [handle==${handle}]` );
 			if ( hasDid>=0 ) {
 				found					= BSKY.user.relations.feed.replys[ hasDid ];
 				avatar					= found.avatar;
@@ -247,7 +259,7 @@ function analyzeAuthorFeed( authorFeed ) {
 		}
 	};
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -274,7 +286,8 @@ function analyzeAuthorLikes( authorLikes ) {
 	let n								= 1;
 	const total							= authorLikes.length;
 	for ( const item of authorLikes ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX_LIKES + `+ Like[${n++}/${total}] [${item.post.indexedAt}] [${item.post.author.handle}]:`, COMMON.toJson( item ) );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_LIKES + `+ Like[${n++}/${total}] [${item.post.indexedAt}] [${item.post.author.handle}]:`, COMMON.toJson( item ) );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX_LIKES + `+ Like[${n++}/${total}] [${item.post.indexedAt}] [${item.post.author.handle}]:` );
 
 		isMine							= COMMON.areEquals( item.post.author.did, BSKY.user.userDid );
 		if ( !isMine ) {
@@ -293,7 +306,7 @@ function analyzeAuthorLikes( authorLikes ) {
 		}
 	};
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -309,49 +322,52 @@ function summary() {
 	const PREFIX_LIKES					= `${PREFIX}[LIKES] `;
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX );
 
-	let n								= 1;
+	// let n								= 1;
 	let total							= 0;
 
 	// Reposts
 	// ---------------------------------------------------------
-	n									= 1;
+	// n									= 1;
 	total								= BSKY.user.relations.feed.reposts.length;
 	BSKY.user.relations.feed.reposts.sort( (a,b) => b.count - a.count );
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_REPOSTS + `Reposts: [${total}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Reposts: [${total}]` );
+	// if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_REPOSTS + `Reposts: [${total}]` );
 	// Retrieve the avatar image
-	for ( const item of BSKY.user.relations.feed.reposts ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX_REPOSTS + `+ Repost: [${n++}/${total}] [${item.did}/${item.handle}==${item.count}]` );
-	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX_REPOSTS + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	// for ( const item of BSKY.user.relations.feed.reposts ) {
+	// 	if (window.BSKY.DEBUG) console.debug( PREFIX_REPOSTS + `+ Repost: [${n++}/${total}] [${item.did}/${item.handle}==${item.count}]` );
+	// }
+	// if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_REPOSTS + "-- END" );
+	// if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Replies
 	// ---------------------------------------------------------
-	n									= 1;
+	// n									= 1;
 	total								= BSKY.user.relations.feed.replys.length;
 	BSKY.user.relations.feed.replys.sort( (a,b) => b.count - a.count );
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_REPLIES + `Replies: [${total}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Replies: [${total}]` );
+	// if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_REPLIES + `Replies: [${total}]` );
 	// Retrieve the avatar image
-	for ( const item of BSKY.user.relations.feed.replys ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX_REPLIES + `+ Repost: [${n++}/${total}] [${item.did}/${item.handle}==${item.count}]` );
-	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX_REPLIES + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	// for ( const item of BSKY.user.relations.feed.replys ) {
+	// 	if (window.BSKY.DEBUG) console.debug( PREFIX_REPLIES + `+ Repost: [${n++}/${total}] [${item.did}/${item.handle}==${item.count}]` );
+	// }
+	// if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_REPLIES + "-- END" );
+	// if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Likes
 	// ---------------------------------------------------------
-	n									= 1;
+	// n									= 1;
 	total								= BSKY.user.relations.likes.length;
 	BSKY.user.relations.likes.sort( (a,b) => b.count - a.count );
-	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_LIKES + `Likes..: [${total}]` );
+	if (window.BSKY.DEBUG) console.debug( PREFIX + `Likes..: [${total}]` );
+	// if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_LIKES + `Likes..: [${total}]` );
 	// Retrieve the avatar image
-	for ( const item of BSKY.user.relations.likes ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX_LIKES + `+ Like: [${n++}/${total}] [${item.did}/${item.handle}==${item.count}]` );
-	}
-	if (window.BSKY.DEBUG) console.debug( PREFIX_LIKES + "-- END" );
-	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+	// for ( const item of BSKY.user.relations.likes ) {
+	// 	if (window.BSKY.DEBUG) console.debug( PREFIX_LIKES + `+ Like: [${n++}/${total}] [${item.did}/${item.handle}==${item.count}]` );
+	// }
+	// if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_LIKES + "-- END" );
+	// if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -415,18 +431,18 @@ async function findAvatar( did, handle ) {
 
 	if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX + `[did==${did}] [handle==${handle}]` );
 	if ( COMMON.isNullOrEmpty( profile?.avatarImage ) ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "The didDoc..." );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + "The didDoc..." );
 		profile.didDoc					= await APIPLCDirectory.resolveDid( did );
 
 		// Retrieve the avatar as Data URL
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "The avatar as Data URL..." );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + "The avatar as Data URL..." );
 		const avatarURL					= await APIBluesky.getAvatarURL( profile );
 		profile.avatarImage				= avatarURL ? await APIBluesky.getAvatar( avatarURL ) : null;
 	}
 	
 	renderedProfiles.push( profile );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return profile.avatarImage;
 }
@@ -459,13 +475,13 @@ async function drawCanvas( idDiv, did, handle, profilesToDraw ) {
 	canvas.dataset.handle				= handle;
 
 	// Tune-up the dimensions
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `The canvas dimensions:` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.width==${canvas.width}]` );					// REAL: canvas.offsetWidth
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.height==${canvas.height}]` );					// REAL: canvas.offsetHeight
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.offsetWidth==${canvas.offsetWidth}]` );		// REAL: canvas.offsetWidth
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.offsetHeight==${canvas.offsetHeight}]` );		// REAL: canvas.offsetHeight
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [window.innerWidth==${window.innerWidth}]` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [window.innerHeight==${window.innerHeight}]` );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `The canvas dimensions:` );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.width==${canvas.width}]` );					// REAL: canvas.offsetWidth
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.height==${canvas.height}]` );					// REAL: canvas.offsetHeight
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.offsetWidth==${canvas.offsetWidth}]` );		// REAL: canvas.offsetWidth
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [canvas.offsetHeight==${canvas.offsetHeight}]` );		// REAL: canvas.offsetHeight
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [window.innerWidth==${window.innerWidth}]` );
+	// if (window.BSKY.DEBUG) console.debug( PREFIX + `+ [window.innerHeight==${window.innerHeight}]` );
 	
 	const maxWidth						= canvas.width;
 	const maxHeight						= canvas.height;
@@ -508,7 +524,7 @@ async function drawCanvas( idDiv, did, handle, profilesToDraw ) {
 	// The canvas context
 	// ---------------------------------------------------------
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `The BSKY Canvas object...` );
-	const bskyCanvas					= new TYPES.BSKYCanvas( canvas.width, canvas.height, mediumHeight );
+	const bskyCanvas					= new TYPES.BSKYCanvas( canvas.width, canvas.height, mediumHeight, canvasType );
 
 	if (canvas.getContext) {
 		const ctx						= canvas.getContext("2d");
@@ -542,15 +558,20 @@ async function drawCanvas( idDiv, did, handle, profilesToDraw ) {
 		let n							= 0;
 		let max							= 0;
 		let min							= 1000;
+		// Clear the "target div".
+		$( ".relations .list-of-handles" ).empty();
+		let html						= "Accounts:<br/><br/>";
 		for ( const like of profilesToDraw ) {
 			n++;
 			if ( n > MAX_PROFILES ) { break; }
+			html						+= `${like.count}: <a href="${BLUESKY.profile.url}${like.handle}" target="_blank" title="${like.displayName || "@"+like.handle}">${like.displayName || "@"+like.handle}</a><br/>`;
 
 			// Max & min
 			max							= like.count > max ? like.count : max;
 			min							= like.count < min ? like.count : min;
 		}
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `Figures: [MAX_PROFILES==${MAX_PROFILES}] [min==${min}] [max==${max}]` );
+		$( ".relations .list-of-handles" ).html( html );
 
 		n								= 0;
 		for ( const like of profilesToDraw ) {
@@ -567,14 +588,14 @@ async function drawCanvas( idDiv, did, handle, profilesToDraw ) {
 				image.id				= `image-${like.did}`;
 				// image.addEventListener("load", event => processImage( ctx, image, mediumHeight + n * 20, (n-1) * 20 + 2, 20, 20 ), false);
 				image.addEventListener( "load", event => {
-					if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_IMAGE + `[did==${like.did}] [handle==${like.handle}]` );
+					// if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_IMAGE + `[did==${like.did}] [handle==${like.handle}]` );
 					item				= bskyCanvas.getCanvasItem( n );
-					if (window.BSKY.DEBUG) console.debug( PREFIX_IMAGE + `[item]`, COMMON.toJson(item) );
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_IMAGE + `[item]`, COMMON.toJson(item) );
 					const x				= item.offsetX( n );
 					const y				= item.offsetY( n );
 					image.width			= item.width;
 					image.height		= item.height;
-					if (window.BSKY.DEBUG) console.debug( PREFIX_IMAGE + `[x==${x}] [y==${y}] [image.width==${image.width}] [image.height==${image.height}]` );
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_IMAGE + `[x==${x}] [y==${y}] [image.width==${image.width}] [image.height==${image.height}]` );
 
 					ctx.imageSmoothingEnabled	= false;
 					ctx.fillStyle		= "rgb(0 0 200 / 50%)";
@@ -586,8 +607,8 @@ async function drawCanvas( idDiv, did, handle, profilesToDraw ) {
 					// ctx.textAlign		= "left";
 					// ctx.fillText( like.handle, x, y );
 
-					if (window.BSKY.DEBUG) console.debug( PREFIX_IMAGE + "-- END" );
-					if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+					// if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_IMAGE + "-- END" );
+					// if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 					return resolve( dataURL );
 				});
 				image.src				= dataURL;
@@ -606,7 +627,7 @@ async function drawCanvas( idDiv, did, handle, profilesToDraw ) {
 	// ---------------------------------------------------------
 	HTML.showStepInfo( STEP_NAME );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return bskyCanvas;
 }
@@ -626,7 +647,7 @@ async function processImage( ctx, image, x, y, width, height ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `[image.height==${image.height}]` );
 
 	ctx.imageSmoothingEnabled			= false;
-	ctx.fillStyle						= "rgb(0 0 200 / 50%)";
+	ctx.fillStyle						= "rgb(255 255 255 / 50%)";
 	ctx.fillRect(x + 2, y + 2, width, height);
 	ctx.drawImage(image, x, y, image.width, image.height );
 
@@ -635,7 +656,7 @@ async function processImage( ctx, image, x, y, width, height ) {
 	ctx.textAlign						= "right";
 	ctx.fillText( BSKY.user.userHandle, width - 5, height - 5 );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -654,7 +675,7 @@ export function downloadImage() {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `Still downloading profiles!` );
 		COMMON.showInfo( "Still downloading profiles!" );
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return;
 	}
@@ -688,7 +709,7 @@ export function downloadImage() {
 		if (window.BSKY.DEBUG) console.error( PREFIX + "Detected error:", error );
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -715,7 +736,7 @@ export function changeCanvasType( target ) {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Drawing ${target.value} for ${window.BSKY.user.profile.handle}...` );
 	const bskyCanvas					= drawCanvas( idCanvas, idThisUser, handleThisUser, collection );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -865,7 +886,7 @@ export async function getTheRelations() {
 	// ---------------------------------------------------------
 	window.BSKY.faviconStandBy();
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 

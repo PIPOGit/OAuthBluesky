@@ -176,7 +176,7 @@ async function startUp() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + `Updated object: [window.BSKY].`, window.BSKY );
 	console.info( `Loaded module ${MODULE_NAME}.` );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX_MODULE_INFO + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_MODULE_INFO + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Page setup concrete actions.
@@ -233,7 +233,7 @@ async function startUp() {
 	// ---------------------------------------------------------
 	// End of module setup
 	// ---------------------------------------------------------
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Perform latest operations
@@ -276,7 +276,7 @@ async function getUserStatuSphere( handle ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `ERROR:`, COMMON.prettyJson( error ) );
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return COMMON.isNullOrEmpty( allData ) ? null : allData[0];
 }
@@ -344,7 +344,7 @@ async function fnSearchUser( source ) {
 		}
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -362,6 +362,7 @@ async function getRepoRecordsOfNSIDType( nsid, renderHTMLErrors=true ) {
 	let apiCallResponse					= null;
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= [];
 	let allData							= [];
 	let subTotal						= 0;
@@ -372,27 +373,30 @@ async function getRepoRecordsOfNSIDType( nsid, renderHTMLErrors=true ) {
 			n++;
 			// Retrieve the user's repo records of type 'NSID'
 			// ---------------------------------------------------------
-			apiCallResponse					= await APIBluesky.getRecords( { cursor: cursor, nsid: nsid, renderHTMLErrors: renderHTMLErrors } );
+			apiCallResponse				= await APIBluesky.getRecords( { cursor: cursor, nsid: nsid, renderHTMLErrors: renderHTMLErrors } );
 
 			// Datos. Seguimos?
-			cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-			hayCursor						= !COMMON.isNullOrEmpty(cursor);
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.records );
 
-			data							= apiCallResponse.records;
-			subTotal						= data.length;
-			allData.push(...data);
-			acumulado						= allData.length;
+			if ( hayData ) {
+				data					= apiCallResponse.records;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
 
 			// Update the info panel
 			HTML.showStepInfo( STEP_NAME, `Retrieving who the user follows (${acumulado})...` );
-		} while ( hayCursor && (n<MAX_ITERATIONS) );
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
 	} catch ( error ) {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return allData;
 }
@@ -439,7 +443,7 @@ async function getTheUserNotifications() {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -479,7 +483,7 @@ async function getTheUserProfile( handle = BSKY.user.userHandle ) {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	return userProfile;
 }
@@ -521,7 +525,7 @@ async function getWhoTheUserFollows() {
 	if ( COMMON.isNullOrEmpty( allData ) ) {
 		if (window.BSKY.DEBUG) console.debug( PREFIX + `No following detected.` );
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		return;
 	} else {
@@ -605,7 +609,7 @@ async function getWhoTheUserFollows() {
 						profile.avatarImage	= avatarURL ? await APIBluesky.getAvatar( avatarURL ) : null;
 					}
 
-					if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + "Push to array..." );
+					// if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + "Push to array..." );
 					allProfiles.push( profile );
 					searched.splice( position, 1 );
 				}
@@ -616,7 +620,7 @@ async function getWhoTheUserFollows() {
 						// }
 					});
 				}
-				if (window.BSKY.DEBUG) console.debug( PREFIX_PDS_PROFILE + "-- END" );
+				if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_PDS_PROFILE + "-- END" );
 				if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 			}
 			if (searched.length>0) {
@@ -625,7 +629,7 @@ async function getWhoTheUserFollows() {
 			}
 		}
 	} while ( startCurrent <= finishAt );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Save it.
@@ -660,10 +664,10 @@ async function getWhoTheUserFollows() {
 			try {
 				missed.didDoc			= {};
 				urlOfMissing			= `${BLUESKY.profile.pld}${userDid}`;
-				if (window.BSKY.DEBUG) console.debug( "Requesting DIDDOC url:", urlOfMissing );
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + "Requesting DIDDOC url:", urlOfMissing );
 				didDocForMissing		= await APIPLCDirectory.resolveDid( userDid );
 				missed.didDoc.body		= didDocForMissing;
-				if (window.BSKY.GROUP_DEBUG) console.warn( "Examinar didDocForMissing:", didDocForMissing );
+				// if (window.BSKY.GROUP_DEBUG) console.warn( PREFIX_MISSING + "Examinar didDocForMissing:", didDocForMissing );
 			} catch ( error ) {
 				missed.didDoc.fetchError	= error;
 			}
@@ -672,10 +676,10 @@ async function getWhoTheUserFollows() {
 			try {
 				missed.profile			= {};
 				urlOfMissing			= `${XRPC.public}/app.bsky.actor.getProfile?actor=${userDid}`;
-				if (window.BSKY.DEBUG) console.debug( "Requesting PROFILE url:", urlOfMissing );
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + "Requesting PROFILE url:", urlOfMissing );
 				profileForMissing		= await APICall.call( STEP_NAME, urlOfMissing );
 				missed.profile.profile	= profileForMissing;
-				if (window.BSKY.GROUP_DEBUG) console.warn( "Examinar profileForMissing:", profileForMissing );
+				// if (window.BSKY.GROUP_DEBUG) console.warn( PREFIX_MISSING + "Examinar profileForMissing:", profileForMissing );
 			} catch ( error ) {
 				missed.profile.fetchError	= error;
 			}
@@ -683,7 +687,7 @@ async function getWhoTheUserFollows() {
 			// Recap
 			missingProfiles.push( missed );
 
-			if (window.BSKY.DEBUG) console.debug( PREFIX_MISSING + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_MISSING + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
@@ -702,7 +706,7 @@ async function getWhoTheUserFollows() {
 	HTML.htmlRenderUserFollowing( BSKY.user.following.profiles );
 	HTML.htmlRenderMissingProfiles( BSKY.user.missingProfiles );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -725,31 +729,42 @@ async function getWhoFollowsTheUser() {
 	let apiCallResponse					= null;
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= null;
 	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
 	let avatarURL						= null;
-	do {
-		n++;
-		// Retrieve user's followers to show
-		// ---------------------------------------------------------
-		apiCallResponse					= await APIBluesky.getFollowers( cursor );
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+	try {
+		do {
+			n++;
+			// Retrieve user's followers to show
+			// ---------------------------------------------------------
+			apiCallResponse				= await APIBluesky.getFollowers( cursor );
 
-		data							= apiCallResponse.followers;
-		subTotal						= data.length;
-		allData.push(...data);
-		acumulado						= allData.length;
+			// Datos. Seguimos?
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.followers );
 
-		// Info step
-		HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user (${acumulado})...` );
+			if ( hayData ) {
+				data					= apiCallResponse.followers;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
 
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
+			// Info step
+			HTML.showStepInfo( STEP_NAME, `Retrieving who follows the user (${acumulado})...` );
+
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
+	} catch ( error ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw( error );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} records in the repo of the user` );
 
@@ -763,7 +778,7 @@ async function getWhoFollowsTheUser() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserFollowers( allData );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -787,6 +802,7 @@ async function getWhoTheUserIsBlocking() {
 	let apiCallResponse					= null;
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= null;
 	let allData							= [];
 	let n								= 0;
@@ -813,29 +829,41 @@ async function getWhoTheUserIsBlocking() {
 		}
 	}
 
-	do {
-		n++;
-		// Retrieve user's blocks
-		// ---------------------------------------------------------
-		apiCallResponse					= await APIBluesky.getBlocks( cursor );
+	try {
+		do {
+			n++;
+			// Retrieve user's blocks
+			// ---------------------------------------------------------
+			apiCallResponse				= await APIBluesky.getBlocks( cursor );
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+			// Datos. Seguimos?
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.blocks );
 
-		data							= apiCallResponse.blocks;
-		subTotal						= data.length;
-		allData.push(...data);
-		acumulado						= allData.length;
+			if ( hayData ) {
+				data					= apiCallResponse.blocks;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
 
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
+	} catch ( error ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw( error );
+	}
 
 	// As we previously added the blocks from ClearSky, we must make it unique.
 	const uniqueArray					= allData
 		.filter((value, index, self) =>
 			index === self.findIndex( b => ( COMMON.areEquals( b.did, value.did ) ))
 		)
-		.sort( (a,b) => a.handle.localeCompare( b.handle ) );
+		// Sorted by handle
+		//.sort( (a,b) => a.handle.localeCompare( b.handle ) );
+		// Sorted by date
+		.sort( (a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() );
 	acumulado							= uniqueArray.length;
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} blocks`, uniqueArray );
@@ -850,7 +878,7 @@ async function getWhoTheUserIsBlocking() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserBlocks( uniqueArray );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -874,27 +902,37 @@ async function getWhoTheUserIsMuting() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve who the user is muting...` );
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= null;
 	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
-	do {
-		n++;
-		// Retrieve user's mutes
-		// ---------------------------------------------------------
-		apiCallResponse					= await APIBluesky.getMutes( cursor );
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+	try {
+		do {
+			n++;
+			// Retrieve user's mutes
+			// ---------------------------------------------------------
+			apiCallResponse				= await APIBluesky.getMutes( cursor );
 
-		data							= apiCallResponse.mutes;
-		subTotal						= data.length;
-		allData.push(...data);
-		acumulado						= allData.length;
+			// Datos. Seguimos?
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.mutes );
 
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
+			if ( hayData ) {
+				data					= apiCallResponse.mutes;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
+	} catch ( error ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw( error );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} mutes`, allData );
 
@@ -908,7 +946,7 @@ async function getWhoTheUserIsMuting() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserMutes( allData );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -932,27 +970,37 @@ async function getTheUserLists() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the lists of the user...` );
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= null;
 	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
-	do {
-		n++;
-		// Retrieve user's lists
-		// ---------------------------------------------------------
-		apiCallResponse					= await APIBluesky.getUserLists( cursor );
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+	try {
+		do {
+			n++;
+			// Retrieve user's lists
+			// ---------------------------------------------------------
+			apiCallResponse				= await APIBluesky.getUserLists( cursor );
 
-		data							= apiCallResponse.lists;
-		subTotal						= data.length;
-		allData.push(...data);
-		acumulado						= allData.length;
+			// Datos. Seguimos?
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.lists );
 
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
+			if ( hayData ) {
+				data					= apiCallResponse.lists;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
+	} catch ( error ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw( error );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
 
@@ -966,7 +1014,7 @@ async function getTheUserLists() {
 	// Lo pintamos en su sitio.
 	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserLists( allData );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -990,27 +1038,30 @@ async function getTheUserMutingModerationLists() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the blocking moderation lists of the user...` );
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= null;
 	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
-	do {
-		n++;
-		// Retrieve user's lists
-		// ---------------------------------------------------------
-		apiCallResponse					= await APIBluesky.getUserModLists( cursor );
+		do {
+			n++;
+			// Retrieve user's lists
+			// ---------------------------------------------------------
+			apiCallResponse				= await APIBluesky.getUserModLists( cursor );
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+			// Datos. Seguimos?
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.lists );
 
-		data							= apiCallResponse.lists;
-		subTotal						= data.length;
-		allData.push(...data);
-		acumulado						= allData.length;
-
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
+			if ( hayData ) {
+				data					= apiCallResponse.lists;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
 
@@ -1025,7 +1076,7 @@ async function getTheUserMutingModerationLists() {
 	// Lo pintamos en su sitio.
 	if ( allData && ( allData.length>0 ) ) HTML.htmlRenderUserModerationList( allData, HTML.DIV_TABLE_MY_MOD_M_LISTS );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1049,26 +1100,37 @@ async function getTheUserBlockingModerationLists() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the muting moderation lists of the user...` );
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= null;
 	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
-	do {
-		n++;
-		// Retrieve user's lists
-		// ---------------------------------------------------------
-		apiCallResponse					= await APIBluesky.getUserBlockModLists( cursor );
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+	try {
+		do {
+			n++;
+			// Retrieve user's lists
+			// ---------------------------------------------------------
+			apiCallResponse				= await APIBluesky.getUserBlockModLists( cursor );
 
-		data							= apiCallResponse.lists;
-		subTotal						= data.length;
-		allData.push(...data);
-		acumulado						= allData.length;
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
+			// Datos. Seguimos?
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.lists );
+
+			if ( hayData ) {
+				data					= apiCallResponse.lists;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
+	} catch ( error ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw( error );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
 
@@ -1083,7 +1145,7 @@ async function getTheUserBlockingModerationLists() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserModerationList( allData, HTML.DIV_TABLE_MY_MOD_B_LISTS, true );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1107,26 +1169,37 @@ async function getTheUserFeeds() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the user feeds...` );
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= null;
 	let allData							= [];
 	let n								= 0;
 	let acumulado						= 0;
 	let subTotal						= 0;
-	do {
-		n++;
-		// Retrieve user's lists
-		// ---------------------------------------------------------
-		apiCallResponse					= await APIBluesky.getUserFeeds( cursor );
 
-		// Datos. Seguimos?
-		cursor							= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
-		hayCursor						= !COMMON.isNullOrEmpty(cursor);
+	try {
+		do {
+			n++;
+			// Retrieve user's lists
+			// ---------------------------------------------------------
+			apiCallResponse				= await APIBluesky.getUserFeeds( cursor );
 
-		data							= apiCallResponse.feeds;
-		subTotal						= data.length;
-		allData.push(...data);
-		acumulado						= allData.length;
-	} while ( hayCursor && (n<MAX_ITERATIONS) );
+			// Datos. Seguimos?
+			cursor						= ( apiCallResponse.hasOwnProperty("cursor") ) ? apiCallResponse.cursor : null;
+			hayCursor					= !COMMON.isNullOrEmpty(cursor);
+			hayData						= !COMMON.isNullOrEmpty( apiCallResponse?.feeds );
+
+			if ( hayData ) {
+				data					= apiCallResponse.feeds;
+				subTotal				= data.length;
+				allData.push(...data);
+				acumulado				= allData.length;
+			}
+		} while ( hayCursor && hayData && (n<MAX_ITERATIONS) );
+	} catch ( error ) {
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
+		throw( error );
+	}
 
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Detected ${acumulado} lists`, allData );
 
@@ -1140,7 +1213,7 @@ async function getTheUserFeeds() {
 	// Lo pintamos en su sitio.
 	HTML.htmlRenderUserFeeds( allData );
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1166,6 +1239,7 @@ async function getTheTrendingTopics() {
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Let's retrieve the Trending Topics...` );
 	let cursor							= null;
 	let hayCursor						= false;
+	let hayData							= false;
 	let data							= {};
 	data.topics							= {};
 	data.suggested						= {};
@@ -1174,10 +1248,11 @@ async function getTheTrendingTopics() {
 	// Retrieve the Trending Topics
 	// ---------------------------------------------------------
 	try {
-		data								= await APIBluesky.getTrendingTopics( cursor, false );
+		data							= await APIBluesky.getTrendingTopics( cursor, false );
+		hayData							= !COMMON.isNullOrEmpty( data );
 
 		// if ( !COMMON.isNullOrEmpty( data ) ) {
-		if ( data && ( data?.topics || data?.suggested ) ) {
+		if ( hayData && data && ( data?.topics || data?.suggested ) ) {
 			// Save it.
 			BSKY.user.trendingTopics		= data;
 
@@ -1191,7 +1266,7 @@ async function getTheTrendingTopics() {
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
 
-		// if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		// if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		// if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		// throw( error );
 	}
@@ -1200,7 +1275,7 @@ async function getTheTrendingTopics() {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1238,7 +1313,7 @@ async function getTheClearSkyInfo() {
 	// ---------------------------------------------------------
 	if ( window.BSKY.steps.firstTime ) window.BSKY.steps.total++;
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1282,7 +1357,7 @@ async function fnLogout() {
 	// Set, in localStorage, we come from "LOGOUT"
 	localStorage.setItem(LSKEYS.LOGOUT, true);
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX_LOCALSTORAGE + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_LOCALSTORAGE + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 
 	// Remove the crypto key from the database and the database itself.
@@ -1321,7 +1396,7 @@ async function fnLogout() {
 	// Send to fallback URL.
 	window.BSKY.faviconStandBy();
 	if (window.BSKY.DEBUG) console.debug( PREFIX + `Redirecting to: [${fallBackURLFromCurrent}]...` );
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 	window.location						= fallBackURL;
 }
@@ -1425,7 +1500,7 @@ async function fnDashboard() {
 
 		if ( goAutoLogout || CONFIGURATION.global.autoLogout ) {
 			if (window.BSKY.DEBUG) console.debug( PREFIX + "Errors found. Performing the auto-logout." );
-			if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 			await fnLogout();
 		}
@@ -1449,7 +1524,7 @@ async function fnDashboard() {
 		window.BSKY.faviconStandBy();
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1490,7 +1565,7 @@ async function updateDynamicData() {
 	// ---------------------------------------------------------
 	window.BSKY.faviconStandBy();
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1518,7 +1593,7 @@ async function updateStaticData() {
 	// ---------------------------------------------------------
 	window.BSKY.faviconStandBy();
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1551,7 +1626,7 @@ async function updateDynamicInfo() {
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	} finally {
@@ -1560,7 +1635,7 @@ async function updateDynamicInfo() {
 		HTML.showStepInfo( STEP_NAME );
 	}
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 
@@ -1615,7 +1690,7 @@ async function updateStaticInfo() {
 		// Show the error and update the HTML fields
 		HTML.updateHTMLError(error);
 
-		if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+		if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 		if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		throw( error );
 	} finally {
@@ -1638,7 +1713,7 @@ async function updateStaticInfo() {
 		}, 1000 );
 	});
 
-	if (window.BSKY.DEBUG) console.debug( PREFIX + "-- END" );
+	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 }
 

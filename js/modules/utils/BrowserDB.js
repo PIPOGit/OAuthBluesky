@@ -147,7 +147,7 @@ export async function terminate() {
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "BLOCKED the database:", DB_NAME );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "+ currentVersion:", currentVersion );
 			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "+ received event:", event );
-			if (window.BSKY.DEBUG) console.debug( PREFIX_BLOCKED + "-- END" );
+			if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX_BLOCKED + "-- END" );
 			if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 			/* Twice. */	if (window.BSKY.GROUP_DEBUG) console.groupEnd();
 		}

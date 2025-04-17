@@ -152,7 +152,7 @@ async function performCall( params ) {
 	let responseFromServer				= null;
 	const renderHTMLErrors				= isRenderHTMLErrors ? params.renderHTMLErrors : true;
 	try {
-		if (window.BSKY.DEBUG) console.debug( PREFIX + `On behalf of [${params.step}], calling: [<${params.method}> ${params.url}]...` );
+		// if (window.BSKY.DEBUG) console.debug( PREFIX + `On behalf of [${params.step}], calling: [<${params.method}> ${params.url}]...` );
 		responseFromServer				= await APICall.authenticatedCall( requestParams, renderHTMLErrors );
 		// if (window.BSKY.DEBUG) console.debug( PREFIX + `Response from server:`, responseFromServer );
 	} catch ( error ) {

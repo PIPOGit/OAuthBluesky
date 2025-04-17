@@ -802,11 +802,11 @@ export function htmlRenderMissingProfiles( data ) {
 	let $tableMissedBody				= $( '#'+HTMLConstants.DIV_TABLE_IDLE + " tbody" );
 
 	// Clear the current content.
-	$( '#'+HTMLConstants.DIV_TAB_IDLE_BADGE ).html(data.length);
+	total								= data?.length || 0;
+	$( '#'+HTMLConstants.DIV_TAB_IDLE_BADGE ).html(total);
 
 	// Missed
 	$tableMissedBody.empty();
-	total								= data.length;
 	index								= 0;
 	if ( total>0 ) {
 		// Add data.
@@ -834,7 +834,7 @@ export function htmlRenderUserFollowers( data ) {
 	$tableBody.empty();
 
 	// Total
-	let total							= data.length;
+	let total							= data?.length || 0;
 	$( '#'+HTMLConstants.DIV_TAB_FOLLOWERS_BADGE ).html(total);
 	$( '#'+HTMLConstants.DIV_TAB_FOLLOWERS_TOTAL ).html(total);
 
@@ -868,7 +868,7 @@ export function htmlRenderUserBlocks( data ) {
 	$tableBody.empty();
 
 	// Total
-	let total							= data.length;
+	let total							= data?.length || 0;
 	$( '#'+HTMLConstants.DIV_TAB_BLOCKS_BADGE ).html(total);
 	if ( total>0 ) {
 		// Add data.
@@ -900,7 +900,7 @@ export function htmlRenderUserMutes( data ) {
 	$tableBody.empty();
 
 	// Total
-	let total							= data.length;
+	let total							= data?.length || 0;
 	$( '#'+HTMLConstants.DIV_TAB_MUTED_BADGE ).html(total);
 	if ( total>0 ) {
 		// Add data.
@@ -996,18 +996,18 @@ function htmlRenderSingleList( table, data ) {
 	$tableBody.empty();
 
 	// Total
-	const total							= data.length;
+	const total							= data?.length || 0;
 
 	// The "total" in the badge.
 	const grandTotal					= parseInt( $( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html() );
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + `Badge Numbers: [total==${total}] [grandTotal==${grandTotal}]` );
 	$( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html( grandTotal + total );
 
-	// Sort
-	const sorted						= data.sort( (a,b) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime() );
-
 	// The rendering
 	if ( total>0 ) {
+		// Sort
+		const sorted					= data.sort( (a,b) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime() );
+
 		// Add data.
 		sorted.forEach( list => {
 			index++;
@@ -1049,18 +1049,18 @@ export function htmlRenderUserModerationList( data, table, danger=false ) {
 	$tableBody.empty();
 
 	// Total
-	const total							= data.length;
+	const total							= data?.length || 0;
 
 	// The "total" in the badge.
 	const grandTotal					= parseInt( $( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html() || 0 );
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + `Badge Numbers: [total==${total}] [grandTotal==${grandTotal}]` );
 	$( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html( grandTotal + total );
 
-	// Sort
-	const sorted						= data.sort( (a,b) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime() );
-
 	// The rendering
 	if ( total>0 ) {
+		// Sort
+		const sorted					= data.sort( (a,b) => new Date(b.indexedAt).getTime() - new Date(a.indexedAt).getTime() );
+
 		// Add data.
 		let url							= "";
 		sorted.forEach( list => {
@@ -1232,9 +1232,9 @@ export function htmlRenderClearSkyInformation( clearSky ) {
 	// ---------------------------------------------------------
 	const statistics					= clearSky.statistics;
 	const userInfo						= clearSky.userInfo;
-	const subscribedToLists				= userInfo.modLists.data.found;
-	const subscribedToBlockLists		= userInfo.listsUserBlock.data.found;
-	const blockedByLists				= userInfo.listsUserBlocked.data.found;
+	const subscribedToLists				= userInfo.modLists?.data?.found || null;
+	const subscribedToBlockLists		= userInfo.listsUserBlock?.data?.found || null;
+	const blockedByLists				= userInfo.listsUserBlocked?.data?.found || null;
 
 	// ClearSky statistics
 	// ---------------------------------------------------------
@@ -1252,9 +1252,9 @@ export function htmlRenderClearSkyInformation( clearSky ) {
 	$( '#'+HTMLConstants.DIV_TAB_MY_LISTS_BADGE ).html( "" );
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + `Rendering ClearSky lists...` );
-	htmlRenderUserModerationList( subscribedToLists, HTMLConstants.CLEARSKY_DIV_B_IN );					// table-in-lists
-	htmlRenderUserModerationList( subscribedToBlockLists, HTMLConstants.CLEARSKY_DIV_B_SUBS, true );	// table-subscribed-to-lists
-	htmlRenderUserModerationList( blockedByLists, HTMLConstants.CLEARSKY_DIV_B_MEMBER, true );			// table-member-of-lists
+	if ( !COMMON.isNullOrEmpty( subscribedToLists ) ) htmlRenderUserModerationList( subscribedToLists, HTMLConstants.CLEARSKY_DIV_B_IN );					// table-in-lists
+	if ( !COMMON.isNullOrEmpty( subscribedToBlockLists ) ) htmlRenderUserModerationList( subscribedToBlockLists, HTMLConstants.CLEARSKY_DIV_B_SUBS, true );	// table-subscribed-to-lists
+	if ( !COMMON.isNullOrEmpty( blockedByLists ) ) htmlRenderUserModerationList( blockedByLists, HTMLConstants.CLEARSKY_DIV_B_MEMBER, true );			// table-member-of-lists
 
 	if (window.BSKY.GROUP_DEBUG) console.debug( PREFIX + "-- END" );
 	if (window.BSKY.GROUP_DEBUG) console.groupEnd();

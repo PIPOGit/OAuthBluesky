@@ -197,7 +197,7 @@
 						aria-selected="false">
 						<span id="pill-blocking-badge" name="pill-blocking-badge" class="badge bg-success-subtle"></span>
 						<i class="bi bi-person-dash px-1"></i>
-						Blocking
+						Blocks
 					</button>
 					<button class="btn nav-link d-flex align-items-baseline px-2"
 						id="pill-muting"
@@ -893,7 +893,7 @@
 					<div id="panel-relations" name="panel-relations" class="tab-pane fade theme-relations" role="tabpanel" aria-labelledby="pill-relations" tabindex="0">
 						<div id="relations" name="relations" class="relations">
 							<div class="row m-0">
-								<div class="col-2">
+								<div class="col-2 p-0">
 									<div class="form-check">
 										<input class="form-check-input" type="radio" name="drawCanvas" id="drawCanvas1" value="likes" checked onClick="BSKY.canvasType(this);">
 										<label class="form-check-label" for="drawCanvas1">Likes</label>
@@ -909,6 +909,7 @@
 									<div>
 										<i>When finished, click on the image to download</i>.
 									</div>
+									<div class="border-2 border-top h-50 list-of-handles mt-3 overflow-scroll theme-smaller"></div>
 								</div>
 								<div class="col-10">
 									<canvas id="canvas-relations" width="1000" height="400" class="border border-1 border-black m-0 p-0" onClick="BSKY.downloadImage();">

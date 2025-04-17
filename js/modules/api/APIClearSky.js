@@ -310,7 +310,7 @@ async function getUserInfo( did, handle ) {
 			if (window.BSKY.GROUP_DEBUG) console.groupCollapsed( PREFIX_HYDRATING + `+ Profile for account: [${account.did}]` );
 			try {
 				hydrated				= await APIBluesky.getUserProfile( account.did, false );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated profile:", hydrated );
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated profile:", hydrated );
 
 				if ( EXTENDED ) {
 					// Hack: Retrieve also the didDoc of this profile.
@@ -348,7 +348,7 @@ async function getUserInfo( did, handle ) {
 			standardList				= TYPES.BSKYListDetails.getInstanceFromModList( list );
 			try {
 				hydrated				= await APIBluesky.getListDetails( standardList, cursor, false );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated subscribed to list:", hydrated );
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated subscribed to list:", hydrated );
 				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.modLists.data.found.push( hydrated.list );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );
@@ -377,7 +377,7 @@ async function getUserInfo( did, handle ) {
 			standardList				= TYPES.BSKYListDetails.getInstanceFromBlockList( list );
 			try {
 				hydrated				= await APIBluesky.getListDetails( standardList, cursor, false );
-				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated subscribed to block list:", hydrated );
+				// if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + "  Hydrated subscribed to block list:", hydrated );
 				if ( !COMMON.isNullOrEmpty( hydrated ) ) userInfo.listsUserBlock.data.found.push( hydrated.list );
 			} catch ( error ) {
 				if (window.BSKY.DEBUG) console.debug( PREFIX_HYDRATING + `  ERROR[${error.message}]: [${error.cause}]`, error.json );
